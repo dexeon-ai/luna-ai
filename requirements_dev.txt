@@ -1,0 +1,12 @@
+# --- Core runtime dependencies (same as requirements.txt) ---
+requests
+python-dotenv
+pillow
+Flask
+
+# --- Dev / tooling extras ---
+black          # auto-formatter
+flake8         # linting
+pytest         # unit testing
+pytest-cov     # test coverage
+ipython        # interactive debugging shell

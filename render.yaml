@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: luna-ai
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --workers=1 --threads=4 --timeout=120 --preload
+    envVars:
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_VOICE_ID
+        sync: false
+      - key: ELEVENLABS_VOICE_NAME
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: SESSION_TTL_SECONDS
+        value: "1800"

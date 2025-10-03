@@ -1,0 +1,205 @@
+We are continuing the Luna AI project.
+Here’s the context:
+- Luna AI is both a crypto analysis AI companion and a character in an animated series streaming on Pump.fun.
+- Goal: launch a meme/utility token (LUNA), stream episodes + live analysis to promote the ecosystem.
+- Core pipeline is working: analysis engine (Dexscreener + CoinGecko), ElevenLabs voice, ffmpeg+pydub lip-sync, overlay PNGs, OBS Browser Source.
+- BONK + PEPE analysis runs cleanly: TL;DR, overlays, voice narration, lipsync JSON, mood emoji in overlay.
+- We’ve built starter PNG assets via make_luna_assets.py (avatar_base, mouth_rest, mouth_mid, mouth_open).
+- Current folder: C:\Users\jmpat\Desktop\Luna AI\ with venv, tasks.bat, server.py, client_demo.py, snapshot.py, voice_adapter.py, lipsync.py, avatar_overlay.html, and assets.
+- OBS overlay loads avatar and animates mouth with mood emoji.
+- Next step: finalize Luna’s avatar assets, improve overlay to auto-detect latest voice/JSON, and move toward Block 13 (interactive Q&A).
+
+Got it ✅ — I’ll give you a **full soup-to-nuts synopsis** of everything we’ve built and decided around **Luna AI**, so you can drop it into a **new chat** and pick up exactly where we left off.
+
+---
+
+# 🧵 Luna AI — Full Project Recap
+
+## 1. 🌌 Core Vision
+
+* **Luna AI** is both:
+
+  1. A **crypto analysis AI companion** (interactive, voice, overlay, data-driven).
+  2. A **character/avatar** in an **animated series** streaming on Pump.fun.
+* She will be tokenized with a **meme/utility token launch** (LUNA token) to tie into the Virtuals Protocol / Pump.fun ecosystem.
+* Streaming goal: Use **Pump.fun** streams, tie Luna’s personality to analysis of trending coins, and cross-promote the animated content + token.
+
+---
+
+## 2. 🧠 The “Brain” — What Luna Can Do
+
+We’ve built Luna’s intelligence in **blocks**:
+
+### ✅ Analysis Engine
+
+* Fetches live token data from **Dexscreener** + **CoinGecko**.
+* Generates **snapshots** with:
+
+  * Price, liquidity, FDV, volume.
+  * % change across 1h, 24h, etc.
+  * What-if scenarios (e.g. “If you invested $1000 24h ago → $985”).
+  * LP analysis (fees, IL risk, slippage, APR est).
+  * ATH/ATL context (“Currently -67% vs ATH”).
+
+### ✅ Risk & Macro
+
+* `/risk` endpoint → contract verification (Etherscan/BscScan), top holders, safety gauge.
+* `/macro` endpoint → global market cap, BTC dominance, ETH dominance, trending coins.
+
+### ✅ Community / Social
+
+* Pulls limited **CoinGecko community data** (Twitter followers, Telegram counts).
+* Placeholder for future integration with **Telegram Bot API** + **X API** (requires $200/mo Basic plan).
+
+---
+
+## 3. 🎙️ Voice & Narration
+
+* Integrated with **ElevenLabs**:
+
+  * Luna speaks her TL;DR in **Jessica’s voice**.
+  * Narration saved as `.mp3` in `/voice`.
+* ✅ ElevenLabs key configured via `.env`.
+
+---
+
+## 4. 👄 Lip-Sync
+
+* Added `lipsync.py`:
+
+  * Processes MP3s with **pydub + ffmpeg**.
+  * Generates `.json` timeline of mouth movements (visemes: rest/mid/open).
+* ✅ Fixed race condition with retry loop.
+* Output:
+
+  * `Bonk_solana.mp3`
+  * `Bonk_solana.json`
+
+---
+
+## 5. 😀 OBS Overlay
+
+* `avatar_overlay.html`:
+
+  * Displays Luna avatar.
+  * Plays narration audio.
+  * Swaps mouth PNGs in sync with lip-sync JSON.
+  * Shows **mood emoji** (🙂 😌 😐 😟 😱) mapped to Safety Gauge (calm seas → tsunami risk).
+
+* Required assets:
+
+  * `avatar_base.png`
+  * `mouth_rest.png`
+  * `mouth_mid.png`
+  * `mouth_open.png`
+
+---
+
+## 6. 🎨 Starter Assets
+
+* Built `make_luna_assets.py` (with Pillow).
+
+  * Generates placeholder PNGs labeled “BASE / REST / MID / OPEN.”
+  * Bundles them into `luna_assets.zip`.
+* To run:
+
+  ```powershell
+  cd "C:\Users\jmpat\Desktop\Luna AI"
+  & ".\.venv\Scripts\Activate.ps1"
+  python make_luna_assets.py
+  ```
+* Output:
+
+  * `avatar_base.png`
+  * `mouth_rest.png`
+  * `mouth_mid.png`
+  * `mouth_open.png`
+  * `luna_assets.zip`
+
+These placeholders work until you swap in proper artwork.
+
+---
+
+## 7. ⚙️ Project Setup
+
+* Folder: `C:\Users\jmpat\Desktop\Luna AI\`
+* Uses a **virtual environment** `.venv`.
+* Key scripts:
+
+  * `server.py` → Flask server exposing `/analyze`, `/risk`, `/macro`.
+  * `client_demo.py` → demo script hitting endpoints (BONK, PEPE).
+  * `snapshot.py` → builds analysis snapshot.
+  * `voice_adapter.py` → generates MP3 + lip-sync JSON.
+  * `lipsync.py` → processes MP3 → viseme JSON.
+  * `avatar_overlay.html` → OBS browser overlay.
+  * `tasks.bat` → helper tasks (`run`, `demo`, `voice`, etc.).
+
+---
+
+## 8. 🔑 Environment Variables (`.env`)
+
+```txt
+# ElevenLabs
+ELEVENLABS_API_KEY=sk_xxxxxxxxxxxxxxxxxxxxx
+ELEVENLABS_VOICE_NAME=Jessica
+ELEVENLABS_VOICE_ID=EXAVITQu4vr4xnSDxMaL
+
+# Blockchain
+ETHERSCAN_API_KEY=
+BSCSCAN_API_KEY=
+HELIUS_API_KEY=
+COVALENT_API_KEY=
+BITQUERY_API_KEY=
+
+# Community & Social
+TG_BOT_TOKEN=
+X_API_BEARER=
+```
+
+---
+
+## 9. 🛠️ What Works Right Now
+
+* ✅ BONK + PEPE analysis with overlays + voice.
+* ✅ `/risk` and `/macro` endpoints return JSON (limited without API keys).
+* ✅ MP3 + JSON (lip-sync) generation.
+* ✅ OBS overlay loads, shows avatar, mouth moves with audio, mood emoji updates.
+* ✅ Starter PNGs generated via `make_luna_assets.py`.
+
+---
+
+## 10. 📺 Streaming on Pump.fun
+
+* Plan:
+
+  * Launch **LUNA token** as a meme/utility token.
+  * Use **Pump.fun** streaming to showcase Luna’s character.
+  * Animated series content + live Luna AI analysis = promotion loop.
+  * Every stream promotes the token + community.
+
+---
+
+## 11. 🔮 Next Steps (Future Blocks)
+
+* **Block 13:** Interactive Q&A → user can ask “Compare BONK vs PEPE” and get side-by-side analysis.
+* **Block 14:** Packaging & deployment (Docker/installer).
+* **Block 15:** Stretch goals → portfolio, alerts, Discord/Telegram bot integration.
+* Animated series episodes & personality tuning for Pump.fun streams.
+
+---
+
+# 📝 Prompt for New Chat
+
+When you start a new thread, paste this in:
+
+```
+We are continuing the Luna AI project.
+Here’s the context:
+- Luna AI is both a crypto analysis AI companion and a character in an animated series streaming on Pump.fun.
+- Goal: launch a meme/utility token (LUNA), stream episodes + live analysis to promote the ecosystem.
+- Core pipeline is working: analysis engine (Dexscreener + CoinGecko), ElevenLabs voice, ffmpeg+pydub lip-sync, overlay PNGs, OBS Browser Source.
+- BONK + PEPE analysis runs cleanly: TL;DR, overlays, voice narration, lipsync JSON, mood emoji in overlay.
+- We’ve built starter PNG assets via make_luna_assets.py (avatar_base, mouth_rest, mouth_mid, mouth_open).
+- Current folder: C:\Users\jmpat\Desktop\Luna AI\ with venv, tasks.bat, server.py, client_demo.py, snapshot.py, voice_adapter.py, lipsync.py, avatar_overlay.html, and assets.
+- OBS overlay loads avatar and animates mouth with mood emoji.
+- Next step: finalize Luna’s avatar assets, improve overlay to auto-detect latest voice/JSON, and move toward Block 13 (interactive Q&A).

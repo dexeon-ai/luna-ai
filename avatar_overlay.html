@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Luna Avatar Overlay</title>
+  <style>
+    body { margin: 0; background: transparent; }
+    #avatar { position: relative; width: 400px; }
+    #mouth { position: absolute; bottom: 40px; left: 150px; width: 100px; }
+    #mood { position: absolute; top: 10px; right: 10px; font-size: 32px; }
+  </style>
+</head>
+<body>
+  <div id="avatar">
+    <img src="avatar_base.png" width="400">
+    <img id="mouth" src="mouth_rest.png">
+    <div id="mood">😐</div>
+  </div>
+
+  <audio id="voice" controls autoplay></audio>
+
+  <script>
+    async function loadLatest() {
+      try {
+        // Ask Flask server for newest voice/lipsync/mood files
+        const resp = await fetch("http://127.0.0.1:5000/voice/latest.json?_=" + Date.now());
+        const latest = await resp.json();
+
+        const audioFile = "http://127.0.0.1:5000/" + latest.mp3;
+        const lipsyncFile = "http://127.0.0.1:5000/" + latest.json;
+        const moodFile = "http://127.0.0.1:5000/" + latest.mood;
+
+        // Load audio
+        const audio = document.getElementById("voice");
+        audio.src = audioFile;
+        audio.autoplay = true;
+
+        // Force audio to play in OBS Chromium
+        audio.addEventListener("canplaythrough", () => {
+          audio.play().catch(err => console.log("Autoplay blocked:", err));
+        });
+
+        // Load mood emoji
+        fetch(moodFile).then(r => r.json()).then(mood => {
+          const moodEl = document.getElementById("mood");
+          const moodMap = {
+            "calm seas": "🙂",
+            "steady breeze": "😌",
+            "rolling waves": "😐",
+            "stormy waters": "😟",
+            "tsunami risk": "😱"
+          };
+          if (mood.summary && moodMap[mood.summary]) {
+            moodEl.textContent = moodMap[mood.summary];
+          }
+        }).catch(err => console.log("Mood load error:", err));
+
+        // Load lipsync frames
+        fetch(lipsyncFile).then(r => r.json()).then(frames => {
+          let i = 0;
+          function step() {
+            if (i >= frames.length) return;
+            const f = frames[i];
+            const mouth = document.getElementById("mouth");
+            if (f.viseme === "open") mouth.src = "mouth_open.png";
+            else if (f.viseme === "mid") mouth.src = "mouth_mid.png";
+            else mouth.src = "mouth_rest.png";
+            i++;
+            setTimeout(step, 50);
+          }
+          audio.onplay = () => step();
+        }).catch(err => console.log("Lipsync load error:", err));
+
+      } catch (err) {
+        console.log("LoadLatest failed:", err);
+      }
+    }
+
+    loadLatest();
+  </script>
+</body>
+</html>
+
