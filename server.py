@@ -1,4 +1,4 @@
-# server.py — Render-ready Flask API
+# server.py — Render-ready Flask API (patched)
 import os, glob, time, json
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, abort
@@ -38,12 +38,15 @@ def session_start():
     return jsonify({"ok": True, "session_id": sid, "questions_left": 21, "ttl_seconds": ttl})
 
 @app.post("/session/status")
+@app.get("/session/status")          # <-- added GET support for browser polling
 def session_status():
     data = request.get_json(silent=True) or {}
-    sid = data.get("session_id")
+    sid = data.get("session_id") or request.args.get("session_id")
+    if not sid:
+        return jsonify({"ok": False, "error": "missing session_id"}), 400
     if not manager.touch(sid):
         return jsonify({"ok": False, "error": "invalid or expired session"}), 403
-    return jsonify({"ok": True, "questions_left": manager.remaining(sid)})
+    return jsonify({"ok": True, "remaining_questions": manager.remaining(sid)})
 
 @app.post("/session/end")
 def session_end():
@@ -52,8 +55,6 @@ def session_end():
     if not sid:
         return jsonify({"ok": False, "error": "missing session_id"}), 400
     history, text = manager.end(sid)
-    # Ephemeral storage policy: clear voice files for privacy if you want:
-    # for f in VOICE_DIR.glob("*"): f.unlink(missing_ok=True)
     return jsonify({"ok": True, "message": "session closed", "history": history, "history_text": text})
 
 # ------------- Analysis -------------
@@ -115,19 +116,14 @@ def qa():
     if not manager.touch(sid):
         return jsonify({"ok": False, "error": "invalid or expired session"}), 403
 
-    # Decrement question counter
     remaining = manager.decrement(sid)
-
-    # Route to your existing handler (compare, etc.)
-    result = handle_question(data)  # expects dict response
-    # Make a simple text for history + TTS
+    result = handle_question(data)  # expects dict
     text_for_tts = result.get("summary") or result.get("tldr") or result.get("message") \
                    or result.get("error") or "Answer ready."
 
     manager.add_history(sid, "user", json.dumps({k:v for k,v in data.items() if k!='session_id'})[:500])
     manager.add_history(sid, "assistant", text_for_tts)
 
-    # Generate voice (optional if ELEVENLABS_API_KEY missing)
     voice_url = None
     lipsync_url = None
     audio_path = tts_generate(text_for_tts, base_name=f"reply_{int(time.time())}", out_dir=str(VOICE_DIR))
@@ -140,13 +136,14 @@ def qa():
 
     payload = {
         "ok": bool(result.get("ok", True)),
-        "result": result,
+        "answer": text_for_tts,
+        "overlay_url": f"/overlays/latest.png",
+        "voice_path": voice_url,
+        "lipsync_path": lipsync_url,
         "remaining_questions": remaining,
-        "voice_url": voice_url,
-        "lipsync_url": lipsync_url
+        "symbol": result.get("symbol"),
+        "metrics": result.get("metrics", {})
     }
-
-    # If out of questions, include transcript prompt text
     if remaining <= 0:
         payload["notice"] = "Session limit reached. Use /session/end to copy the transcript."
     return jsonify(payload)
@@ -154,14 +151,29 @@ def qa():
 # ------------- Static for voice + overlays + assets -------------
 @app.get("/voice/latest.json")
 def latest_voice_json():
+    # Return newest .json file info instead of file content
     files = sorted(VOICE_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not files:
-        abort(404)
-    return send_from_directory(str(VOICE_DIR), files[0].name)
+        return jsonify({"error": "no voice files yet"}), 404
+    latest = files[0]
+    base = latest.stem
+    audio_path = f"/voice/{base}.wav"
+    lipsync_path = f"/voice/{latest.name}"
+    return jsonify({
+        "audio_url": audio_path,
+        "lipsync_url": lipsync_path
+    })
 
 @app.get("/voice/<path:filename>")
 def voice_files(filename):
     return send_from_directory(str(VOICE_DIR), filename)
+
+@app.get("/overlays/latest.png")       # <-- added for overlay display
+def latest_overlay():
+    files = sorted(OVERLAY_DIR.glob("*.png"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not files:
+        abort(404)
+    return send_from_directory(str(OVERLAY_DIR), files[0].name)
 
 @app.get("/overlays/<path:filename>")
 def overlay_files(filename):
@@ -173,12 +185,11 @@ def overlay_html():
 
 @app.get("/<path:asset>")
 def base_assets(asset):
-    # allows avatar_base.png, mouth_*.png to be served
     path = (ASSETS_DIR / asset)
     if path.exists():
         return send_from_directory(str(ASSETS_DIR), asset)
     abort(404)
 
-# ------------- Run (local dev); Render uses gunicorn -------------
+# ------------- Run (local dev) -------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=False)
