@@ -1,9 +1,10 @@
-# server.py — Render-ready Flask API (patched)
-import os, glob, time, json
+# server.py — Luna AI backend (Render-ready, overlay-fixed)
+import os, time, json
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, abort
 from flask_cors import CORS
 
+# ---- internal modules ----
 from session_manager import manager
 from snapshot import build_snapshot
 from overlay_card import make_overlay_card
@@ -12,6 +13,7 @@ from risk_providers import fetch_deep_risk
 from macro_providers import build_macro_summary
 from qa_handler import handle_question
 
+# ---- directories ----
 ROOT        = Path(__file__).resolve().parent
 VOICE_DIR   = ROOT / "voice"
 OVERLAY_DIR = ROOT / "overlays"
@@ -20,25 +22,32 @@ ASSETS_DIR  = ROOT   # avatar_base.png, mouth_*.png, avatar_overlay.html
 VOICE_DIR.mkdir(exist_ok=True)
 OVERLAY_DIR.mkdir(exist_ok=True)
 
+# ---- Flask setup ----
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": os.getenv("CORS_ORIGINS", "*").split(",")}})
 
-print(">>> Luna AI server live with /ping, /session/*, /analyze, /risk, /macro, /qa, /voice/*")
+print(">>> Luna AI server live with /ping, /session/*, /analyze, /risk, /macro, /qa, /voice/*, /overlays/*")
 
-# ------------- Health -------------
+# -----------------------------------------------------------
+# Health
+# -----------------------------------------------------------
 @app.get("/ping")
 def ping():
     return jsonify({"ok": True, "message": "pong", "ts": int(time.time())})
 
-# ------------- Sessions -------------
+
+# -----------------------------------------------------------
+# Session management
+# -----------------------------------------------------------
 @app.post("/session/start")
 def session_start():
     ttl = int(os.getenv("SESSION_TTL_SECONDS", "1800"))
     sid = manager.start(ttl_seconds=ttl)
     return jsonify({"ok": True, "session_id": sid, "questions_left": 21, "ttl_seconds": ttl})
 
+
 @app.post("/session/status")
-@app.get("/session/status")          # <-- added GET support for browser polling
+@app.get("/session/status")
 def session_status():
     data = request.get_json(silent=True) or {}
     sid = data.get("session_id") or request.args.get("session_id")
@@ -47,6 +56,7 @@ def session_status():
     if not manager.touch(sid):
         return jsonify({"ok": False, "error": "invalid or expired session"}), 403
     return jsonify({"ok": True, "remaining_questions": manager.remaining(sid)})
+
 
 @app.post("/session/end")
 def session_end():
@@ -57,7 +67,10 @@ def session_end():
     history, text = manager.end(sid)
     return jsonify({"ok": True, "message": "session closed", "history": history, "history_text": text})
 
-# ------------- Analysis -------------
+
+# -----------------------------------------------------------
+# /analyze — optional direct analysis endpoint
+# -----------------------------------------------------------
 @app.post("/analyze")
 def analyze():
     data = request.get_json(silent=True) or {}
@@ -71,14 +84,7 @@ def analyze():
     if not manager.touch(sid):
         return jsonify({"ok": False, "error": "invalid or expired session"}), 403
 
-    cached = manager.get_cached(sid, chain, contract)
-    if cached:
-        snap = cached
-    else:
-        snap = build_snapshot(chain, contract)
-        if snap.get("ok"):
-            manager.set_cached(sid, chain, contract, snap)
-
+    snap = build_snapshot(chain, contract)
     if not snap.get("ok"):
         return jsonify({"ok": False, "error": snap.get("error", "snapshot failed")}), 500
 
@@ -91,7 +97,10 @@ def analyze():
     manager.add_history(sid, "system", f"[analyze] {chain}:{contract}")
     return jsonify({"ok": True, "snapshot": snap, "overlay_card_url": card_url})
 
-# ------------- Risk -------------
+
+# -----------------------------------------------------------
+# /risk  &  /macro
+# -----------------------------------------------------------
 @app.post("/risk")
 def risk():
     data = request.get_json(silent=True) or {}
@@ -101,12 +110,15 @@ def risk():
         return jsonify({"ok": False, "error": "missing chain/contract"}), 400
     return jsonify(fetch_deep_risk(chain, contract))
 
-# ------------- Macro -------------
+
 @app.post("/macro")
 def macro():
     return jsonify(build_macro_summary())
 
-# ------------- Q&A (21 questions) -------------
+
+# -----------------------------------------------------------
+# /qa — main interactive route (21 Questions mode)
+# -----------------------------------------------------------
 @app.post("/qa")
 def qa():
     data = request.get_json(silent=True) or {}
@@ -116,14 +128,23 @@ def qa():
     if not manager.touch(sid):
         return jsonify({"ok": False, "error": "invalid or expired session"}), 403
 
+    # decrement counter
     remaining = manager.decrement(sid)
-    result = handle_question(data)  # expects dict
-    text_for_tts = result.get("summary") or result.get("tldr") or result.get("message") \
-                   or result.get("error") or "Answer ready."
 
-    manager.add_history(sid, "user", json.dumps({k:v for k,v in data.items() if k!='session_id'})[:500])
+    # get core answer
+    result = handle_question(data) or {}
+    text_for_tts = (
+        result.get("summary")
+        or result.get("tldr")
+        or result.get("message")
+        or result.get("error")
+        or "Answer ready."
+    )
+
+    manager.add_history(sid, "user", json.dumps({k: v for k, v in data.items() if k != "session_id"})[:500])
     manager.add_history(sid, "assistant", text_for_tts)
 
+    # ---------- voice ----------
     voice_url = None
     lipsync_url = None
     audio_path = tts_generate(text_for_tts, base_name=f"reply_{int(time.time())}", out_dir=str(VOICE_DIR))
@@ -134,24 +155,39 @@ def qa():
         if json_candidate.exists():
             lipsync_url = f"/voice/{json_candidate.name}"
 
+    # ---------- overlay ----------
+    overlay_path = None
+    try:
+        snap_like = {
+            "token": {"symbol": result.get("symbol")},
+            "market": result.get("metrics", {}),
+            "summary": text_for_tts,
+        }
+        overlay_path = make_overlay_card(snap_like, out_dir=str(OVERLAY_DIR))
+    except Exception as e:
+        print("[Overlay Error]", e)
+
     payload = {
         "ok": bool(result.get("ok", True)),
         "answer": text_for_tts,
-        "overlay_url": f"/overlays/latest.png",
+        "overlay_url": f"/overlays/{Path(overlay_path).name}" if overlay_path else None,
         "voice_path": voice_url,
         "lipsync_path": lipsync_url,
         "remaining_questions": remaining,
         "symbol": result.get("symbol"),
-        "metrics": result.get("metrics", {})
+        "metrics": result.get("metrics", {}),
     }
+
     if remaining <= 0:
         payload["notice"] = "Session limit reached. Use /session/end to copy the transcript."
     return jsonify(payload)
 
-# ------------- Static for voice + overlays + assets -------------
+
+# -----------------------------------------------------------
+# Static routes: voice / overlays / assets
+# -----------------------------------------------------------
 @app.get("/voice/latest.json")
 def latest_voice_json():
-    # Return newest .json file info instead of file content
     files = sorted(VOICE_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not files:
         return jsonify({"error": "no voice files yet"}), 404
@@ -159,37 +195,42 @@ def latest_voice_json():
     base = latest.stem
     audio_path = f"/voice/{base}.wav"
     lipsync_path = f"/voice/{latest.name}"
-    return jsonify({
-        "audio_url": audio_path,
-        "lipsync_url": lipsync_path
-    })
+    return jsonify({"audio_url": audio_path, "lipsync_url": lipsync_path})
+
 
 @app.get("/voice/<path:filename>")
 def voice_files(filename):
     return send_from_directory(str(VOICE_DIR), filename)
 
-@app.get("/overlays/latest.png")       # <-- added for overlay display
+
+@app.get("/overlays/latest.png")
 def latest_overlay():
     files = sorted(OVERLAY_DIR.glob("*.png"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not files:
         abort(404)
     return send_from_directory(str(OVERLAY_DIR), files[0].name)
 
+
 @app.get("/overlays/<path:filename>")
 def overlay_files(filename):
     return send_from_directory(str(OVERLAY_DIR), filename)
+
 
 @app.get("/avatar_overlay.html")
 def overlay_html():
     return send_from_directory(str(ASSETS_DIR), "avatar_overlay.html")
 
+
 @app.get("/<path:asset>")
 def base_assets(asset):
-    path = (ASSETS_DIR / asset)
+    path = ASSETS_DIR / asset
     if path.exists():
         return send_from_directory(str(ASSETS_DIR), asset)
     abort(404)
 
-# ------------- Run (local dev) -------------
+
+# -----------------------------------------------------------
+# Run (local dev); Render uses gunicorn
+# -----------------------------------------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=False)
