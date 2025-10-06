@@ -2,12 +2,10 @@ services:
   - type: web
     name: luna-ai
     env: python
-    plan: starter   # free plan sleeps; starter is better if you want it always on
+    plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn server:app --workers=1 --threads=4 --timeout=120 --preload
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.3
       - key: ELEVENLABS_API_KEY
         sync: false
       - key: ELEVENLABS_VOICE_ID
