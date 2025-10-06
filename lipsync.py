@@ -1,33 +1,48 @@
-# lipsync.py (cloud-safe, no ffmpeg)
+# lipsync.py (cloud-safe, no ffmpeg, no audioop)
 import os
 import json
 import wave
-import audioop
+import struct
+import math
 from typing import List, Dict
 
+
 def _rms_levels_wav(wav_path: str, frame_ms: int = 50) -> List[float]:
+    """
+    Compute RMS loudness values for each frame of a WAV file without audioop.
+    """
     with wave.open(wav_path, 'rb') as wf:
         n_channels = wf.getnchannels()
-        sampwidth  = wf.getsampwidth()
-        framerate  = wf.getframerate()
-        n_frames   = wf.getnframes()
+        sampwidth = wf.getsampwidth()
+        framerate = wf.getframerate()
+        n_frames = wf.getnframes()
 
-        # size in samples per frame, then bytes
         samples_per_chunk = int(framerate * (frame_ms / 1000.0))
-        bytes_per_sample  = sampwidth
-        chunk_size_bytes  = samples_per_chunk * n_channels * bytes_per_sample
+        fmt = {1: 'b', 2: 'h', 4: 'i'}[sampwidth]
+        max_val = float(1 << (8 * sampwidth - 1))
+        levels = []
 
-        frames = []
         while True:
             chunk = wf.readframes(samples_per_chunk)
             if not chunk:
                 break
-            # audioop.rms expects mono; average channels if needed
+
+            # Unpack the samples
+            try:
+                samples = struct.unpack(fmt * (len(chunk) // sampwidth), chunk)
+            except struct.error:
+                break
+
+            # For multi-channel audio, average the channels
             if n_channels > 1:
-                chunk = audioop.tomono(chunk, sampwidth, 0.5, 0.5)
-            rms = audioop.rms(chunk, sampwidth)
-            frames.append(float(rms))
-        return frames
+                samples = [sum(samples[i::n_channels]) / n_channels for i in range(n_channels)]
+
+            # Compute RMS manually
+            rms = math.sqrt(sum(s * s for s in samples) / len(samples))
+            levels.append(rms / max_val)
+
+        return levels
+
 
 def generate_lipsync(audio_path: str, out_dir: str = "voice") -> str:
     """
@@ -38,7 +53,8 @@ def generate_lipsync(audio_path: str, out_dir: str = "voice") -> str:
         return None
 
     os.makedirs(out_dir, exist_ok=True)
-    # Compute simple visemes based on loudness thresholds
+
+    # Compute loudness-based visemes
     levels = _rms_levels_wav(audio_path, frame_ms=50)
     if not levels:
         frames = [{"time": 0.0, "viseme": "rest"}]
@@ -60,4 +76,5 @@ def generate_lipsync(audio_path: str, out_dir: str = "voice") -> str:
     json_path = os.path.splitext(audio_path)[0] + ".json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(frames, f)
+
     return json_path
