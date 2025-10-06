@@ -21,7 +21,7 @@ VOICE_DIR.mkdir(exist_ok=True)
 OVERLAY_DIR.mkdir(exist_ok=True)
 
 app = Flask(__name__)
-CORS(app, resources={r"/**": {"origins": os.getenv("CORS_ORIGINS", "*").split(",")}})
+CORS(app, resources={r"/*": {"origins": os.getenv("CORS_ORIGINS", "*").split(",")}})
 
 print(">>> Luna AI server live with /ping, /session/*, /analyze, /risk, /macro, /qa, /voice/*")
 
