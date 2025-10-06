@@ -1,8 +1,9 @@
-# voice_adapter.py — Render-ready, WAV output (new ElevenLabs SDK style)
+# voice_adapter.py — Render-ready, ElevenLabs 2.x client version
 import os, time, re
 from typing import Optional
 from dotenv import load_dotenv
-from elevenlabs import generate, save   # ✅ this is correct, NO "ElevenLabs"
+from elevenlabs.client import ElevenLabs
+from elevenlabs import save
 from lipsync import generate_lipsync
 
 load_dotenv()
@@ -16,6 +17,7 @@ def _safe_slug(text: str, limit: int = 40) -> str:
     return base[:limit].strip("-").lower()
 
 def tts_generate(text: str, base_name: Optional[str] = None, out_dir: str = "voice") -> Optional[str]:
+    """Generate speech using ElevenLabs 2.x SDK"""
     os.makedirs(out_dir, exist_ok=True)
     if not ELEVENLABS_API_KEY:
         print("❌ Missing ELEVENLABS_API_KEY")
@@ -37,11 +39,6 @@ def tts_generate(text: str, base_name: Optional[str] = None, out_dir: str = "voi
         generate_lipsync(wav_path, out_dir=out_dir)
         print(f"✅ TTS generated: {wav_path}")
         return wav_path
-
-    except Exception as e:
-        print("❌ TTS error:", e)
-        return None
-
     except Exception as e:
         print("❌ TTS error:", e)
         return None
