@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Luna AI — Live Widget</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Luna AI — crypto analysis companion with live chart overlays, voice, and lipsync."
+  />
+
+  <style>
+    /* ============ Base Reset & Theme ============ */
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background: radial-gradient(1200px 800px at 70% 10%, #0a0f1b 0%, #05070c 60%, #04060a 100%);
+      color: #e9edf7; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    a { color: #9ad1ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ============ Stage (Main Screen) ============ */
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: clamp(16px, 4vw, 28px);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 14px;
+    }
+    .stage-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 10px 12px; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; background: rgba(255,255,255,0.03); backdrop-filter: blur(10px);
+    }
+    .stage-title {
+      font-weight: 700; letter-spacing: 0.3px; display: flex; align-items: center; gap: 12px;
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #37f59f; box-shadow: 0 0 10px #37f59f66, 0 0 20px #37f59f33;
+      display: inline-block;
+    }
+    .session-info {
+      font-size: 13px; opacity: 0.85; display: flex; gap: 14px; align-items: center;
+    }
+    .meter {
+      width: 200px; height: 8px; border-radius: 999px; background: #1a2130; overflow: hidden; border: 1px solid #2a3346;
+    }
+    .meter > div {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #34d399);
+      transition: width 300ms ease;
+    }
+    .latency {
+      font-size: 12px; opacity: 0.8;
+    }
+
+    /* ============ Chart & Analytics Area ============ */
+    .chart-wrap {
+      position: relative; border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      overflow: hidden; min-height: 56vh;
+      display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr;
+      place-items: center;
+    }
+    .chart-img {
+      max-width: 100%; max-height: 100%;
+      object-fit: contain; opacity: 0; transition: opacity 240ms ease;
+    }
+    .chart-img.visible { opacity: 1; }
+    .chart-empty {
+      opacity: 0.6; font-size: 14px; text-align: center; padding: 20px;
+    }
+
+    /* Quick Stats Overlay (top-left on chart) */
+    .quick-stats {
+      position: absolute; top: 14px; left: 14px; z-index: 5;
+      background: rgba(7,10,18,0.7); backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 10px 12px; min-width: 240px;
+    }
+    .quick-stats .row {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      font-size: 13px; padding: 4px 0;
+    }
+    .badge {
+      font-size: 11px; padding: 2px 8px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1); opacity: 0.85;
+    }
+    .risk-low { color: #34d399; border-color: #34d39966; }
+    .risk-med { color: #f59e0b; border-color: #f59e0b66; }
+    .risk-high { color: #f87171; border-color: #f8717166; }
+
+    /* ============ Luna Dock (bottom-right) ============ */
+    .luna-dock {
+      position: fixed; right: clamp(12px, 2vw, 22px); bottom: clamp(10px, 2.2vw, 28px);
+      display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: end; max-width: 760px; width: calc(100% - 24px);
+    }
+    @media (min-width: 900px) {
+      .luna-dock { width: 640px; }
+    }
+
+    /* Avatar bubble */
+    .avatar {
+      position: relative; width: 96px; height: 96px; flex: 0 0 96px;
+      border-radius: 50%; overflow: hidden; border: 1px solid rgba(255,255,255,0.12);
+      background: radial-gradient(60px 60px at 50% 30%, #192132 0%, #0c1220 100%);
+      box-shadow: 0 6px 30px rgba(0,0,0,0.45), inset 0 0 40px rgba(64,144,255,0.18);
+    }
+    .avatar .pulse {
+      position: absolute; inset: -6px;
+      border-radius: 50%; pointer-events: none;
+      box-shadow: 0 0 0 0 rgba(56,189,248,0.35);
+      animation: pulse 2s infinite;
+      opacity: 0; transition: opacity 180ms ease;
+    }
+    .avatar.speaking .pulse { opacity: 1; }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(56,189,248,0.35); }
+      70% { box-shadow: 0 0 0 18px rgba(56,189,248,0.0); }
+      100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.0); }
+    }
+    .avatar img.base {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: contrast(1.08) saturate(1.04);
+    }
+    /* Mouth frames stacked, we toggle visibility via classes */
+    .mouth { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); width: 44px; height: 28px; opacity: 0.95; display: none; }
+    .mouth.show { display: block; }
+
+    /* Chat card */
+    .chat-card {
+      border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04); backdrop-filter: blur(10px);
+      padding: 10px; display: grid; gap: 8px;
+    }
+    .input-row {
+      display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+    }
+    .prompt {
+      width: 100%; padding: 12px 12px;
+      border-radius: 10px; border: 1px solid #2a3346; background: #0b1220; color: #eaf0ff;
+      outline: none; font-size: 14px;
+    }
+    .btn {
+      padding: 10px 14px; border-radius: 10px; border: 1px solid #2c3a55; cursor: pointer;
+      background: linear-gradient(180deg, #0f172a, #0b1325);
+      color: #e9f1ff; font-weight: 600; letter-spacing: 0.3px;
+      transition: transform 0.05s ease, opacity 0.15s ease, background 0.2s ease;
+    }
+    .btn:hover { opacity: 0.95; }
+    .btn:active { transform: translateY(1px); }
+    .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+    .row-mini {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      font-size: 12px; opacity: 0.88;
+    }
+    .row-mini .controls { display: flex; gap: 8px; }
+    .control-link { opacity: 0.85; cursor: pointer; }
+    .control-link:hover { opacity: 1; text-decoration: underline; }
+
+    /* Transcript */
+    .transcript {
+      max-height: 28vh; overflow: auto; border-top: 1px dashed rgba(255,255,255,0.12); padding-top: 8px;
+    }
+    .qa { margin: 10px 0; }
+    .q { color: #9ad1ff; font-weight: 600; margin-bottom: 4px; }
+    .a { color: #e9edf7; opacity: 0.95; white-space: pre-wrap; }
+
+    /* Toast (errors / notices) */
+    .toast {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: 120px; padding: 10px 14px; border-radius: 10px;
+      background: rgba(18,24,38,0.96); border: 1px solid rgba(255,255,255,0.1);
+      color: #fff; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity 200ms ease;
+    }
+    .toast.show { opacity: 1; }
+
+    /* Tiny helper classes */
+    .faded { opacity: 0.72; }
+    .hide { display: none !important; }
+  </style>
+</head>
+
+<body>
+  <div class="stage">
+    <!-- Header -->
+    <div class="stage-header">
+      <div class="stage-title">
+        <span class="status-dot" id="statusDot" title="Backend status"></span>
+        <span>Luna AI — Live Session</span>
+      </div>
+
+      <div class="session-info">
+        <div title="Questions remaining">
+          Q Left:
+          <span id="qLeft">21</span>
+        </div>
+        <div class="meter" title="Session progress">
+          <div id="meterFill" style="width: 0%"></div>
+        </div>
+        <div class="latency" title="Request → audio start latency">
+          Latency: <span id="latency">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart & Analytics Stage -->
+    <div class="chart-wrap">
+      <div class="quick-stats" id="quickStats" aria-live="polite">
+        <div class="row"><strong id="qsSymbol">—</strong><span id="qsChange" class="badge">—</span></div>
+        <div class="row"><span>Price</span><strong id="qsPrice">—</strong></div>
+        <div class="row"><span>24h Volume</span><span id="qsVol" class="faded">—</span></div>
+        <div class="row"><span>Mkt Cap</span><span id="qsMcap" class="faded">—</span></div>
+        <div class="row"><span>Risk</span><span id="qsRisk" class="badge risk-med">—</span></div>
+      </div>
+
+      <img id="chartImg" class="chart-img" alt="Luna chart & overlay" />
+      <div id="chartEmpty" class="chart-empty">
+        Ask Luna about a crypto (e.g., <strong>SOL</strong>, <strong>BONK</strong>, <strong>PEPE</strong>) and the live chart + overlay will appear here while she talks.
+      </div>
+    </div>
+  </div>
+
+  <!-- Luna Dock -->
+  <div class="luna-dock" role="complementary" aria-label="Luna chat dock">
+    <div class="avatar" id="avatar">
+      <div class="pulse"></div>
+      <!-- Base head/body -->
+      <img id="avatarBase" class="base" alt="Luna avatar" src="./assets/avatar_base.png" />
+      <!-- Mouth frames -->
+      <img id="mouthRest" class="mouth show" alt="mouth rest" src="./assets/mouth_rest.png" />
+      <img id="mouthMid"  class="mouth" alt="mouth mid"  src="./assets/mouth_mid.png" />
+      <img id="mouthOpen" class="mouth" alt="mouth open" src="./assets/mouth_open.png" />
+    </div>
+
+    <div class="chat-card">
+      <div class="input-row">
+        <input id="prompt" class="prompt" type="text" placeholder="Ask Luna about a crypto — e.g., “What’s the setup on SOL?”" autocomplete="off" />
+        <button id="sendBtn" class="btn">Ask</button>
+      </div>
+      <div class="row-mini">
+        <div>
+          <span class="faded">Session:</span> <span id="sessionIdLabel" class="faded">—</span>
+          &nbsp;&nbsp;•&nbsp;&nbsp;
+          <span class="faded">Audio:</span> <span id="audioState" class="faded">idle</span>
+        </div>
+        <div class="controls">
+          <span id="replay" class="control-link">Replay</span>
+          <span id="copyTranscript" class="control-link hide">Copy transcript</span>
+          <span id="resetSession" class="control-link">New session</span>
+        </div>
+      </div>
+      <div id="transcript" class="transcript" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="assertive"></div>
+
+  <!-- Config: update API_BASE if needed -->
+  <script>
+    window.LUNA_CONFIG = {
+      API_BASE: "https://luna-ai-j4dn.onrender.com",
+      /* If your assets are elsewhere, change these paths (PNG names come from make_luna_assets.py) */
+      ASSETS: {
+        AVATAR_BASE: "./assets/avatar_base.png",
+        MOUTH_REST: "./assets/mouth_rest.png",
+        MOUTH_MID:  "./assets/mouth_mid.png",
+        MOUTH_OPEN: "./assets/mouth_open.png"
+      }
+    };
+  </script>
+  <script src="./luna_widget.js"></script>
+</body>
+</html>

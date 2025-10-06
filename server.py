@@ -1,4 +1,4 @@
-# server.py — Luna AI backend (Render-ready, overlay-fixed)
+# server.py — Luna AI backend (Render-ready, overlay-safe)
 import os, time, json
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, abort
@@ -13,20 +13,30 @@ from risk_providers import fetch_deep_risk
 from macro_providers import build_macro_summary
 from qa_handler import handle_question
 
-# ---- directories ----
-ROOT        = Path(__file__).resolve().parent
-VOICE_DIR   = ROOT / "voice"
-OVERLAY_DIR = ROOT / "overlays"
-ASSETS_DIR  = ROOT   # avatar_base.png, mouth_*.png, avatar_overlay.html
+
+# ===========================================================
+# Directories — Render-safe (voice on /voice, overlays in /tmp)
+# ===========================================================
+ROOT = Path(__file__).resolve().parent
+VOICE_DIR = ROOT / "voice"
+OVERLAY_DIR = Path("/tmp/overlays")     # ✅ Render write-safe location
+ASSETS_DIR = ROOT                       # avatar_base.png, etc.
 
 VOICE_DIR.mkdir(exist_ok=True)
-OVERLAY_DIR.mkdir(exist_ok=True)
+OVERLAY_DIR.mkdir(parents=True, exist_ok=True)
 
-# ---- Flask setup ----
+print(">>> Luna AI backend starting …")
+print(">>> Voice directory:", VOICE_DIR)
+print(">>> Overlay directory:", OVERLAY_DIR)
+
+# ===========================================================
+# Flask setup
+# ===========================================================
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": os.getenv("CORS_ORIGINS", "*").split(",")}})
 
-print(">>> Luna AI server live with /ping, /session/*, /analyze, /risk, /macro, /qa, /voice/*, /overlays/*")
+print(">>> Routes loaded: /ping, /qa, /voice/*, /overlays/*")
+
 
 # -----------------------------------------------------------
 # Health
@@ -164,6 +174,7 @@ def qa():
             "summary": text_for_tts,
         }
         overlay_path = make_overlay_card(snap_like, out_dir=str(OVERLAY_DIR))
+        print("[QA] Overlay created:", overlay_path)
     except Exception as e:
         print("[Overlay Error]", e)
 
@@ -205,15 +216,17 @@ def voice_files(filename):
 
 @app.get("/overlays/latest.png")
 def latest_overlay():
-    files = sorted(OVERLAY_DIR.glob("*.png"), key=lambda p: p.stat().st_mtime, reverse=True)
+    files = sorted(Path("/tmp/overlays").glob("*.png"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not files:
         abort(404)
-    return send_from_directory(str(OVERLAY_DIR), files[0].name)
+    latest = files[0]
+    print("[GET] Serving overlay:", latest)
+    return send_from_directory("/tmp/overlays", latest.name)
 
 
 @app.get("/overlays/<path:filename>")
 def overlay_files(filename):
-    return send_from_directory(str(OVERLAY_DIR), filename)
+    return send_from_directory("/tmp/overlays", filename)
 
 
 @app.get("/avatar_overlay.html")

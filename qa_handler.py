@@ -1,13 +1,14 @@
-# qa_handler.py — handles both structured and natural-language questions
+# qa_handler.py — natural language + compare
 import re
+from utils import chain_slug            # NEW import
 from snapshot import build_snapshot
 
-# -------------------------------------------------------------
-# Compare two tokens (your original logic, unchanged)
-# -------------------------------------------------------------
+# -----------------------------
+# Compare two tokens
+# -----------------------------
 def compare_tokens(chain1, contract1, chain2, contract2):
-    snap1 = build_snapshot(chain1, contract1)
-    snap2 = build_snapshot(chain2, contract2)
+    snap1 = build_snapshot(chain_slug(chain1), contract1)
+    snap2 = build_snapshot(chain_slug(chain2), contract2)
 
     if not snap1.get("ok") or not snap2.get("ok"):
         return {"ok": False, "error": "One or both tokens not found."}
@@ -24,67 +25,51 @@ def compare_tokens(chain1, contract1, chain2, contract2):
         f"Price {snap2['market']['price_usd']}, "
         f"Liquidity {snap2['market']['liquidity_usd']}\n"
     )
-
     return {"ok": True, "summary": summary, "snapshots": [snap1, snap2]}
 
 
-# -------------------------------------------------------------
-# Natural-language handler for “analyze …” style questions
-# -------------------------------------------------------------
+# -----------------------------
+# Analyze a single token
+# -----------------------------
 def analyze_single(chain, contract):
-    """Fetch a snapshot and return readable metrics."""
-    snap = build_snapshot(chain, contract)
+    """Aligns with snapshot.build_snapshot logic."""
+    slug = chain_slug(chain)  # normalize chain input
+    snap = build_snapshot(slug, contract)
     if not snap.get("ok"):
         return {"ok": False, "error": snap.get("error", "Snapshot failed.")}
 
-    token = snap.get("token", {}).get("symbol", "Unknown")
-    mkt = snap.get("market", {})
-    price = mkt.get("price_usd") or snap.get("price", "N/A")
-    volume = mkt.get("volume_24h_usd") or snap.get("volume_24h", "N/A")
-    fdv = mkt.get("fdv_usd", "N/A")
-    liquidity = mkt.get("liquidity_usd", "N/A")
-    change = mkt.get("change_24h", "N/A")
+    token = snap["token"].get("symbol") or "Unknown"
+    m = snap.get("market", {})
+    price = m.get("price_usd", "N/A")
+    change24 = (m.get("pct_change") or {}).get("h24", "N/A")
+    vol = m.get("volume_24h_usd", "N/A")
+    fdv = m.get("fdv_usd", "N/A")
+    liq = m.get("liquidity_usd", "N/A")
 
-    # Rough risk tag
-    risk = "Medium"
-    try:
-        chg_val = float(str(change).replace("%", "").strip())
-        if chg_val <= -10:
-            risk = "High"
-        elif abs(chg_val) < 5:
-            risk = "Low"
-    except Exception:
-        pass
-
-    summary = (
-        f"{token} on {chain.title()} is trading near ${price}. "
-        f"24 h change {change}, volume ${volume}, FDV ${fdv}, liquidity ${liquidity}. "
-        f"Risk level {risk}."
-    )
+    risk = snap.get("risk", {}).get("mood", "N/A")
+    summary = snap.get("tldr")
 
     return {
         "ok": True,
         "symbol": token,
         "metrics": {
             "price": price,
-            "change_24h": change,
-            "volume_24h": volume,
+            "change_24h": change24,
+            "volume_24h": vol,
             "market_cap": fdv,
-            "risk": risk,
+            "risk": risk
         },
-        "summary": summary,
+        "summary": summary
     }
 
 
-# -------------------------------------------------------------
-# Main router
-# -------------------------------------------------------------
+# -----------------------------
+# Router
+# -----------------------------
 def handle_question(data):
     """
-    Accepts either structured JSON (with 'action') or plain-language questions.
+    Handles both structured {"action": ...} and natural text {"question": ...}
     """
-
-    # ---------- Case 1: explicit action ----------
     action = data.get("action")
     if action == "compare":
         tokens = data.get("tokens", [])
@@ -95,26 +80,25 @@ def handle_question(data):
             )
         return {"ok": False, "error": "Need two tokens to compare."}
 
-    # ---------- Case 2: natural-language question ----------
-    question = (data.get("question") or "").strip()
-    if not question:
+    # Natural-language
+    q = (data.get("question") or "").strip()
+    if not q:
         return {"ok": False, "error": "No question text provided."}
 
-    # Detect chain name
+    # detect chain
     chain = None
-    if "solana" in question.lower():
+    if "solana" in q.lower():
         chain = "solana"
-    elif "ethereum" in question.lower():
+    elif "ethereum" in q.lower():
         chain = "ethereum"
-    elif "bsc" in question.lower() or "binance" in question.lower():
+    elif "bsc" in q.lower() or "binance" in q.lower():
         chain = "bsc"
 
-    # Extract first probable contract address (32–44 chars = Solana; 0x…40 hex = EVM)
-    match = re.search(r"(0x[a-fA-F0-9]{40}|[A-Za-z0-9]{32,44})", question)
+    # extract contract address
+    match = re.search(r"(0x[a-fA-F0-9]{40}|[A-Za-z0-9]{32,44})", q)
     contract = match.group(0) if match else None
 
     if chain and contract:
         return analyze_single(chain, contract)
 
-    # Could not understand the request
-    return {"ok": False, "error": "Unrecognized question — specify chain and contract."}
+    return {"ok": False, "error": "Unrecognized question — include chain and contract."}
