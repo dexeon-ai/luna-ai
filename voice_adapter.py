@@ -1,44 +1,36 @@
-# voice_adapter.py — Render-ready, ElevenLabs 2.x client version
-import os, time, re
-from typing import Optional
-from dotenv import load_dotenv
-from elevenlabs.client import ElevenLabs
-from elevenlabs import save
-from lipsync import generate_lipsync
+# voice_adapter.py — Offline TTS for Luna AI (no ElevenLabs, no API calls)
+import os
+import pyttsx3
+from pathlib import Path
 
-load_dotenv()
+def tts_generate(text, base_name="reply", out_dir="voice"):
+    """
+    Generates a WAV file using pyttsx3 (offline, free).
+    Returns the full file path if successful.
+    """
 
-ELEVENLABS_API_KEY  = os.getenv("ELEVENLABS_API_KEY", "").strip()
-VOICE_NAME          = os.getenv("ELEVENLABS_VOICE_NAME", "").strip()
-VOICE_ID            = os.getenv("ELEVENLABS_VOICE_ID", "").strip()
-
-def _safe_slug(text: str, limit: int = 40) -> str:
-    base = re.sub(r"[^a-zA-Z0-9_-]+", "-", text.strip()) or "luna"
-    return base[:limit].strip("-").lower()
-
-def tts_generate(text: str, base_name: Optional[str] = None, out_dir: str = "voice") -> Optional[str]:
-    """Generate speech using ElevenLabs 2.x SDK"""
     os.makedirs(out_dir, exist_ok=True)
-    if not ELEVENLABS_API_KEY:
-        print("❌ Missing ELEVENLABS_API_KEY")
-        return None
-
-    base = base_name or f"luna_{int(time.time())}"
-    base = _safe_slug(base)
-    wav_path = os.path.join(out_dir, f"{base}.wav")
+    path = Path(out_dir) / f"{base_name}.wav"
 
     try:
-        client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
-        audio = client.text_to_speech.convert(
-            voice_id=VOICE_ID or VOICE_NAME,
-            model_id="eleven_multilingual_v2",
-            text=text,
-            output_format="wav_44100_16",
-        )
-        save(audio, wav_path)
-        generate_lipsync(wav_path, out_dir=out_dir)
-        print(f"✅ TTS generated: {wav_path}")
-        return wav_path
+        engine = pyttsx3.init()
+        engine.setProperty("rate", 180)     # speaking speed
+        engine.setProperty("volume", 0.9)   # volume 0.0–1.0
+
+        # Try to select a female voice if available
+        voices = engine.getProperty("voices")
+        for v in voices:
+            if "female" in v.name.lower():
+                engine.setProperty("voice", v.id)
+                break
+
+        # Save speech directly to file (no playback needed)
+        engine.save_to_file(text, str(path))
+        engine.runAndWait()
+
+        print(f"[TTS] Saved offline voice to {path}")
+        return str(path)
+
     except Exception as e:
-        print("❌ TTS error:", e)
+        print("[TTS Error]", e)
         return None

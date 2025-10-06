@@ -3,5 +3,10 @@ flask-cors==4.0.1
 requests==2.32.3
 python-dotenv==1.0.1
 Pillow==10.4.0
-elevenlabs==2.8.0
 gunicorn==21.2.0
+
+# --- Offline voice engine ---
+pyttsx3==2.99
+pywin32==311            # needed for pyttsx3 on Windows
+comtypes==1.4.12
+pypiwin32==223
