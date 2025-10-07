@@ -5,22 +5,90 @@
 #               long-term support zones (density-based)
 
 import os, time, json, math, hashlib
-from pathlib import Path
-
 import requests
 import numpy as np
-
 import matplotlib
 matplotlib.use("Agg")  # headless
 import matplotlib.pyplot as plt
+from pathlib import Path
 
-CG_API = "https://api.coingecko.com/api/v3/coins"
+# Cache and retry configuration
 CACHE_DIR = Path("/tmp/luna_cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
+CACHE_TTL = 15 * 60        # 15-minute cache
+MAX_RETRIES = 3
+RETRY_WAIT = 3
+SHORT_TTL = 4 * 60         # 4 minutes for 7d prices
+LONG_TTL = 6 * 60 * 60    # 6 hours for lifetime prices
+INFO_TTL = 15 * 60        # 15 minutes for coin market_data
 
-SHORT_TTL = 4 * 60          # 4 minutes for 7d prices
-LONG_TTL  = 6 * 60 * 60     # 6 hours for lifetime prices
-INFO_TTL  = 15 * 60         # 15 minutes for coin market_data
+CG_API = "https://api.coingecko.com/api/v3/coins"
+
+# ------------------------------------------------------------
+# Data fetch + caching
+# ------------------------------------------------------------
+def _fetch_json(url: str):
+    """Fetch JSON with retry + caching (handles 429s)"""
+    key = hashlib.sha1(url.encode()).hexdigest()
+    fp = CACHE_DIR / f"{key}.json"
+
+    # valid cache?
+    if fp.exists() and (time.time() - fp.stat().st_mtime) < CACHE_TTL:
+        with open(fp) as f:
+            return json.load(f)
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            r = requests.get(url, timeout=12)
+            if r.status_code == 429:
+                print(f"[Retry {attempt}] 429 Too Many Requests – sleeping {RETRY_WAIT*attempt}s")
+                time.sleep(RETRY_WAIT * attempt)
+                continue
+            r.raise_for_status()
+            data = r.json()
+            with open(fp, "w") as f:
+                json.dump(data, f)
+            return data
+        except Exception as e:
+            print(f"[Retry {attempt}] {e}")
+            time.sleep(RETRY_WAIT)
+    # fallback to stale cache if exists
+    if fp.exists():
+        print("[Fetch] Using stale cache for", url)
+        with open(fp) as f:
+            return json.load(f)
+    return {}
+
+def _resolve_cg_id(symbol: str) -> str:
+    s = (symbol or "").upper()
+    known = {
+        "BTC": "bitcoin",
+        "ETH": "ethereum",
+        "SOL": "solana",
+        "BNB": "binancecoin",
+        "ADA": "cardano",
+        "XRP": "ripple",
+        "DOGE": "dogecoin",
+        "AVAX": "avalanche-2",
+        "MATIC": "matic-network",
+    }
+    return known.get(s, s.lower())
+
+def _fetch_prices(cg_id: str, days="max", ttl=LONG_TTL):
+    url = f"{CG_API}/{cg_id}/market_chart?vs_currency=usd&days={days}"
+    data = _fetch_json(url)
+
+    prices = data.get("prices", [])
+    if not prices:
+        return [], []
+    ts = [p[0] / 1000.0 for p in prices]
+    px = [float(p[1]) for p in prices]
+    return ts, px
+
+def _fetch_info(cg_id: str, ttl=INFO_TTL):
+    url = f"{CG_API}/{cg_id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false"
+    data = _fetch_json(url)
+    return data
 
 # ------------------------------------------------------------
 # Public entry point
@@ -36,7 +104,8 @@ def build_tech_panel(
     Returns: dict with:
       - chart_path (str)
       - metrics (dict): price, pct_24h, pct_7d, mcap, vol_24h, from_ath_pct,
-                        nearest_support, nearest_resistance
+                        nearest_support, nearest_resistance, ath_price,
+                        circ_supply, total_supply, btc_dominance, pct_30d
       - pivots (dict): A,B used for fib
     """
 
@@ -44,26 +113,30 @@ def build_tech_panel(
 
     # Fetch & cache data
     short_ts, short_px = _fetch_prices(coin_id, days=short_days, ttl=SHORT_TTL)    # 7d
-    long_ts,  long_px  = _fetch_prices(coin_id, days="max", ttl=LONG_TTL)          # lifetime
-    info                = _fetch_info(coin_id, ttl=INFO_TTL)                       # market_data
+    long_ts, long_px = _fetch_prices(coin_id, days="max", ttl=LONG_TTL)            # lifetime
+    info = _fetch_info(coin_id, ttl=INFO_TTL)                                      # market_data
 
     if len(short_px) < 10 or len(long_px) < 50:
         raise RuntimeError("Insufficient data for chart rendering")
 
     # Metrics
     price_now = float(info.get("market_data", {}).get("current_price", {}).get("usd", short_px[-1]))
-    pct_24h   = float(info.get("market_data", {}).get("price_change_percentage_24h", _percent_change(short_px, hours=24)))
-    mcap      = float(info.get("market_data", {}).get("market_cap", {}).get("usd", 0.0))
-    vol_24h   = float(info.get("market_data", {}).get("total_volume", {}).get("usd", 0.0))
-    ath_usd   = float(info.get("market_data", {}).get("ath", {}).get("usd", max(long_px)))
+    pct_24h = float(info.get("market_data", {}).get("price_change_percentage_24h", _percent_change(short_px, hours=24)))
+    mcap = float(info.get("market_data", {}).get("market_cap", {}).get("usd", 0.0))
+    vol_24h = float(info.get("market_data", {}).get("total_volume", {}).get("usd", 0.0))
+    ath_usd = float(info.get("market_data", {}).get("ath", {}).get("usd", max(long_px)))
+    circ_supply = float(info.get("market_data", {}).get("circulating_supply", 0.0))
+    total_supply = float(info.get("market_data", {}).get("total_supply", 0.0))
+    ath_price = ath_usd
+    btc_dom = float(info.get("market_data", {}).get("market_cap_percentage", {}).get("btc", 0.0))
+    pct_30d = float(info.get("market_data", {}).get("price_change_percentage_30d", 0.0))
     from_ath_pct = ((price_now - ath_usd) / ath_usd) * 100.0 if ath_usd else 0.0
-
     pct_7d = _percent_change(short_px, hours=24*7)
 
     # Indicators (short-term)
     trendline = _ols_trendline(short_px)          # y_hat across [0..N-1]
-    A, B      = _recent_pivots(short_px)          # swing low/high (A,B) of freshest move
-    fib_exts  = _fib_extensions(A, B)             # list of (level_name, price)
+    A, B = _recent_pivots(short_px)               # swing low/high (A,B) of freshest move
+    fib_exts = _fib_extensions(A, B)              # list of (level_name, price)
 
     # Support zones (long-term)
     supports, resistances = _support_resistance_zones(long_px, bins=40, top_k=4)
@@ -88,79 +161,14 @@ def build_tech_panel(
             "from_ath_pct": from_ath_pct,
             "nearest_support": nearest_sup,
             "nearest_resistance": nearest_res,
+            "ath_price": ath_price,
+            "circ_supply": circ_supply,
+            "total_supply": total_supply,
+            "btc_dominance": btc_dom,
+            "pct_30d": pct_30d,
         },
         "pivots": {"A": A, "B": B}
     }
-
-# ------------------------------------------------------------
-# Data fetch + caching
-# ------------------------------------------------------------
-def _resolve_cg_id(symbol: str) -> str:
-    s = (symbol or "").upper()
-    known = {
-        "BTC": "bitcoin",
-        "ETH": "ethereum",
-        "SOL": "solana",
-        "BNB": "binancecoin",
-        "ADA": "cardano",
-        "XRP": "ripple",
-        "DOGE": "dogecoin",
-        "AVAX": "avalanche-2",
-        "MATIC": "matic-network",
-    }
-    return known.get(s, s.lower())
-
-def _cache_key(url: str):
-    return hashlib.sha1(url.encode("utf-8")).hexdigest() + ".json"
-
-def _cache_load(url: str, ttl: int):
-    fp = CACHE_DIR / _cache_key(url)
-    if not fp.exists(): return None
-    try:
-        age = time.time() - fp.stat().st_mtime
-        if age > ttl: return None
-        with open(fp, "r") as f:
-            return json.load(f)
-    except Exception:
-        return None
-
-def _cache_save(url: str, data: dict):
-    fp = CACHE_DIR / _cache_key(url)
-    try:
-        with open(fp, "w") as f:
-            json.dump(data, f)
-    except Exception:
-        pass
-
-def _fetch_prices(cg_id: str, days="max", ttl=LONG_TTL):
-    url = f"{CG_API}/{cg_id}/market_chart?vs_currency=usd&days={days}"
-    cached = _cache_load(url, ttl)
-    if cached is None:
-        r = requests.get(url, timeout=12)
-        r.raise_for_status()
-        data = r.json()
-        _cache_save(url, data)
-    else:
-        data = cached
-
-    prices = data.get("prices", [])
-    if not prices:
-        return [], []
-    ts = [p[0] / 1000.0 for p in prices]
-    px = [float(p[1]) for p in prices]
-    return ts, px
-
-def _fetch_info(cg_id: str, ttl=INFO_TTL):
-    url = f"{CG_API}/{cg_id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false"
-    cached = _cache_load(url, ttl)
-    if cached is None:
-        r = requests.get(url, timeout=12)
-        r.raise_for_status()
-        data = r.json()
-        _cache_save(url, data)
-    else:
-        data = cached
-    return data
 
 # ------------------------------------------------------------
 # Indicators
@@ -272,9 +280,9 @@ def _render_dual(short_px, long_px, trendline, fib_exts, supports, resistances, 
     # Color theme
     col_price_s = "#60d4ff"  # short
     col_price_l = "#b084ff"  # long
-    col_trend   = "#9cff9c"
-    col_fib     = "#ffd166"  # amber
-    col_zone    = "#8be9fd"  # cyan-ish (transparent bands)
+    col_trend = "#9cff9c"
+    col_fib = "#ffd166"  # amber
+    col_zone = "#8be9fd"  # cyan-ish (transparent bands)
 
     # ----- Short-term panel -----
     ax1 = plt.subplot(2, 1, 1, facecolor="#0f1433")
