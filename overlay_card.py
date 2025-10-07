@@ -1,153 +1,144 @@
-# overlay_card.py — Luna Broadcast Overlay vFinal (MOMO on Solana)
-import os, io, math, time, requests
+# overlay_card.py — Luna Broadcast Overlay v5 (Tech Panel + Metrics)
+# Uses plot_engine.build_tech_panel to render:
+#  - Short-term trendline + trend-based fib extension
+#  - Long-term support density zones
+#  - Key metrics: price, 24h%, 7d%, mcap, vol, from ATH, nearest S/R
+#
+# Output: /tmp/overlays/<SYMBOL>_<ts>.png
+
+import os, time
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
-DEX_API = "https://api.dexscreener.com/latest/dex/pairs"
+from plot_engine import build_tech_panel
 
-def make_overlay_card(snapshot: dict, out_dir="/tmp/overlays"):
+DEFAULT_OUTDIR = "/tmp/overlays"
+Path(DEFAULT_OUTDIR).mkdir(parents=True, exist_ok=True)
+
+# --------------------------------------------
+def make_overlay_card(snapshot: dict, out_dir: str = DEFAULT_OUTDIR) -> str:
     os.makedirs(out_dir, exist_ok=True)
 
-    token = (snapshot.get("token") or {}).get("symbol", "—")
-    chain = snapshot.get("chain", "solana").capitalize()
-    market = snapshot.get("market") or {}
-    summary = snapshot.get("summary") or snapshot.get("tldr") or "No summary."
+    token = (snapshot.get("token") or {}).get("symbol", "BTC").upper()
+    chain = (snapshot.get("chain") or "bitcoin").title()
 
-    price = _fmt(market.get("price") or market.get("price_usd"))
-    change = str(market.get("change_24h") or (market.get("pct_change") or {}).get("h24") or "0")
-    volume = _fmt(market.get("volume_24h") or market.get("volume_24h_usd"))
-    fdv = _fmt(market.get("market_cap") or market.get("fdv_usd"))
-    liq = _fmt(market.get("liquidity_usd") or "--")
-    mood = str((snapshot.get("risk") or {}).get("mood", "—")).title()
-    risk = (snapshot.get("risk") or {}).get("safety_gauge", 5)
+    # Generate tech chart (and collect metrics)
+    tech = build_tech_panel(symbol=token, cg_id=_cg_id_for(token), short_days=7,
+                            out_path="/tmp/tech_panel.png", theme="purple")
 
-    # --- canvas ---
+    chart_path = tech["chart_path"]
+    M = tech["metrics"]
+
+    # --- Canvas ---
     W, H = 1280, 720
-    img = Image.new("RGB", (W, H), (12, 10, 25))
+    img = Image.new("RGB", (W, H), (10, 12, 35))
     draw = ImageDraw.Draw(img)
-    _gradient(draw, W, H, (40, 10, 80), (10, 30, 90))
+    _gradient(draw, W, H, (38, 18, 80), (10, 34, 100))
 
-    # --- title bar ---
-    header_h = 90
-    draw.rectangle([0, 0, W, header_h], fill=(25, 15, 55))
-    draw.text((40, 20), f"{token} ({chain})", fill=(255, 255, 255), font=_font(52))
+    # --- Header ---
+    header_h = 86
+    draw.rectangle([0, 0, W, header_h], fill=(28, 22, 60))
+    draw.text((40, 18), f"{token}  —  Technical Overview", fill=(255, 255, 255), font=_font(50))
+    draw.text((40, 58), f"Network: {chain}", fill=(190, 200, 230), font=_font(22))
 
-    # --- sparkline ---
-    _sparkline(draw, chain.lower(), snapshot.get("contract"), W-420, 60, 340, 120)
-
-    # --- metric grid ---
-    label_font = _font(28)
-    value_font = _font(30)
-    start_x, start_y = 60, 140
-    spacing = 50
-    def metric(lbl, val, color=(220,230,255)):
-        nonlocal start_y
-        draw.text((start_x, start_y), f"{lbl}:", font=label_font, fill=(180,190,210))
-        draw.text((start_x+240, start_y), str(val), font=value_font, fill=color)
-        start_y += spacing
-
-    metric("Price", f"${price}")
-    metric("24h Change", f"{change}%", _chg_col(change))
-    metric("24h Volume", f"${volume}")
-    metric("Liquidity", f"${liq}")
-    metric("FDV", f"${fdv}")
-    metric("Safety", f"{risk}/10")
-    metric("Mood", mood, _mood_col(mood))
-
-    # --- gauge + emoji ---
-    cx, cy, r = 1060, 230, 90
-    _gauge(draw, cx, cy, r, risk)
-    draw.text((cx-25, cy-35), _emoji(mood), font=_font(72), fill=(255,255,255))
-
-    # --- summary ---
-    box_y = 420
-    draw.rectangle([40, box_y-20, W-40, H-40], fill=(15,20,45), outline=(80,90,150), width=2)
-    draw.text((60, box_y), "Luna’s Analysis:", font=_font(28), fill=(255,255,255))
-    y = box_y+40
-    for line in _wrap(summary, 95)[:9]:
-        draw.text((80, y), line, font=_font(24), fill=(215,220,245))
-        y += 28
-
-    fn = f"{token}_{int(time.time())}.png"
-    path = os.path.join(out_dir, fn)
-    img.save(path)
-    print(f"[Overlay Saved] {path}")
-    return path
-
-
-# ---------- helpers ----------
-def _sparkline(draw, chain, contract, x, y, w, h):
-    if not contract: return
+    # --- Paste chart panel (right) ---
     try:
-        url = f"{DEX_API}/{chain}/{contract}"
-        r = requests.get(url, timeout=6)
-        data = r.json()
-        pair = (data.get("pairs") or [None])[0]
-        if not pair: return
-        pts = [float(p) for p in (pair.get("sparkline") or [])[-50:]]
-        if not pts: return
-        mx, mn = max(pts), min(pts)
-        sx, sy = w/len(pts), h/(mx-mn+1e-6)
-        px = [x+i*sx for i in range(len(pts))]
-        py = [y+h-(n-mn)*sy for n in pts]
-        draw.line(list(zip(px,py)), fill=(140,200,255), width=3)
+        chart = Image.open(chart_path).convert("RGBA")
+        # Fit chart to a nice panel area
+        chart_w, chart_h = 600, 420
+        chart = chart.resize((chart_w, chart_h))
+        panel_x, panel_y = W - chart_w - 60, 140
+        # Panel frame
+        draw.rounded_rectangle([panel_x-16, panel_y-16, panel_x+chart_w+16, panel_y+chart_h+16],
+                               radius=12, fill=(18, 22, 45), outline=(80,90,150), width=2)
+        img.paste(chart, (panel_x, panel_y), chart)
     except Exception as e:
-        print("[Sparkline]", e)
+        print("[Overlay] Could not paste chart:", e)
+
+    # --- Metrics column (left) ---
+    y = 150
+    metrics = [
+        ("Price", _usd(M["price"]), (230, 235, 255)),
+        ("24h Change", f"{_pct(M['pct_24h'])}", _chg_col(M["pct_24h"])),
+        ("7d Change", f"{_pct(M['pct_7d'])}", _chg_col(M["pct_7d"])),
+        ("Market Cap", _usd(M["market_cap"]), (220, 230, 255)),
+        ("24h Volume", _usd(M["vol_24h"]), (220, 230, 255)),
+        ("From ATH", f"{_pct(M['from_ath_pct'])}", _chg_col(-abs(M["from_ath_pct"]))),
+        ("Nearest Support", _usd(M["nearest_support"]) if M["nearest_support"] else "—", (190, 210, 255)),
+        ("Nearest Resistance", _usd(M["nearest_resistance"]) if M["nearest_resistance"] else "—", (255, 210, 160)),
+    ]
+    for label, val, col in metrics:
+        draw.text((60, y), f"{label}:", font=_font(28), fill=(180,190,210))
+        draw.text((300, y), val, font=_font(30), fill=col)
+        y += 44
+
+    # --- Analysis box (bottom) ---
+    summary = snapshot.get("summary") or snapshot.get("tldr") or "Automated technical overview generated by Luna."
+    box_y = 520
+    draw.rounded_rectangle([40, box_y-18, W-40, H-40], radius=10, fill=(15, 20, 45), outline=(80, 90, 150), width=2)
+    draw.text((60, box_y-6), "Luna’s Analysis", font=_font(26), fill=(255,255,255))
+    for i, line in enumerate(_wrap(summary, 98)[:5]):
+        draw.text((60, box_y + 30 + i*26), line, font=_font(22), fill=(210,215,240))
+
+    # --- Save ---
+    filename = f"{token}_{int(time.time())}.png"
+    out_path = str(Path(out_dir) / filename)
+    img.save(out_path, quality=92)
+    print(f"[Overlay Saved] {out_path}")
+    return out_path
+
+# --------------------------------------------
+# Helpers
+# --------------------------------------------
+def _cg_id_for(symbol: str) -> str:
+    s = (symbol or "").upper()
+    return {
+        "BTC": "bitcoin",
+        "ETH": "ethereum",
+        "SOL": "solana",
+    }.get(s, s.lower())
 
 def _gradient(draw, W,H,c1,c2):
     for i in range(H):
-        r = int(c1[0]+(c2[0]-c1[0])*i/H)
-        g = int(c1[1]+(c2[1]-c1[1])*i/H)
-        b = int(c1[2]+(c2[2]-c1[2])*i/H)
+        r=int(c1[0]+(c2[0]-c1[0])*i/H)
+        g=int(c1[1]+(c2[1]-c1[1])*i/H)
+        b=int(c1[2]+(c2[2]-c1[2])*i/H)
         draw.line([(0,i),(W,i)], fill=(r,g,b))
 
-def _gauge(draw,cx,cy,r,val):
-    try: val=float(val)
-    except: val=5
-    for i in range(0,180,3):
-        c=(60,60,70)
-        if i/18<val: c=(int(25*i/3),255-int(20*i/3),100)
-        a=math.radians(180+i)
-        x1=cx+int(r*math.cos(a)); y1=cy+int(r*math.sin(a))
-        draw.line([(cx,cy),(x1,y1)], fill=c,width=4)
-
-def _chg_col(c):
-    try:
-        v=float(str(c).replace("%",""))
-        return (120,255,120) if v>=0 else (255,100,100)
-    except: return (230,230,230)
-
-def _mood_col(m):
-    s=str(m).lower()
-    if "calm" in s: return (100,255,120)
-    if "rolling" in s: return (255,210,100)
-    if "storm" in s: return (255,120,120)
-    return (220,220,255)
-
-def _emoji(m):
-    s=str(m).lower()
-    if "calm" in s: return "😌"
-    if "rolling" in s: return "🌊"
-    if "storm" in s: return "🌪️"
-    return "✨"
-
-def _wrap(t,w=85):
-    wd,ln,cur=t.split(),[],[]
-    for x in wd:
-        cur.append(x)
-        if len(" ".join(cur))>=w: ln.append(" ".join(cur));cur=[]
-    if cur: ln.append(" ".join(cur))
-    return ln
-
-def _fmt(x):
+def _usd(x):
     try:
         f=float(x)
-        if f>=1_000_000_000: return f"{f/1_000_000_000:.2f}B"
-        if f>=1_000_000: return f"{f/1_000_000:.2f}M"
-        if f>=1000: return f"{f/1000:.2f}K"
-        return f"{f:.4f}"
+        if f >= 1_000_000_000: return f"${f/1_000_000_000:.2f}B"
+        if f >= 1_000_000: return f"${f/1_000_000:.2f}M"
+        if f >= 1_000: return f"${f/1_000:.2f}K"
+        if f >= 1: return f"${f:,.2f}"
+        return f"${f:.6f}"
     except: return str(x)
 
+def _pct(x):
+    try:
+        return f"{float(x):+.2f}%"
+    except:
+        return str(x)
+
+def _chg_col(v):
+    try:
+        return (120,255,120) if float(v) >= 0 else (255,120,120)
+    except:
+        return (230,230,230)
+
 def _font(s=24):
-    try: return ImageFont.truetype("arial.ttf",s)
-    except: return ImageFont.load_default()
+    try:
+        return ImageFont.truetype("arial.ttf", s)
+    except:
+        return ImageFont.load_default()
+
+def _wrap(text, width=90):
+    words = str(text).split()
+    lines, cur = [], []
+    for w in words:
+        cur.append(w)
+        if len(" ".join(cur)) >= width:
+            lines.append(" ".join(cur)); cur = []
+    if cur: lines.append(" ".join(cur))
+    return lines

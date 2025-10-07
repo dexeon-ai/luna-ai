@@ -5,5 +5,10 @@ python-dotenv==1.0.1
 Pillow==10.4.0
 gunicorn==21.2.0
 
-# --- Offline voice engine (cross-platform) ---
+# Chart + math
+numpy==1.26.4
+matplotlib==3.8.4
+
+# Optional local/offline voice (safe to keep; not used on Render)
 pyttsx3==2.99
+
