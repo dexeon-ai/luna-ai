@@ -1,11 +1,6 @@
-# overlay_card.py — Luna Broadcast Overlay v5.1 (Tech Panel + Metrics, safe defaults)
-# Works with plot_engine.build_tech_panel (CoinGecko only)
-# Handles:
-#   - Short-term trendline + trend-based fib extension
-#   - Long-term support zones
-#   - Full metrics + analysis summary
-#   - Graceful fallbacks when snapshot or token missing
-# Output → /tmp/overlays/<SYMBOL>_<ts>.png
+# overlay_card.py — Luna Broadcast Overlay v6 (Expanded Metrics + Wider Chart)
+# Compatible with plot_engine.py v2 (caching + extended metrics)
+# Renders expanded metrics and larger chart panel.
 
 import os, time
 from pathlib import Path
@@ -15,93 +10,77 @@ from plot_engine import build_tech_panel
 DEFAULT_OUTDIR = "/tmp/overlays"
 Path(DEFAULT_OUTDIR).mkdir(parents=True, exist_ok=True)
 
-# --------------------------------------------
 def make_overlay_card(snapshot: dict, out_dir: str = DEFAULT_OUTDIR) -> str:
     os.makedirs(out_dir, exist_ok=True)
-
-    # ---- guard: ensure snapshot is valid ----
     if not snapshot or not isinstance(snapshot, dict):
         snapshot = {}
 
-    # ---- safe extraction of symbol/chain ----
-    token = (snapshot.get("token") or {}).get("symbol", "BTC")
-    if token is None:
-        token = "BTC"
-    token = str(token).upper()
-
+    token = str((snapshot.get("token") or {}).get("symbol", "BTC")).upper()
     chain = (snapshot.get("chain") or "bitcoin").title()
 
-    # ---- build chart safely ----
     try:
-        tech = build_tech_panel(
-            symbol=token,
-            cg_id=_cg_id_for(token),
-            short_days=7,
-            out_path="/tmp/tech_panel.png",
-            theme="purple"
-        )
+        tech = build_tech_panel(symbol=token, cg_id=_cg_id_for(token), short_days=7,
+                                out_path="/tmp/tech_panel.png", theme="purple")
         chart_path = tech.get("chart_path")
         M = tech.get("metrics", {})
     except Exception as e:
         print(f"[Overlay Error] build_tech_panel failed: {e}")
-        tech, chart_path, M = {}, None, {}
+        chart_path, M = None, {}
 
     # --- Canvas ---
-    W, H = 1280, 720
+    W, H = 1400, 780
     img = Image.new("RGB", (W, H), (10, 12, 35))
     draw = ImageDraw.Draw(img)
-    _gradient(draw, W, H, (38, 18, 80), (10, 34, 100))
+    _gradient(draw, W, H, (40, 20, 80), (10, 40, 110))
 
     # --- Header ---
-    header_h = 86
+    header_h = 90
     draw.rectangle([0, 0, W, header_h], fill=(28, 22, 60))
-    draw.text((40, 18), f"{token}  —  Technical Overview", fill=(255, 255, 255), font=_font(50))
-    draw.text((40, 58), f"Network: {chain}", fill=(190, 200, 230), font=_font(22))
+    draw.text((50, 25), f"{token} — Technical Overview", fill=(255,255,255), font=_font(50))
+    draw.text((50, 60), f"Network: {chain}", fill=(190,200,230), font=_font(22))
 
-    # --- Paste chart panel (right) ---
+    # --- Chart panel ---
     if chart_path and os.path.exists(chart_path):
         try:
             chart = Image.open(chart_path).convert("RGBA")
-            chart_w, chart_h = 600, 420
-            chart = chart.resize((chart_w, chart_h))
-            panel_x, panel_y = W - chart_w - 60, 140
-            draw.rounded_rectangle(
-                [panel_x-16, panel_y-16, panel_x+chart_w+16, panel_y+chart_h+16],
-                radius=12, fill=(18, 22, 45), outline=(80,90,150), width=2
-            )
+            chart = chart.resize((720, 460))
+            panel_x, panel_y = W - 760, 140
+            draw.rounded_rectangle([panel_x-16, panel_y-16, panel_x+720+16, panel_y+460+16],
+                                   radius=12, fill=(18,22,45), outline=(80,90,150), width=2)
             img.paste(chart, (panel_x, panel_y), chart)
         except Exception as e:
             print(f"[Overlay] Could not paste chart: {e}")
-    else:
-        print("[Overlay] No chart image found, skipping chart paste.")
 
-    # --- Metrics column (left) ---
+    # --- Metrics left column ---
     y = 150
     metrics = [
         ("Price", _usd(M.get("price", 0)), (230, 235, 255)),
-        ("24h Change", f"{_pct(M.get('pct_24h', 0))}", _chg_col(M.get("pct_24h", 0))),
-        ("7d Change", f"{_pct(M.get('pct_7d', 0))}", _chg_col(M.get("pct_7d", 0))),
-        ("Market Cap", _usd(M.get("market_cap", 0)), (220, 230, 255)),
-        ("24h Volume", _usd(M.get("vol_24h", 0)), (220, 230, 255)),
-        ("From ATH", f"{_pct(M.get('from_ath_pct', 0))}", _chg_col(-abs(M.get("from_ath_pct", 0)))),
-        ("Nearest Support", _usd(M.get("nearest_support")) if M.get("nearest_support") else "—", (190, 210, 255)),
-        ("Nearest Resistance", _usd(M.get("nearest_resistance")) if M.get("nearest_resistance") else "—", (255, 210, 160)),
+        ("24h Change", _pct(M.get("pct_24h", 0)), _chg_col(M.get("pct_24h", 0))),
+        ("7d Change", _pct(M.get("pct_7d", 0)), _chg_col(M.get("pct_7d", 0))),
+        ("30d Change", _pct(M.get("pct_30d", 0)), _chg_col(M.get("pct_30d", 0))),
+        ("Market Cap", _usd(M.get("market_cap", 0)), (220,230,255)),
+        ("BTC Dominance", _pct(M.get("btc_dominance", 0)), (255,210,160)),
+        ("24h Volume", _usd(M.get("vol_24h", 0)), (220,230,255)),
+        ("From ATH", _pct(M.get("from_ath_pct", 0)), _chg_col(-abs(M.get("from_ath_pct", 0)))),
+        ("ATH Price", _usd(M.get("ath_price", 0)), (220,230,255)),
+        ("Circ. Supply", _usd(M.get("circ_supply", 0)), (190,210,255)),
+        ("Total Supply", _usd(M.get("total_supply", 0)), (190,210,255)),
+        ("Nearest Support", _usd(M.get("nearest_support")) if M.get("nearest_support") else "—", (190,210,255)),
+        ("Nearest Resistance", _usd(M.get("nearest_resistance")) if M.get("nearest_resistance") else "—", (255,210,160)),
     ]
     for label, val, col in metrics:
         draw.text((60, y), f"{label}:", font=_font(28), fill=(180,190,210))
-        draw.text((300, y), val, font=_font(30), fill=col)
-        y += 44
+        draw.text((340, y), val, font=_font(30), fill=col)
+        y += 42
 
-    # --- Analysis box (bottom) ---
+    # --- Summary box ---
     summary = snapshot.get("summary") or snapshot.get("tldr") or "Automated technical overview generated by Luna."
-    box_y = 520
-    draw.rounded_rectangle(
-        [40, box_y-18, W-40, H-40],
-        radius=10, fill=(15, 20, 45), outline=(80, 90, 150), width=2
-    )
-    draw.text((60, box_y-6), "Luna’s Analysis", font=_font(26), fill=(255,255,255))
-    for i, line in enumerate(_wrap(summary, 98)[:5]):
-        draw.text((60, box_y + 30 + i*26), line, font=_font(22), fill=(210,215,240))
+    box_y = H - 210
+    draw.rounded_rectangle([50, box_y-18, W-50, H-50], radius=10,
+                           fill=(15,20,45), outline=(80,90,150), width=2)
+    draw.text((70, box_y-6), "Luna’s Analysis", font=_font(26), fill=(255,255,255))
+    for i, line in enumerate(_wrap(summary, 110)[:7]):
+        draw.text((70, box_y + 30 + i*26), line, font=_font(22), fill=(210,215,240))
 
     # --- Save ---
     filename = f"{token}_{int(time.time())}.png"
@@ -136,26 +115,19 @@ def _usd(x):
         if f >= 1000: return f"${f/1000:.2f}K"
         if f >= 1: return f"${f:,.2f}"
         return f"${f:.6f}"
-    except Exception:
-        return str(x)
+    except Exception: return str(x)
 
 def _pct(x):
-    try:
-        return f"{float(x):+.2f}%"
-    except Exception:
-        return str(x)
+    try: return f"{float(x):+.2f}%"
+    except Exception: return str(x)
 
 def _chg_col(v):
-    try:
-        return (120,255,120) if float(v) >= 0 else (255,120,120)
-    except Exception:
-        return (230,230,230)
+    try: return (120,255,120) if float(v) >= 0 else (255,120,120)
+    except Exception: return (230,230,230)
 
 def _font(s=24):
-    try:
-        return ImageFont.truetype("arial.ttf", s)
-    except Exception:
-        return ImageFont.load_default()
+    try: return ImageFont.truetype("arial.ttf", s)
+    except Exception: return ImageFont.load_default()
 
 def _wrap(text, width=90):
     words = str(text).split()
@@ -163,8 +135,6 @@ def _wrap(text, width=90):
     for w in words:
         cur.append(w)
         if len(" ".join(cur)) >= width:
-            lines.append(" ".join(cur))
-            cur = []
-    if cur:
-        lines.append(" ".join(cur))
+            lines.append(" ".join(cur)); cur=[]
+    if cur: lines.append(" ".join(cur))
     return lines
