@@ -1,3 +1,4 @@
+# updated manually on 2025-10-07
 # plot_engine.py — Luna Technical Chart Engine v1
 # - Data source: CoinGecko (no CAPTCHA)
 # - Caching: /tmp/luna_cache (short TTL for 7d data, longer for lifetime)
