@@ -1,15 +1,15 @@
-# overlay_card.py — Luna Broadcast Overlay v5 (Tech Panel + Metrics)
-# Uses plot_engine.build_tech_panel to render:
-#  - Short-term trendline + trend-based fib extension
-#  - Long-term support density zones
-#  - Key metrics: price, 24h%, 7d%, mcap, vol, from ATH, nearest S/R
-#
-# Output: /tmp/overlays/<SYMBOL>_<ts>.png
+# overlay_card.py — Luna Broadcast Overlay v5.1 (Tech Panel + Metrics, safe defaults)
+# Works with plot_engine.build_tech_panel (CoinGecko only)
+# Handles:
+#   - Short-term trendline + trend-based fib extension
+#   - Long-term support zones
+#   - Full metrics + analysis summary
+#   - Graceful fallbacks when snapshot or token missing
+# Output → /tmp/overlays/<SYMBOL>_<ts>.png
 
 import os, time
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-
 from plot_engine import build_tech_panel
 
 DEFAULT_OUTDIR = "/tmp/overlays"
@@ -19,15 +19,32 @@ Path(DEFAULT_OUTDIR).mkdir(parents=True, exist_ok=True)
 def make_overlay_card(snapshot: dict, out_dir: str = DEFAULT_OUTDIR) -> str:
     os.makedirs(out_dir, exist_ok=True)
 
-    token = (snapshot.get("token") or {}).get("symbol", "BTC").upper()
+    # ---- guard: ensure snapshot is valid ----
+    if not snapshot or not isinstance(snapshot, dict):
+        snapshot = {}
+
+    # ---- safe extraction of symbol/chain ----
+    token = (snapshot.get("token") or {}).get("symbol", "BTC")
+    if token is None:
+        token = "BTC"
+    token = str(token).upper()
+
     chain = (snapshot.get("chain") or "bitcoin").title()
 
-    # Generate tech chart (and collect metrics)
-    tech = build_tech_panel(symbol=token, cg_id=_cg_id_for(token), short_days=7,
-                            out_path="/tmp/tech_panel.png", theme="purple")
-
-    chart_path = tech["chart_path"]
-    M = tech["metrics"]
+    # ---- build chart safely ----
+    try:
+        tech = build_tech_panel(
+            symbol=token,
+            cg_id=_cg_id_for(token),
+            short_days=7,
+            out_path="/tmp/tech_panel.png",
+            theme="purple"
+        )
+        chart_path = tech.get("chart_path")
+        M = tech.get("metrics", {})
+    except Exception as e:
+        print(f"[Overlay Error] build_tech_panel failed: {e}")
+        tech, chart_path, M = {}, None, {}
 
     # --- Canvas ---
     W, H = 1280, 720
@@ -42,30 +59,33 @@ def make_overlay_card(snapshot: dict, out_dir: str = DEFAULT_OUTDIR) -> str:
     draw.text((40, 58), f"Network: {chain}", fill=(190, 200, 230), font=_font(22))
 
     # --- Paste chart panel (right) ---
-    try:
-        chart = Image.open(chart_path).convert("RGBA")
-        # Fit chart to a nice panel area
-        chart_w, chart_h = 600, 420
-        chart = chart.resize((chart_w, chart_h))
-        panel_x, panel_y = W - chart_w - 60, 140
-        # Panel frame
-        draw.rounded_rectangle([panel_x-16, panel_y-16, panel_x+chart_w+16, panel_y+chart_h+16],
-                               radius=12, fill=(18, 22, 45), outline=(80,90,150), width=2)
-        img.paste(chart, (panel_x, panel_y), chart)
-    except Exception as e:
-        print("[Overlay] Could not paste chart:", e)
+    if chart_path and os.path.exists(chart_path):
+        try:
+            chart = Image.open(chart_path).convert("RGBA")
+            chart_w, chart_h = 600, 420
+            chart = chart.resize((chart_w, chart_h))
+            panel_x, panel_y = W - chart_w - 60, 140
+            draw.rounded_rectangle(
+                [panel_x-16, panel_y-16, panel_x+chart_w+16, panel_y+chart_h+16],
+                radius=12, fill=(18, 22, 45), outline=(80,90,150), width=2
+            )
+            img.paste(chart, (panel_x, panel_y), chart)
+        except Exception as e:
+            print(f"[Overlay] Could not paste chart: {e}")
+    else:
+        print("[Overlay] No chart image found, skipping chart paste.")
 
     # --- Metrics column (left) ---
     y = 150
     metrics = [
-        ("Price", _usd(M["price"]), (230, 235, 255)),
-        ("24h Change", f"{_pct(M['pct_24h'])}", _chg_col(M["pct_24h"])),
-        ("7d Change", f"{_pct(M['pct_7d'])}", _chg_col(M["pct_7d"])),
-        ("Market Cap", _usd(M["market_cap"]), (220, 230, 255)),
-        ("24h Volume", _usd(M["vol_24h"]), (220, 230, 255)),
-        ("From ATH", f"{_pct(M['from_ath_pct'])}", _chg_col(-abs(M["from_ath_pct"]))),
-        ("Nearest Support", _usd(M["nearest_support"]) if M["nearest_support"] else "—", (190, 210, 255)),
-        ("Nearest Resistance", _usd(M["nearest_resistance"]) if M["nearest_resistance"] else "—", (255, 210, 160)),
+        ("Price", _usd(M.get("price", 0)), (230, 235, 255)),
+        ("24h Change", f"{_pct(M.get('pct_24h', 0))}", _chg_col(M.get("pct_24h", 0))),
+        ("7d Change", f"{_pct(M.get('pct_7d', 0))}", _chg_col(M.get("pct_7d", 0))),
+        ("Market Cap", _usd(M.get("market_cap", 0)), (220, 230, 255)),
+        ("24h Volume", _usd(M.get("vol_24h", 0)), (220, 230, 255)),
+        ("From ATH", f"{_pct(M.get('from_ath_pct', 0))}", _chg_col(-abs(M.get("from_ath_pct", 0)))),
+        ("Nearest Support", _usd(M.get("nearest_support")) if M.get("nearest_support") else "—", (190, 210, 255)),
+        ("Nearest Resistance", _usd(M.get("nearest_resistance")) if M.get("nearest_resistance") else "—", (255, 210, 160)),
     ]
     for label, val, col in metrics:
         draw.text((60, y), f"{label}:", font=_font(28), fill=(180,190,210))
@@ -75,7 +95,10 @@ def make_overlay_card(snapshot: dict, out_dir: str = DEFAULT_OUTDIR) -> str:
     # --- Analysis box (bottom) ---
     summary = snapshot.get("summary") or snapshot.get("tldr") or "Automated technical overview generated by Luna."
     box_y = 520
-    draw.rounded_rectangle([40, box_y-18, W-40, H-40], radius=10, fill=(15, 20, 45), outline=(80, 90, 150), width=2)
+    draw.rounded_rectangle(
+        [40, box_y-18, W-40, H-40],
+        radius=10, fill=(15, 20, 45), outline=(80, 90, 150), width=2
+    )
     draw.text((60, box_y-6), "Luna’s Analysis", font=_font(26), fill=(255,255,255))
     for i, line in enumerate(_wrap(summary, 98)[:5]):
         draw.text((60, box_y + 30 + i*26), line, font=_font(22), fill=(210,215,240))
@@ -91,7 +114,7 @@ def make_overlay_card(snapshot: dict, out_dir: str = DEFAULT_OUTDIR) -> str:
 # Helpers
 # --------------------------------------------
 def _cg_id_for(symbol: str) -> str:
-    s = (symbol or "").upper()
+    s = str(symbol).upper()
     return {
         "BTC": "bitcoin",
         "ETH": "ethereum",
@@ -110,27 +133,28 @@ def _usd(x):
         f=float(x)
         if f >= 1_000_000_000: return f"${f/1_000_000_000:.2f}B"
         if f >= 1_000_000: return f"${f/1_000_000:.2f}M"
-        if f >= 1_000: return f"${f/1_000:.2f}K"
+        if f >= 1000: return f"${f/1000:.2f}K"
         if f >= 1: return f"${f:,.2f}"
         return f"${f:.6f}"
-    except: return str(x)
+    except Exception:
+        return str(x)
 
 def _pct(x):
     try:
         return f"{float(x):+.2f}%"
-    except:
+    except Exception:
         return str(x)
 
 def _chg_col(v):
     try:
         return (120,255,120) if float(v) >= 0 else (255,120,120)
-    except:
+    except Exception:
         return (230,230,230)
 
 def _font(s=24):
     try:
         return ImageFont.truetype("arial.ttf", s)
-    except:
+    except Exception:
         return ImageFont.load_default()
 
 def _wrap(text, width=90):
@@ -139,6 +163,8 @@ def _wrap(text, width=90):
     for w in words:
         cur.append(w)
         if len(" ".join(cur)) >= width:
-            lines.append(" ".join(cur)); cur = []
-    if cur: lines.append(" ".join(cur))
+            lines.append(" ".join(cur))
+            cur = []
+    if cur:
+        lines.append(" ".join(cur))
     return lines
