@@ -1,13 +1,13 @@
-# plot_engine.py — Luna Technical Chart Engine v2
+# plot_engine.py — Luna Technical Chart Engine v3
 # - Primary data: CoinGecko (no captcha)
 # - Fallback (only if CG returns empty): CoinPaprika (daily)
-# - Caching/backoff to avoid 429s
+# - Per-endpoint caching/backoff to avoid 429s
 # - Indicators:
 #     • Short-term OLS trend line
 #     • Trend-based Fib extensions (A→B, last move)
 #     • Long-term density support zones
 #     • Projection: linear forecast + ±1σ band (next N samples)
-# - Render: dual panels (7d / lifetime), white ticks, darker theme
+# - Render: dual panels (7d / lifetime), white ticks, dark theme
 # Updated: 2025-10-08
 
 import time, json, hashlib
@@ -27,8 +27,9 @@ from matplotlib.ticker import FuncFormatter
 CACHE_DIR = Path("/tmp/luna_cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
+# Global defaults
 CACHE_TTL   = 15 * 60     # generic 15m
-SHORT_TTL   = 4 * 60      # 7d prices refresh
+SHORT_TTL   = 4 * 60      # ~7d prices refresh
 LONG_TTL    = 6 * 60 * 60 # lifetime refresh
 INFO_TTL    = 15 * 60     # market info refresh
 MAX_RETRIES = 3
@@ -39,14 +40,23 @@ CG_API = "https://api.coingecko.com/api/v3/coins"
 # -------------------------------
 # Utilities: cache + fetch
 # -------------------------------
-def _fetch_json(url: str):
+def _fetch_json(url: str, ttl: int = CACHE_TTL):
+    """
+    Fetch JSON with retry/backoff + per-URL file cache.
+    ttl controls how 'fresh' a cached file must be to be reused.
+    """
     key = hashlib.sha1(url.encode()).hexdigest()
     fp = CACHE_DIR / f"{key}.json"
 
-    # fresh cache?
-    if fp.exists() and (time.time() - fp.stat().st_mtime) < CACHE_TTL:
-        with open(fp) as f:
-            return json.load(f)
+    # Fresh cache?
+    if fp.exists():
+        age = time.time() - fp.stat().st_mtime
+        if age < ttl:
+            try:
+                with open(fp) as f:
+                    return json.load(f)
+            except Exception:
+                pass  # fall through to refetch
 
     last_err = None
     for attempt in range(1, MAX_RETRIES + 1):
@@ -59,23 +69,30 @@ def _fetch_json(url: str):
                 continue
             r.raise_for_status()
             data = r.json()
-            with open(fp, "w") as f:
-                json.dump(data, f)
+            try:
+                with open(fp, "w") as f:
+                    json.dump(data, f)
+            except Exception:
+                pass
             return data
         except Exception as e:
             last_err = e
             time.sleep(RETRY_WAIT)
 
-    # fallback to stale cache if we have it
+    # Fallback to stale cache if we have it
     if fp.exists():
-        print(f"[Fetch] Using stale cache for {url} after error: {last_err}")
-        with open(fp) as f:
-            return json.load(f)
+        try:
+            print(f"[Fetch] Using stale cache for {url} after error: {last_err}")
+            with open(fp) as f:
+                return json.load(f)
+        except Exception:
+            pass
 
     print(f"[Fetch] failed for {url}: {last_err}")
     return {}
 
 def _resolve_cg_id(symbol: str) -> str:
+    """Resolve a ticker symbol to a CoinGecko coin id."""
     s = (symbol or "").upper()
     mapping = {
         "BTC": "bitcoin",
@@ -90,9 +107,14 @@ def _resolve_cg_id(symbol: str) -> str:
     }
     return mapping.get(s, s.lower())
 
+# Public alias so other modules can import either name
+resolve_cg_id = _resolve_cg_id
+
 def _fetch_prices_cg(cg_id: str, days="max"):
+    # Per-endpoint TTL: 7d window refreshes more often than lifetime
+    ttl = SHORT_TTL if (days != "max") else LONG_TTL
     url = f"{CG_API}/{cg_id}/market_chart?vs_currency=usd&days={days}"
-    data = _fetch_json(url)
+    data = _fetch_json(url, ttl=ttl)
     prices = data.get("prices") or []
     ts = [p[0] / 1000.0 for p in prices]
     px = [float(p[1]) for p in prices]
@@ -111,9 +133,8 @@ def _fetch_prices_fallback_daily(cg_id: str):
         hist = r.json()
         if not isinstance(hist, list):
             return [], []
-        ts = []
-        px = []
-        # we approximate timestamps to daily spacing (seconds)
+        ts, px = [], []
+        # Approximate timestamps to daily spacing (seconds); avoids timezone noise
         t0 = int(time.time()) - 86400 * len(hist)
         for i, h in enumerate(hist):
             if "close" in h:
@@ -124,8 +145,8 @@ def _fetch_prices_fallback_daily(cg_id: str):
         print("[Fallback error CoinPaprika]", e)
         return [], []
 
-def _fetch_prices(cg_id: str, days="max", ttl=LONG_TTL):
-    # delegate to CG; fallback if no data at all
+def _fetch_prices(cg_id: str, days="max"):
+    # Try CoinGecko; fallback to daily history if empty
     ts, px = _fetch_prices_cg(cg_id, days=days)
     if not px:
         print("[Prices] Falling back to daily data")
@@ -138,7 +159,7 @@ def _fetch_info(cg_id: str):
         "?localization=false&tickers=false&market_data=true"
         "&community_data=false&developer_data=false&sparkline=false"
     )
-    return _fetch_json(url)
+    return _fetch_json(url, ttl=INFO_TTL)
 
 # -------------------------------
 # Public entry
@@ -167,8 +188,8 @@ def build_tech_panel(
     coin_id = cg_id or _resolve_cg_id(symbol)
 
     # data
-    _, short_px = _fetch_prices(coin_id, days=short_days, ttl=SHORT_TTL)
-    _, long_px  = _fetch_prices(coin_id, days="max",  ttl=LONG_TTL)
+    _, short_px = _fetch_prices(coin_id, days=short_days)
+    _, long_px  = _fetch_prices(coin_id, days="max")
     info        = _fetch_info(coin_id)
 
     if len(short_px) < 10 and long_px:
@@ -198,8 +219,8 @@ def build_tech_panel(
     supports, resistances = _support_resistance_zones(long_px, bins=40, top_k=4)
     nearest_sup, nearest_res = _nearest_levels(price_now, supports, resistances)
 
-    # projection over short window (30 samples by default)
-    proj = _forecast_linear(short_px, forecast_n=24)  # next 24 samples (≈hours for 7d hourly)
+    # projection over short window (next 24 samples)
+    proj = _forecast_linear(short_px, forecast_n=24)
 
     _render_dual(
         short_px=short_px,
@@ -351,11 +372,13 @@ def _fmt_usd(val, _pos=None):
 # Rendering
 # -------------------------------
 def _render_dual(short_px, long_px, trendline, fib_exts, supports, resistances, price_now, projection, out_path):
+    # Make text/ticks **white** for readability on the dark background
     plt.rcParams.update({
         "axes.edgecolor": "#3a3f66",
-        "axes.labelcolor": "#E8EDFF",
-        "xtick.color": "#E8EDFF",
-        "ytick.color": "#E8EDFF",
+        "axes.labelcolor": "#FFFFFF",
+        "xtick.color": "#FFFFFF",
+        "ytick.color": "#FFFFFF",
+        "text.color":  "#FFFFFF",
         "font.size": 9,
     })
 
@@ -399,7 +422,7 @@ def _render_dual(short_px, long_px, trendline, fib_exts, supports, resistances, 
     ax1.yaxis.set_major_formatter(FuncFormatter(_fmt_usd))
     ax1.set_xticks([])  # hide ticks; index scale not meaningful to users
     ax1.grid(alpha=0.10, color="#2a2f55")
-    ax1.legend(facecolor="#141a40", edgecolor="#343a66", labelcolor="#E8EDFF", loc="upper left", fontsize=8)
+    ax1.legend(facecolor="#141a40", edgecolor="#343a66", labelcolor="#FFFFFF", loc="upper left", fontsize=8)
 
     # ---- Long-term panel ----
     ax2 = plt.subplot(2, 1, 2, facecolor="#101538")
@@ -412,7 +435,7 @@ def _render_dual(short_px, long_px, trendline, fib_exts, supports, resistances, 
         for lvl in supports:
             ax2.axhspan(lvl - span, lvl + span, color=col_zone, alpha=0.08)
 
-    ax2.axhline(price_now, color="#ffffff", linewidth=1.0, alpha=0.25, linestyle="--")
+    ax2.axhline(price_now, color="#ffffff", linewidth=1.0, alpha=0.35, linestyle="--")
     ax2.yaxis.set_major_formatter(FuncFormatter(_fmt_usd))
     ax2.set_xticks([])
     ax2.grid(alpha=0.10, color="#2a2f55")
