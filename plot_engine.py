@@ -75,7 +75,7 @@ def _fetch_json(url: str):
     print(f"[Fetch] failed for {url}: {last_err}")
     return {}
 
-def resolve_cg_id(symbol: str) -> str:
+def _resolve_cg_id(symbol: str) -> str:
     s = (symbol or "").upper()
     mapping = {
         "BTC": "bitcoin",
