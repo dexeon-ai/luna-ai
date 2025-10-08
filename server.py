@@ -246,4 +246,7 @@ def base_assets(asset):
 # Run (local dev); Render uses gunicorn
 # -----------------------------------------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=False)
+    # Render dynamically sets PORT, so always use that value
+    port = int(os.environ.get("PORT", "10000"))
+    print(f"⚙️  Starting Luna server on port {port}...")
+    app.run(host="0.0.0.0", port=port, debug=False)
