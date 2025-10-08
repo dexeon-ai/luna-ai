@@ -15,7 +15,7 @@ Path(DEFAULT_OUTDIR).mkdir(parents=True, exist_ok=True)
 def make_overlay_card(snapshot: dict, out_dir: str = DEFAULT_OUTDIR) -> str:
     os.makedirs(out_dir, exist_ok=True)
 
-    token = (snapshot.get("token") or {}).get("symbol", "BTC").upper()
+    token = ((snapshot.get("token") or {}).get("symbol") or "BTC").upper()
     chain = (snapshot.get("chain") or "bitcoin").title()
 
     print(f"[Overlay] Rendering chart for {token} ({chain})")
