@@ -18,7 +18,7 @@ def build_snapshot(chain_input: str, contract: str):
 
     try:
         # Always use chart engine (no Dexscreener)
-        tech = build_tech_panel(symbol=symbol, out="/tmp/tech_panel.png")
+        tech = build_tech_panel(symbol=symbol, out_path="/tmp/tech_panel.png")
         metrics = tech.get("metrics", {})
 
         return {
