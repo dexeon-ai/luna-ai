@@ -1,10 +1,12 @@
-# overlay_card.py — Luna Broadcast Overlay v6 (Expanded Metrics + Wider Chart)
-# Compatible with plot_engine.py v2 (caching + extended metrics)
-# Renders expanded metrics and larger chart panel.
+# overlay_card.py — Luna Overlay Renderer v6 (fixed for build_tech_panel v2)
+# Generates dual-panel charts from CoinGecko/CoinPaprika data
+# Compatible with updated plot_engine.py (no cg_id argument)
+# Updated: 2025-10-08
 
 import os, time
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
+
 from plot_engine import build_tech_panel
 
 DEFAULT_OUTDIR = "/tmp/overlays"
@@ -12,122 +14,89 @@ Path(DEFAULT_OUTDIR).mkdir(parents=True, exist_ok=True)
 
 def make_overlay_card(snapshot: dict, out_dir: str = DEFAULT_OUTDIR) -> str:
     os.makedirs(out_dir, exist_ok=True)
-    if not snapshot or not isinstance(snapshot, dict):
-        snapshot = {}
 
-    token = str((snapshot.get("token") or {}).get("symbol", "BTC")).upper()
+    token = (snapshot.get("token") or {}).get("symbol", "BTC").upper()
     chain = (snapshot.get("chain") or "bitcoin").title()
 
-    try:
-        tech = build_tech_panel(symbol=token, cg_id=_cg_id_for(token), short_days=7,
-                                out_path="/tmp/tech_panel.png", theme="purple")
-        chart_path = tech.get("chart_path")
-        M = tech.get("metrics", {})
-    except Exception as e:
-        print(f"[Overlay Error] build_tech_panel failed: {e}")
-        chart_path, M = None, {}
+    print(f"[Overlay] Rendering chart for {token} ({chain})")
 
-    # --- Canvas ---
-    W, H = 1400, 780
+    try:
+        # ✅ Only symbol and out_path now — cg_id removed
+        tech = build_tech_panel(symbol=token, out=os.path.join(out_dir, "tech_panel.png"))
+        chart_path = tech["chart_path"]
+        M = tech["metrics"]
+    except Exception as e:
+        print("[Overlay Error] build_tech_panel failed:", e)
+        chart_path = None
+        M = {}
+
+    # --- Canvas setup ---
+    W, H = 1280, 720
     img = Image.new("RGB", (W, H), (10, 12, 35))
     draw = ImageDraw.Draw(img)
-    _gradient(draw, W, H, (40, 20, 80), (10, 40, 110))
+    _gradient(draw, W, H, (38, 18, 80), (10, 34, 100))
 
     # --- Header ---
     header_h = 90
     draw.rectangle([0, 0, W, header_h], fill=(28, 22, 60))
-    draw.text((50, 25), f"{token} — Technical Overview", fill=(255,255,255), font=_font(50))
-    draw.text((50, 60), f"Network: {chain}", fill=(190,200,230), font=_font(22))
+    draw.text((40, 20), f"{token} — Technical Overview", fill=(255, 255, 255), font=_font(48))
+    draw.text((40, 60), f"Network: {chain}", fill=(190, 200, 230), font=_font(24))
 
-    # --- Chart panel ---
+    # --- Paste chart ---
     if chart_path and os.path.exists(chart_path):
         try:
             chart = Image.open(chart_path).convert("RGBA")
-            chart = chart.resize((720, 460))
-            panel_x, panel_y = W - 760, 140
-            draw.rounded_rectangle([panel_x-16, panel_y-16, panel_x+720+16, panel_y+460+16],
-                                   radius=12, fill=(18,22,45), outline=(80,90,150), width=2)
+            chart = chart.resize((600, 400))
+            panel_x, panel_y = W - 660, 160
+            draw.rounded_rectangle([panel_x - 16, panel_y - 16, panel_x + 620, panel_y + 420],
+                                   radius=12, fill=(15, 18, 40), outline=(70, 80, 120), width=2)
             img.paste(chart, (panel_x, panel_y), chart)
         except Exception as e:
-            print(f"[Overlay] Could not paste chart: {e}")
+            print("[Overlay] Failed to paste chart:", e)
 
-    # --- Metrics left column ---
-    y = 150
+    # --- Metrics ---
+    y = 160
     metrics = [
-        ("Price", _usd(M.get("price", 0)), (230, 235, 255)),
-        ("24h Change", _pct(M.get("pct_24h", 0)), _chg_col(M.get("pct_24h", 0))),
-        ("7d Change", _pct(M.get("pct_7d", 0)), _chg_col(M.get("pct_7d", 0))),
-        ("30d Change", _pct(M.get("pct_30d", 0)), _chg_col(M.get("pct_30d", 0))),
-        ("Market Cap", _usd(M.get("market_cap", 0)), (220,230,255)),
-        ("BTC Dominance", _pct(M.get("btc_dominance", 0)), (255,210,160)),
-        ("24h Volume", _usd(M.get("vol_24h", 0)), (220,230,255)),
-        ("From ATH", _pct(M.get("from_ath_pct", 0)), _chg_col(-abs(M.get("from_ath_pct", 0)))),
-        ("ATH Price", _usd(M.get("ath_price", 0)), (220,230,255)),
-        ("Circ. Supply", _usd(M.get("circ_supply", 0)), (190,210,255)),
-        ("Total Supply", _usd(M.get("total_supply", 0)), (190,210,255)),
-        ("Nearest Support", _usd(M.get("nearest_support")) if M.get("nearest_support") else "—", (190,210,255)),
-        ("Nearest Resistance", _usd(M.get("nearest_resistance")) if M.get("nearest_resistance") else "—", (255,210,160)),
+        ("Price", _usd(M.get("price"))),
+        ("24h Change", "+0.00%"),
+        ("Market Cap", _usd(M.get("market_cap", 0))),
+        ("24h Volume", _usd(M.get("vol_24h", 0))),
+        ("From ATH", f"{M.get('from_ath_pct', 0):.2f}%"),
     ]
-    for label, val, col in metrics:
-        draw.text((60, y), f"{label}:", font=_font(28), fill=(180,190,210))
-        draw.text((340, y), val, font=_font(30), fill=col)
-        y += 42
+    for label, val in metrics:
+        draw.text((60, y), f"{label}:", font=_font(28), fill=(180, 190, 210))
+        draw.text((280, y), val, font=_font(30), fill=(255, 255, 255))
+        y += 48
 
     # --- Summary box ---
-    summary = snapshot.get("summary") or snapshot.get("tldr") or "Automated technical overview generated by Luna."
-    box_y = H - 210
-    draw.rounded_rectangle([50, box_y-18, W-50, H-50], radius=10,
-                           fill=(15,20,45), outline=(80,90,150), width=2)
-    draw.text((70, box_y-6), "Luna’s Analysis", font=_font(26), fill=(255,255,255))
-    for i, line in enumerate(_wrap(summary, 110)[:7]):
-        draw.text((70, box_y + 30 + i*26), line, font=_font(22), fill=(210,215,240))
+    summary = snapshot.get("summary") or snapshot.get("tldr") or "Automated technical chart overview."
+    box_y = 580
+    draw.rounded_rectangle([40, box_y - 16, W - 40, H - 40], radius=10, fill=(15, 20, 45))
+    draw.text((60, box_y), "Luna’s Analysis", font=_font(26), fill=(255, 255, 255))
+    for i, line in enumerate(_wrap(summary, 100)[:5]):
+        draw.text((60, box_y + 32 + i * 26), line, font=_font(22), fill=(210, 215, 240))
 
     # --- Save ---
-    filename = f"{token}_{int(time.time())}.png"
-    out_path = str(Path(out_dir) / filename)
-    img.save(out_path, quality=92)
-    print(f"[Overlay Saved] {out_path}")
-    return out_path
+    out_file = os.path.join(out_dir, f"{token}_{int(time.time())}.png")
+    img.save(out_file, quality=90)
+    print(f"[Overlay Saved] {out_file}")
+    return out_file
 
-# --------------------------------------------
+# -----------------------
 # Helpers
-# --------------------------------------------
-def _cg_id_for(symbol: str) -> str:
-    s = str(symbol).upper()
-    return {
-        "BTC": "bitcoin",
-        "ETH": "ethereum",
-        "SOL": "solana",
-    }.get(s, s.lower())
-
-def _gradient(draw, W,H,c1,c2):
+# -----------------------
+def _gradient(draw, W, H, c1, c2):
     for i in range(H):
-        r=int(c1[0]+(c2[0]-c1[0])*i/H)
-        g=int(c1[1]+(c2[1]-c1[1])*i/H)
-        b=int(c1[2]+(c2[2]-c1[2])*i/H)
-        draw.line([(0,i),(W,i)], fill=(r,g,b))
+        r = int(c1[0] + (c2[0] - c1[0]) * i / H)
+        g = int(c1[1] + (c2[1] - c1[1]) * i / H)
+        b = int(c1[2] + (c2[2] - c1[2]) * i / H)
+        draw.line([(0, i), (W, i)], fill=(r, g, b))
 
-def _usd(x):
+def _font(s):
     try:
-        f=float(x)
-        if f >= 1_000_000_000: return f"${f/1_000_000_000:.2f}B"
-        if f >= 1_000_000: return f"${f/1_000_000:.2f}M"
-        if f >= 1000: return f"${f/1000:.2f}K"
-        if f >= 1: return f"${f:,.2f}"
-        return f"${f:.6f}"
-    except Exception: return str(x)
-
-def _pct(x):
-    try: return f"{float(x):+.2f}%"
-    except Exception: return str(x)
-
-def _chg_col(v):
-    try: return (120,255,120) if float(v) >= 0 else (255,120,120)
-    except Exception: return (230,230,230)
-
-def _font(s=24):
-    try: return ImageFont.truetype("arial.ttf", s)
-    except Exception: return ImageFont.load_default()
+        return ImageFont.truetype("arial.ttf", s)
+    except:
+        return ImageFont.load_default()
 
 def _wrap(text, width=90):
     words = str(text).split()
@@ -135,6 +104,17 @@ def _wrap(text, width=90):
     for w in words:
         cur.append(w)
         if len(" ".join(cur)) >= width:
-            lines.append(" ".join(cur)); cur=[]
-    if cur: lines.append(" ".join(cur))
+            lines.append(" ".join(cur)); cur = []
+    if cur:
+        lines.append(" ".join(cur))
     return lines
+
+def _usd(x):
+    try:
+        f = float(x or 0)
+        if f >= 1_000_000_000: return f"${f/1_000_000_000:.2f}B"
+        if f >= 1_000_000: return f"${f/1_000_000:.2f}M"
+        if f >= 1_000: return f"${f/1_000:.2f}K"
+        return f"${f:.2f}"
+    except:
+        return str(x)
