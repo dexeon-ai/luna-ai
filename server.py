@@ -1,4 +1,6 @@
-# server.py — Luna AI backend (Render-ready, overlay-safe + Chart.js)
+# ===========================================================
+# server.py — Luna AI Backend v7 (Render + Caching + Dashboard)
+# ===========================================================
 import os, time, json
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, abort
@@ -13,16 +15,16 @@ from risk_providers import fetch_deep_risk
 from macro_providers import build_macro_summary
 from qa_handler import handle_question
 
-# ✅ NEW IMPORT for Chart.js JSON endpoint
-from chart_json import build_chartjs_payload
+import auto_refresh  # ✅ launches background cache updater thread
+from data_manager import CACHE_DIR  # ✅ used for /cache/status route
 
 # ===========================================================
 # Directories — Render-safe (voice on /voice, overlays in /tmp)
 # ===========================================================
 ROOT = Path(__file__).resolve().parent
 VOICE_DIR = ROOT / "voice"
-OVERLAY_DIR = Path("/tmp/overlays")     # ✅ Render write-safe location
-ASSETS_DIR = ROOT                       # avatar_base.png, etc.
+OVERLAY_DIR = Path("/tmp/overlays")  # ✅ Render write-safe location
+ASSETS_DIR = ROOT  # avatar_base.png, etc.
 
 VOICE_DIR.mkdir(exist_ok=True)
 OVERLAY_DIR.mkdir(parents=True, exist_ok=True)
@@ -37,7 +39,7 @@ print(">>> Overlay directory:", OVERLAY_DIR)
 app = Flask(__name__)
 CORS(app, supports_credentials=True, origins="*")
 
-print(">>> Routes loaded: /ping, /qa, /chart/data, /voice/*, /overlays/*")
+print(">>> Routes loaded: /ping, /qa, /voice/*, /overlays/*, /cache/status")
 
 # -----------------------------------------------------------
 # Health
@@ -53,7 +55,12 @@ def ping():
 def session_start():
     ttl = int(os.getenv("SESSION_TTL_SECONDS", "1800"))
     sid = manager.start(ttl_seconds=ttl)
-    return jsonify({"ok": True, "session_id": sid, "questions_left": 21, "ttl_seconds": ttl})
+    return jsonify({
+        "ok": True,
+        "session_id": sid,
+        "questions_left": 21,
+        "ttl_seconds": ttl
+    })
 
 @app.post("/session/status")
 @app.get("/session/status")
@@ -73,7 +80,12 @@ def session_end():
     if not sid:
         return jsonify({"ok": False, "error": "missing session_id"}), 400
     history, text = manager.end(sid)
-    return jsonify({"ok": True, "message": "session closed", "history": history, "history_text": text})
+    return jsonify({
+        "ok": True,
+        "message": "session closed",
+        "history": history,
+        "history_text": text
+    })
 
 # -----------------------------------------------------------
 # /analyze — optional direct analysis endpoint
@@ -81,10 +93,10 @@ def session_end():
 @app.post("/analyze")
 def analyze():
     data = request.get_json(silent=True) or {}
-    sid      = data.get("session_id")
-    chain    = data.get("chain")
+    sid = data.get("session_id")
+    chain = data.get("chain")
     contract = data.get("contract")
-    overlay  = bool(data.get("overlay", False))
+    overlay = bool(data.get("overlay", False))
 
     if not sid or not chain or not contract:
         return jsonify({"ok": False, "error": "missing session_id/chain/contract"}), 400
@@ -110,7 +122,7 @@ def analyze():
 @app.post("/risk")
 def risk():
     data = request.get_json(silent=True) or {}
-    chain    = data.get("chain")
+    chain = data.get("chain")
     contract = data.get("contract")
     if not chain or not contract:
         return jsonify({"ok": False, "error": "missing chain/contract"}), 400
@@ -146,8 +158,7 @@ def qa():
     manager.add_history(sid, "assistant", text_for_tts)
 
     # ---------- voice ----------
-    voice_url = None
-    lipsync_url = None
+    voice_url, lipsync_url = None, None
     audio_path = tts_generate(text_for_tts, base_name=f"reply_{int(time.time())}", out_dir=str(VOICE_DIR))
     if audio_path:
         name = Path(audio_path).name
@@ -185,24 +196,51 @@ def qa():
     return jsonify(payload)
 
 # -----------------------------------------------------------
-# ✅ Chart.js data endpoint (new)
+# /cache/status — inspect Luna’s cached market data
 # -----------------------------------------------------------
-@app.get("/chart/data")
-def chart_data():
-    """
-    Returns Chart.js-compatible JSON payload for Luna Widget.
-    Example:
-      /chart/data?symbol=BTC&time=7d&metric=price_trend
-    """
-    symbol = (request.args.get("symbol") or "BTC").upper()
-    time_key = request.args.get("time", "7d")
-    metric = request.args.get("metric", "price_trend")
+@app.get("/cache/status")
+def cache_status():
+    """Show list of cached symbols and metadata."""
     try:
-        payload = build_chartjs_payload(symbol=symbol, time_key=time_key, metric=metric)
-        return jsonify(payload)
+        files = sorted(CACHE_DIR.glob("*.json"), key=lambda f: f.stat().st_mtime, reverse=True)
+        entries = []
+        for f in files:
+            try:
+                j = json.load(open(f))
+                entries.append({
+                    "symbol": j.get("symbol"),
+                    "last_updated": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(j.get("timestamp", 0))),
+                    "points": len(j.get("points", [])),
+                    "age_minutes": round((time.time() - j.get("timestamp", 0)) / 60, 1)
+                })
+            except Exception as e:
+                entries.append({"file": f.name, "error": str(e)})
+
+        if request.args.get("html"):
+            rows = "".join(
+                f"<tr><td>{e.get('symbol','?')}</td>"
+                f"<td>{e.get('points','?')}</td>"
+                f"<td>{e.get('last_updated','?')}</td>"
+                f"<td>{e.get('age_minutes','?')}</td></tr>"
+                for e in entries
+            )
+            html = f"""
+            <html><head><title>Luna Cache Status</title>
+            <style>
+              body{{font-family:Arial;background:#0b0f28;color:#E8EDFF}}
+              table{{border-collapse:collapse;width:80%;margin:2em auto;}}
+              th,td{{border:1px solid #343a66;padding:6px 10px;text-align:left;}}
+              th{{background:#141a40;color:#fff;}}
+              tr:nth-child(even){{background:#1a1f3d;}}
+            </style></head><body>
+            <h2 style='text-align:center'>Luna Cache Status</h2>
+            <table><tr><th>Symbol</th><th>Points</th><th>Last Updated (UTC)</th><th>Age (min)</th></tr>{rows}</table>
+            </body></html>"""
+            return html, 200, {"Content-Type": "text/html"}
+
+        return jsonify({"count": len(entries), "entries": entries})
     except Exception as e:
-        print("[Chart Data Error]", e)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 # -----------------------------------------------------------
 # Static routes: voice / overlays / assets
@@ -253,3 +291,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", "10000"))
     print(f"⚙️  Starting Luna server on port {port}...")
     app.run(host="0.0.0.0", port=port, debug=False)
+
