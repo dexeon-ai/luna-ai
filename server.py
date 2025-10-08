@@ -1,4 +1,4 @@
-# server.py — Luna AI backend (Render-ready, overlay-safe)
+# server.py — Luna AI backend (Render-ready, overlay-safe + Chart.js)
 import os, time, json
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, abort
@@ -13,6 +13,8 @@ from risk_providers import fetch_deep_risk
 from macro_providers import build_macro_summary
 from qa_handler import handle_question
 
+# ✅ NEW IMPORT for Chart.js JSON endpoint
+from chart_json import build_chartjs_payload
 
 # ===========================================================
 # Directories — Render-safe (voice on /voice, overlays in /tmp)
@@ -35,8 +37,7 @@ print(">>> Overlay directory:", OVERLAY_DIR)
 app = Flask(__name__)
 CORS(app, supports_credentials=True, origins="*")
 
-print(">>> Routes loaded: /ping, /qa, /voice/*, /overlays/*")
-
+print(">>> Routes loaded: /ping, /qa, /chart/data, /voice/*, /overlays/*")
 
 # -----------------------------------------------------------
 # Health
@@ -44,7 +45,6 @@ print(">>> Routes loaded: /ping, /qa, /voice/*, /overlays/*")
 @app.get("/ping")
 def ping():
     return jsonify({"ok": True, "message": "pong", "ts": int(time.time())})
-
 
 # -----------------------------------------------------------
 # Session management
@@ -54,7 +54,6 @@ def session_start():
     ttl = int(os.getenv("SESSION_TTL_SECONDS", "1800"))
     sid = manager.start(ttl_seconds=ttl)
     return jsonify({"ok": True, "session_id": sid, "questions_left": 21, "ttl_seconds": ttl})
-
 
 @app.post("/session/status")
 @app.get("/session/status")
@@ -67,7 +66,6 @@ def session_status():
         return jsonify({"ok": False, "error": "invalid or expired session"}), 403
     return jsonify({"ok": True, "remaining_questions": manager.remaining(sid)})
 
-
 @app.post("/session/end")
 def session_end():
     data = request.get_json(silent=True) or {}
@@ -76,7 +74,6 @@ def session_end():
         return jsonify({"ok": False, "error": "missing session_id"}), 400
     history, text = manager.end(sid)
     return jsonify({"ok": True, "message": "session closed", "history": history, "history_text": text})
-
 
 # -----------------------------------------------------------
 # /analyze — optional direct analysis endpoint
@@ -107,7 +104,6 @@ def analyze():
     manager.add_history(sid, "system", f"[analyze] {chain}:{contract}")
     return jsonify({"ok": True, "snapshot": snap, "overlay_card_url": card_url})
 
-
 # -----------------------------------------------------------
 # /risk  &  /macro
 # -----------------------------------------------------------
@@ -120,11 +116,9 @@ def risk():
         return jsonify({"ok": False, "error": "missing chain/contract"}), 400
     return jsonify(fetch_deep_risk(chain, contract))
 
-
 @app.post("/macro")
 def macro():
     return jsonify(build_macro_summary())
-
 
 # -----------------------------------------------------------
 # /qa — main interactive route (21 Questions mode)
@@ -138,10 +132,7 @@ def qa():
     if not manager.touch(sid):
         return jsonify({"ok": False, "error": "invalid or expired session"}), 403
 
-    # decrement counter
     remaining = manager.decrement(sid)
-
-    # get core answer
     result = handle_question(data) or {}
     text_for_tts = (
         result.get("summary")
@@ -193,6 +184,25 @@ def qa():
         payload["notice"] = "Session limit reached. Use /session/end to copy the transcript."
     return jsonify(payload)
 
+# -----------------------------------------------------------
+# ✅ Chart.js data endpoint (new)
+# -----------------------------------------------------------
+@app.get("/chart/data")
+def chart_data():
+    """
+    Returns Chart.js-compatible JSON payload for Luna Widget.
+    Example:
+      /chart/data?symbol=BTC&time=7d&metric=price_trend
+    """
+    symbol = (request.args.get("symbol") or "BTC").upper()
+    time_key = request.args.get("time", "7d")
+    metric = request.args.get("metric", "price_trend")
+    try:
+        payload = build_chartjs_payload(symbol=symbol, time_key=time_key, metric=metric)
+        return jsonify(payload)
+    except Exception as e:
+        print("[Chart Data Error]", e)
+        return jsonify({"error": str(e)}), 500
 
 # -----------------------------------------------------------
 # Static routes: voice / overlays / assets
@@ -208,11 +218,9 @@ def latest_voice_json():
     lipsync_path = f"/voice/{latest.name}"
     return jsonify({"audio_url": audio_path, "lipsync_url": lipsync_path})
 
-
 @app.get("/voice/<path:filename>")
 def voice_files(filename):
     return send_from_directory(str(VOICE_DIR), filename)
-
 
 @app.get("/overlays/latest.png")
 def latest_overlay():
@@ -223,16 +231,13 @@ def latest_overlay():
     print("[GET] Serving overlay:", latest)
     return send_from_directory("/tmp/overlays", latest.name)
 
-
 @app.get("/overlays/<path:filename>")
 def overlay_files(filename):
     return send_from_directory("/tmp/overlays", filename)
 
-
 @app.get("/avatar_overlay.html")
 def overlay_html():
     return send_from_directory(str(ASSETS_DIR), "avatar_overlay.html")
-
 
 @app.get("/<path:asset>")
 def base_assets(asset):
@@ -241,12 +246,10 @@ def base_assets(asset):
         return send_from_directory(str(ASSETS_DIR), asset)
     abort(404)
 
-
 # -----------------------------------------------------------
 # Run (local dev); Render uses gunicorn
 # -----------------------------------------------------------
 if __name__ == "__main__":
-    # Render dynamically sets PORT, so always use that value
     port = int(os.environ.get("PORT", "10000"))
     print(f"⚙️  Starting Luna server on port {port}...")
     app.run(host="0.0.0.0", port=port, debug=False)
