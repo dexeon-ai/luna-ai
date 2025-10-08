@@ -33,7 +33,7 @@ print(">>> Overlay directory:", OVERLAY_DIR)
 # Flask setup
 # ===========================================================
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": os.getenv("CORS_ORIGINS", "*").split(",")}})
+CORS(app, supports_credentials=True, origins="*")
 
 print(">>> Routes loaded: /ping, /qa, /voice/*, /overlays/*")
 
