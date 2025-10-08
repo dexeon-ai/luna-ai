@@ -2,10 +2,9 @@
 # Uses plot_engine’s fetch + indicators, returns {labels, datasets} for Chart.js
 from typing import Dict, Any, List
 from plot_engine import (
-    _resolve_cg_id,
+    resolve_cg_id,
     _fetch_prices,
     _ols_trendline,
-    _recent_pivots,
     _fib_extensions,
 )
 
@@ -30,7 +29,7 @@ def build_chartjs_payload(symbol: str = "BTC", time_key: str = "7d", metric: str
     }
     """
     symbol = (symbol or "BTC").upper()
-    cg_id = _resolve_cg_id(symbol)
+    cg_id = resolve_cg_id(symbol)
     days = DAYS_MAP.get(time_key, 7)
 
     ts, px = _fetch_prices(cg_id, days=days)
