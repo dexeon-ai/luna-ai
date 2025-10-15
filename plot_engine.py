@@ -1,398 +1,208 @@
-# plot_engine.py — Luna Technical Chart Engine v3
-# - Primary data: CoinGecko (no captcha)
-# - Fallback: CoinPaprika (daily)
-# - Caching/backoff to avoid 429s (Too Many Requests)
-# - If all sources fail, generates synthetic data
-# - Indicators:
-#     • Short-term OLS trend line
-#     • Trend-based Fib extensions
-#     • Long-term support zones
-#     • Linear projection (next N samples)
-# - Render: dual panels (7d / lifetime), white ticks, clean purple theme
-# Updated: 2025-10-08
-
-import time, json, hashlib
+# ============================================================
+# plot_engine.py — Luna Matrix (Windows, 8-around-1, Structured Squares v3 FIXED)
+# ============================================================
+from __future__ import annotations
+import os, csv, math, logging
 from pathlib import Path
-import requests
+from typing import List, Tuple, Optional
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
+from matplotlib.gridspec import GridSpec
 
-# =====================================================
-# Cache / Backoff Settings
-# =====================================================
-CACHE_DIR = Path("/tmp/luna_cache")
+# ---------------- Logging ----------------
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# ---------------- Paths ----------------
+BASE_DIR = Path(__file__).resolve().parent
+OVERLAYS_DIR = BASE_DIR / "overlays"
+CACHE_DIR = BASE_DIR / "luna_cache"
+DATA_ROOT = CACHE_DIR / "data"
+COIN_DIR = DATA_ROOT / "coins"
+MEME_DIR = DATA_ROOT / "memes"
+OVERLAYS_DIR.mkdir(parents=True, exist_ok=True)
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
+print(f"[PATH] overlays: {OVERLAYS_DIR}")
 
-CACHE_TTL = 15 * 60
-SHORT_TTL = 4 * 60
-LONG_TTL = 6 * 60 * 60
-INFO_TTL = 15 * 60
-MAX_RETRIES = 3
-RETRY_WAIT = 3
-
-CG_API = "https://api.coingecko.com/api/v3/coins"
-
-# =====================================================
-# Helper Functions — Cache + Fetch
-# =====================================================
-def _fetch_json(url: str):
-    key = hashlib.sha1(url.encode()).hexdigest()
-    fp = CACHE_DIR / f"{key}.json"
-
-    # ✅ Try cache first
-    if fp.exists() and (time.time() - fp.stat().st_mtime) < CACHE_TTL:
-        with open(fp) as f:
-            return json.load(f)
-
-    last_err = None
-    for attempt in range(1, MAX_RETRIES + 1):
-        try:
-            r = requests.get(url, timeout=12)
-            if r.status_code == 429:
-                sleep_for = RETRY_WAIT * attempt
-                print(f"[Backoff] 429 on {url} — sleeping {sleep_for}s")
-                time.sleep(sleep_for)
-                continue
-            r.raise_for_status()
-            data = r.json()
-            with open(fp, "w") as f:
-                json.dump(data, f)
-            return data
-        except Exception as e:
-            last_err = e
-            time.sleep(RETRY_WAIT)
-
-    # ✅ If everything fails, use stale cache
-    if fp.exists():
-        print(f"[Fetch] Using stale cache for {url} after error: {last_err}")
-        with open(fp) as f:
-            return json.load(f)
-
-    print(f"[Fetch] failed for {url}: {last_err}")
-    return {}
-
-# =====================================================
-# ID Resolver
-# =====================================================
-def _resolve_cg_id(symbol: str) -> str:
-    s = (symbol or "").upper()
-    mapping = {
-        "BTC": "bitcoin",
-        "ETH": "ethereum",
-        "SOL": "solana",
-        "BNB": "binancecoin",
-        "ADA": "cardano",
-        "XRP": "ripple",
-        "DOGE": "dogecoin",
-        "AVAX": "avalanche-2",
-        "MATIC": "matic-network",
-    }
-    return mapping.get(s, s.lower())
-
-# Public alias so other modules can safely import either name
-resolve_cg_id = _resolve_cg_id
-
-# =====================================================
-# Price Fetchers
-# =====================================================
-def _fetch_prices_cg(cg_id: str, days="max"):
-    url = f"{CG_API}/{cg_id}/market_chart?vs_currency=usd&days={days}"
-    data = _fetch_json(url)
-    prices = data.get("prices") or []
-    ts = [p[0] / 1000.0 for p in prices]
-    px = [float(p[1]) for p in prices]
-    return ts, px
-
-def _fetch_prices_fallback_daily(cg_id: str):
-    pid = "btc-bitcoin" if cg_id == "bitcoin" else cg_id
+# ============================================================
+# Helpers
+# ============================================================
+def _safe_float(x):
     try:
-        r = requests.get(
-            f"https://api.coinpaprika.com/v1/tickers/{pid}/historical?start=2013-04-28&interval=1d",
-            timeout=12
-        )
-        if not r.ok:
-            return [], []
-        hist = r.json()
-        if not isinstance(hist, list):
-            return [], []
-        ts, px = [], []
-        t0 = int(time.time()) - 86400 * len(hist)  # rough daily spacing
-        for i, h in enumerate(hist):
-            if "close" in h:
-                ts.append(t0 + i * 86400)
-                px.append(float(h["close"]))
-        return ts, px
-    except Exception as e:
-        print("[Fallback error CoinPaprika]", e)
-        return [], []
+        f = float(x)
+        if math.isnan(f) or math.isinf(f):
+            return None
+        return f
+    except Exception:
+        return None
 
-def _fetch_prices(cg_id: str, days="max"):
-    """Try CoinGecko, fallback to CoinPaprika, else synthetic."""
-    ts, px = _fetch_prices_cg(cg_id, days=days)
-    if px:
-        return ts, px
+def money_formatter():
+    def _fmt(v, pos):
+        n = abs(v)
+        if n >= 1e12: return f"${v/1e12:.2f}T"
+        if n >= 1e9:  return f"${v/1e9:.2f}B"
+        if n >= 1e6:  return f"${v/1e6:.2f}M"
+        if n >= 1e3:  return f"${v/1e3:.2f}K"
+        return f"${v:.2f}"
+    return FuncFormatter(_fmt)
 
-    print(f"[Prices] Falling back to daily data for {cg_id}")
-    ts, px = _fetch_prices_fallback_daily(cg_id)
-    if px:
-        return ts, px
-
-    # ✅ Final fallback — synthetic placeholder dataset
-    print(f"[ChartEngine] Warning: Using synthetic sample data for {cg_id}")
-    ts = list(range(100))
-    px = [100 + np.sin(i / 5.0) * 5 for i in range(100)]
-    return ts, px
-
-def _fetch_info(cg_id: str):
-    url = (
-        f"{CG_API}/{cg_id}"
-        "?localization=false&tickers=false&market_data=true"
-        "&community_data=false&developer_data=false&sparkline=false"
-    )
-    return _fetch_json(url)
-
-# =====================================================
-# Main Entry — build_tech_panel()
-# =====================================================
-def build_tech_panel(
-    symbol: str = "BTC",
-    cg_id: str | None = None,
-    short_days: int = 7,
-    out_path: str = "/tmp/tech_panel.png",
-    theme: str = "purple",
-    **_ignore,
-):
-    cg_id = cg_id or _resolve_cg_id(symbol)
-
-    _, short_px = _fetch_prices(cg_id, days=short_days)
-    _, long_px  = _fetch_prices(cg_id, days="max")
-    info        = _fetch_info(cg_id)
-
-    # ✅ Ensure usable data always exists
-    if len(short_px) < 10 or len(long_px) < 50:
-        print(f"[ChartEngine] Warning: Low data density for {symbol}, synthesizing demo points.")
-        short_px = [100 + np.sin(i / 3.0) * 2 for i in range(80)]
-        long_px = [x * 1.02 for x in short_px] * 2
-
-    md = info.get("market_data", {}) if isinstance(info, dict) else {}
-    price_now = float(md.get("current_price", {}).get("usd", short_px[-1]))
-    pct_24h   = float(md.get("price_change_percentage_24h", _percent_change(short_px, hours=24)))
-    market_cap= float(md.get("market_cap", {}).get("usd", 0.0))
-    vol_24h   = float(md.get("total_volume", {}).get("usd", 0.0))
-    ath_price = float(md.get("ath", {}).get("usd", max(long_px)))
-    circ      = float(md.get("circulating_supply", 0.0))
-    total_sup = float(md.get("total_supply", 0.0))
-    pct_30d   = float(md.get("price_change_percentage_30d", 0.0))
-    from_ath_pct = ((price_now - ath_price) / ath_price * 100.0) if ath_price else 0.0
-    pct_7d = _percent_change(short_px, hours=24*7)
-
-    # indicators
-    trendline = _ols_trendline(short_px)
-    A, B      = _recent_pivots(short_px)
-    fib_exts  = _fib_extensions(A, B)
-    supports, resistances = _support_resistance_zones(long_px, bins=40, top_k=4)
-    nearest_sup, nearest_res = _nearest_levels(price_now, supports, resistances)
-    proj = _forecast_linear(short_px, forecast_n=24)
-
-    _render_dual(
-        short_px=short_px,
-        long_px=long_px,
-        trendline=trendline,
-        fib_exts=fib_exts,
-        supports=supports,
-        resistances=resistances,
-        price_now=price_now,
-        projection=proj,
-        out_path=out_path,
-    )
-
-    return {
-        "chart_path": out_path,
-        "metrics": {
-            "price": price_now,
-            "pct_24h": pct_24h,
-            "pct_7d": pct_7d,
-            "market_cap": market_cap,
-            "vol_24h": vol_24h,
-            "from_ath_pct": from_ath_pct,
-            "nearest_support": nearest_sup,
-            "nearest_resistance": nearest_res,
-            "ath_price": ath_price,
-            "circ_supply": circ,
-            "total_supply": total_sup,
-            "pct_30d": pct_30d,
-        },
-        "pivots": {"A": A, "B": B},
-    }
-
-# =====================================================
-# Math / Indicator Helpers
-# =====================================================
-def _percent_change(prices, hours=24):
-    if len(prices) < 2:
-        return 0.0
-    n = max(1, min(len(prices) - 1, hours))
-    old, cur = prices[-1 - n], prices[-1]
-    return ((cur - old) / old) * 100.0 if old else 0.0
-
-def _ols_trendline(prices):
-    y = np.array(prices, dtype=float)
-    x = np.arange(len(y), dtype=float)
-    if len(y) < 3:
-        return y.tolist()
-    A = np.vstack([x, np.ones_like(x)]).T
-    slope, intercept = np.linalg.lstsq(A, y, rcond=None)[0]
-    return (slope * x + intercept).tolist()
-
-def _recent_pivots(prices):
-    y = np.array(prices, dtype=float)
-    n = len(y)
-    if n < 10:
-        return float(y[0]), float(y[-1])
-    k = max(2, n // 30)
-    mins, maxs = [], []
-    for i in range(k, n - k):
-        w = y[i-k:i+k+1]
-        if y[i] == w.min(): mins.append(i)
-        if y[i] == w.max(): maxs.append(i)
-    pivots = sorted([(i, "min") for i in mins] + [(i, "max") for i in maxs])
-    last_two = []
-    for i, t in reversed(pivots):
-        if not last_two:
-            last_two.append((i, t))
-        elif last_two[-1][1] != t:
-            last_two.append((i, t))
-            break
-    if len(last_two) < 2:
-        return float(y[0]), float(y[-1])
-    last_two.sort(key=lambda z: z[0])
-    iA, _ = last_two[0]
-    iB, _ = last_two[1]
-    return float(y[iA]), float(y[iB])
-
-def _fib_extensions(A, B):
-    r = [1.272, 1.414, 1.618, 2.0]
-    move = (B - A)
-    if move == 0:
-        return []
-    up = move > 0
-    out = []
-    for rr in r:
-        val = B + (move * (rr - 1.0)) if up else B - (abs(move) * (rr - 1.0))
-        out.append((f"{rr:.3f}x", float(val)))
+def ema(arr, span):
+    if arr is None or len(arr) < 2: return np.array([])
+    a = np.array(arr, dtype=float)
+    alpha = 2 / (span + 1)
+    out = np.zeros_like(a)
+    out[0] = a[0]
+    for i in range(1, len(a)):
+        out[i] = alpha * a[i] + (1 - alpha) * out[i-1]
     return out
 
-def _support_resistance_zones(prices, bins=40, top_k=4):
-    y = np.array(prices, dtype=float)
-    if len(y) < 50:
-        return [], []
-    hist, edges = np.histogram(y, bins=bins)
-    idx = np.argsort(hist)[-top_k:]
-    centers = (edges[idx] + edges[idx+1]) / 2.0
-    centers = sorted(centers)
-    return centers, centers
+def rsi(p, period=14):
+    if p is None or len(p) <= period + 1: return np.array([])
+    p = np.array(p, dtype=float)
+    d = np.diff(p)
+    up = np.where(d > 0, d, 0.0)
+    dn = np.where(d < 0, -d, 0.0)
+    ru = ema(up, period)[-len(d):]
+    rd = ema(dn, period)[-len(d):]
+    with np.errstate(divide='ignore', invalid='ignore'):
+        rs = np.where(rd == 0, np.nan, ru/rd)
+        r = 100 - (100 / (1 + rs))
+    return np.insert(r, 0, np.nan)
 
-def _nearest_levels(price_now, supports, resistances):
-    sup = max([s for s in supports if s <= price_now], default=None)
-    res = min([r for r in resistances if r >= price_now], default=None)
-    return sup, res
+def macd(p, fast=12, slow=26, signal=9):
+    if p is None or len(p) < slow + signal + 2:
+        return np.array([]), np.array([]), np.array([])
+    p = np.array(p, dtype=float)
+    m = ema(p, fast) - ema(p, slow)
+    s = ema(m, signal)
+    return m, s, (m - s)
 
-def _forecast_linear(prices, forecast_n=24):
-    y = np.array(prices, dtype=float)
-    n = len(y)
-    if n < 12:
-        return None
-    tail = max(12, n // 3)
-    x = np.arange(n - tail, n, dtype=float)
-    A = np.vstack([x, np.ones_like(x)]).T
-    slope, intercept = np.linalg.lstsq(A, y[-tail:], rcond=None)[0]
-    y_hat_tail = slope * x + intercept
-    resid = y[-tail:] - y_hat_tail
-    sigma = np.std(resid) if len(resid) > 1 else 0.0
-    x_future = np.arange(n, n + forecast_n, dtype=float)
-    y_future = slope * x_future + intercept
-    return {
-        "x0": n,
-        "x": x_future.tolist(),
-        "y": y_future.tolist(),
-        "y_hi": (y_future + sigma).tolist(),
-        "y_lo": (y_future - sigma).tolist(),
+def bollinger(p, window=20, num_std=2):
+    if p is None or len(p) < window:
+        return np.array([]), np.array([]), np.array([])
+    p = np.array(p, dtype=float)
+    sma = np.convolve(p, np.ones(window)/window, mode="valid")
+    roll_std = np.array([np.std(p[i-window+1:i+1]) for i in range(window-1, len(p))])
+    pad = np.full(window-1, np.nan)
+    return np.concatenate([pad, sma+num_std*roll_std]), np.concatenate([pad, sma]), np.concatenate([pad, sma-num_std*roll_std])
+
+def ols_trend(y):
+    if y is None or len(y) < 2: return np.array([])
+    x = np.arange(len(y))
+    b1, b0 = np.polyfit(x, np.array(y, dtype=float), 1)
+    return b1*x + b0
+
+def _csv_path(symbol:str)->Optional[Path]:
+    s = symbol.lower().strip()
+    for d in [COIN_DIR, MEME_DIR]:
+        p = d/f"{s}.csv"
+        if p.exists(): return p
+    return None
+
+def _load_csv(symbol:str)->Tuple[list,list,list,list]:
+    p = _csv_path(symbol)
+    if not p: return [],[],[],[]
+    rows = list(csv.DictReader(open(p,"r",encoding="utf-8")))
+    def col(n): return [_safe_float(r.get(n)) for r in rows if _safe_float(r.get(n)) is not None]
+    price = col("price") or col("price_dex")
+    vol = col("volume_24h")
+    mcap = col("market_cap")
+    liq = col("liquidity_usd")
+    return price, vol, mcap, liq
+
+# ============================================================
+# Renderer — 8 larger equal squares around 1 big center
+# ============================================================
+def _render_matrix(symbol:str, days:int=180)->str:
+    price, vol, mcap, liq = _load_csv(symbol)
+    rsi_vals = rsi(price)
+    m_line, m_sig, _ = macd(price)
+    up, mid, lo = bollinger(price)
+    tr = ols_trend(price)
+
+    BG="#1b1e30"; PANEL="#262a42"; GRID="#444c70"; TEXT="#ffffff"
+    C={"price":"#4cc9f0","trend":"#80ffb4","rsi":"#ff9eaa","macd":"#35e0c7","signal":"#ffe685",
+       "vol":"#80b3ff","mcap":"#5efc8d","liq":"#f472b6"}
+
+    fig = plt.figure(figsize=(18,18), facecolor=BG)
+    gs = GridSpec(11,11,figure=fig,hspace=0.4,wspace=0.4)
+
+    def setup(ax,title=""):
+        ax.set_facecolor(PANEL)
+        ax.grid(True,color=GRID,alpha=0.35,lw=0.6)
+        ax.tick_params(axis="x",colors=TEXT,labelsize=8)
+        ax.tick_params(axis="y",colors=TEXT,labelsize=8)
+        if title: ax.set_title(title,color=TEXT,fontsize=9,pad=4)
+        for s in ax.spines.values():
+            s.set_edgecolor("#ffffff"); s.set_linewidth(1.8)
+
+    def glow_line(ax,y,color,lw=1.6):
+        if y is None: return
+        y = np.array(y)
+        if y.size == 0: return
+        x = np.arange(len(y))
+        ax.plot(x,y,color=color,lw=lw,alpha=0.9)
+        ax.plot(x,y,color=color,lw=lw+1,alpha=0.15,zorder=-1)
+
+    slots = {
+        "topL":(2,3),"topR":(2,7),
+        "rightT":(4,9),"rightB":(6,9),
+        "bottomR":(8,7),"bottomL":(8,3),
+        "leftB":(6,1),"leftT":(4,1)
     }
 
-def _fmt_usd(val, _pos=None):
-    v = float(val)
-    if abs(v) >= 1_000_000_000: return f"${v/1_000_000_000:.1f}B"
-    if abs(v) >= 1_000_000:     return f"${v/1_000_000:.1f}M"
-    if abs(v) >= 1_000:         return f"${v/1_000:.1f}K"
-    if abs(v) >= 1:             return f"${v:,.2f}"
-    return f"${v:.6f}"
+    if price is not None and len(price)>0:
+        ax1=fig.add_subplot(gs[slots["topL"]]); setup(ax1,"Price"); glow_line(ax1,price,C["price"])
+    if rsi_vals is not None and len(rsi_vals)>0:
+        ax2=fig.add_subplot(gs[slots["topR"]]); setup(ax2,"RSI(14)"); glow_line(ax2,rsi_vals,C["rsi"])
+    if m_line is not None and len(m_line)>0:
+        ax3=fig.add_subplot(gs[slots["rightT"]]); setup(ax3,"MACD"); glow_line(ax3,m_line,C["macd"])
+        if m_sig is not None and len(m_sig)>0: glow_line(ax3,m_sig,C["signal"])
+    if vol is not None and len(vol)>0:
+        ax4=fig.add_subplot(gs[slots["rightB"]]); setup(ax4,"Volume"); ax4.bar(range(len(vol)),vol,color=C["vol"],alpha=0.8)
+    if mcap is not None and len(mcap)>0:
+        ax5=fig.add_subplot(gs[slots["bottomR"]]); setup(ax5,"Market Cap"); glow_line(ax5,mcap,C["mcap"]); ax5.yaxis.set_major_formatter(money_formatter())
+    if liq is not None and len(liq)>0:
+        ax6=fig.add_subplot(gs[slots["bottomL"]]); setup(ax6,"Liquidity"); glow_line(ax6,liq,C["liq"]); ax6.yaxis.set_major_formatter(money_formatter())
+    if tr is not None and len(tr)>0:
+        ax7=fig.add_subplot(gs[slots["leftB"]]); setup(ax7,"Trend (OLS)"); glow_line(ax7,tr,C["trend"])
+    if mid is not None and len(mid)>0:
+        ax8=fig.add_subplot(gs[slots["leftT"]]); setup(ax8,"Bollinger 20/2"); glow_line(ax8,price,C["price"]); glow_line(ax8,mid,"#cfd3da")
 
-# =====================================================
-# Rendering
-# =====================================================
-def _render_dual(short_px, long_px, trendline, fib_exts, supports, resistances, price_now, projection, out_path):
-    # Make text/ticks **white** for readability on the dark background
-    plt.rcParams.update({
-        "axes.edgecolor": "#3a3f66",
-        "axes.labelcolor": "#FFFFFF",
-        "xtick.color": "#FFFFFF",
-        "ytick.color": "#FFFFFF",
-        "text.color":  "#FFFFFF",
-        "font.size": 9,
-    })
+    axc = fig.add_subplot(gs[3:8,3:8]); setup(axc,f"{symbol.upper()} — Overview")
+    if price is not None and len(price)>0:
+        glow_line(axc,price,C["price"])
+        if tr is not None and len(tr)>0: glow_line(axc,tr,C["trend"])
+        if mid is not None and len(mid)>0: glow_line(axc,mid,"#d8dbe5")
+        leg=axc.legend(["Price","Trend","MA20"],facecolor=PANEL,edgecolor=GRID,fontsize=9,loc="upper left")
+        for text in leg.get_texts(): text.set_color("white")
+    for s in axc.spines.values():
+        s.set_edgecolor("#7a84ff"); s.set_linewidth(2.0)
 
-    fig = plt.figure(figsize=(7.2, 4.2), facecolor="#0b0f28")
-
-    col_short = "#70e1ff"
-    col_long = "#b084ff"
-    col_trend = "#9cff9c"
-    col_fib = "#ffd166"
-    col_zone = "#8be9fd"
-    col_proj = "#ff9ee6"
-    col_band = "#ff9ee6"
-
-    # ---- Short-term panel ----
-    ax1 = plt.subplot(2, 1, 1, facecolor="#101538")
-    x1 = np.arange(len(short_px))
-    ax1.plot(x1, short_px, color=col_short, linewidth=2.0, label="Price (7d)")
-
-    if len(trendline) == len(short_px):
-        ax1.plot(x1, trendline, color=col_trend, linewidth=1.6, linestyle="--", label="Trend")
-
-    for name, lvl in fib_exts or []:
-        ax1.axhline(lvl, color=col_fib, linewidth=0.9, linestyle=":", alpha=0.85)
-        ax1.text(x1[-1], lvl, f"  {name} {lvl:,.0f}", color=col_fib, fontsize=8, va="center", ha="left")
-
-    if projection:
-        xf, yf, yhi, ylo = projection["x"], projection["y"], projection["y_hi"], projection["y_lo"]
-        ax1.fill_between(xf, ylo, yhi, color=col_band, alpha=0.08, linewidth=0)
-        ax1.plot([x1[-1], xf[0]], [short_px[-1], yf[0]], color=col_proj, linewidth=1.2, linestyle="--")
-        ax1.plot(xf, yf, color=col_proj, linewidth=1.4, linestyle="--", label="Projection")
-
-    ax1.yaxis.set_major_formatter(FuncFormatter(_fmt_usd))
-    ax1.set_xticks([])
-    ax1.grid(alpha=0.10, color="#2a2f55")
-    ax1.legend(facecolor="#141a40", edgecolor="#343a66", labelcolor="#FFFFFF", loc="upper left", fontsize=8)
-
-    # ---- Long-term panel ----
-    ax2 = plt.subplot(2, 1, 2, facecolor="#101538")
-    x2 = np.arange(len(long_px))
-    ax2.plot(x2, long_px, color=col_long, linewidth=1.6, label="Price (All time)")
-
-    if supports:
-        ymin, ymax = ax2.get_ylim()
-        span = (ymax - ymin) * 0.012
-        for lvl in supports:
-            ax2.axhspan(lvl - span, lvl + span, color=col_zone, alpha=0.08)
-
-    ax2.axhline(price_now, color="#ffffff", linewidth=1.0, alpha=0.25, linestyle="--")
-    ax2.yaxis.set_major_formatter(FuncFormatter(_fmt_usd))
-    ax2.set_xticks([])
-    ax2.grid(alpha=0.10, color="#2a2f55")
-
-    plt.tight_layout(pad=1.2)
-    fig.savefig(out_path, dpi=180, bbox_inches="tight", pad_inches=0.15)
+    fig.suptitle(f"{symbol.upper()} — Technical Overview",color=TEXT,fontsize=17,weight="bold")
+    out = OVERLAYS_DIR / f"{symbol.upper()}_matrix.png"
+    fig.savefig(out.as_posix(),dpi=170,bbox_inches="tight",facecolor=fig.get_facecolor())
     plt.close(fig)
+    logger.info(f"[OK] {symbol} chart saved: {out}")
+    return out.as_posix()
+
+# ============================================================
+# Public API
+# ============================================================
+def build_tech_panel(symbol:str,name:Optional[str]=None,days:int=180)->str:
+    try:
+        return _render_matrix(symbol,days)
+    except Exception as e:
+        logger.error(f"[RenderError] {symbol}: {e}")
+        BG="#1b1e30"; PANEL="#262a42"
+        fig=plt.figure(figsize=(10,6),facecolor=BG)
+        ax=fig.add_subplot(111)
+        ax.set_facecolor(PANEL)
+        ax.text(0.5,0.5,f"Could not render chart for {symbol}\n{e}",ha="center",va="center",color="white")
+        out=OVERLAYS_DIR/f"{symbol}_error.png"
+        fig.savefig(out.as_posix(),dpi=140,bbox_inches="tight",facecolor=fig.get_facecolor())
+        plt.close(fig)
+        return out.as_posix()

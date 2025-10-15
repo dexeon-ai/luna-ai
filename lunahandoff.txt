@@ -1,0 +1,120 @@
+🧵 Luna AI — Handoff Package (Local → Cloud Migration)
+1. 🌌 Core Vision
+
+Luna AI = crypto analysis AI companion + character for streams.
+
+Modes:
+
+Streaming Mode → OBS overlays + Pump.fun live episodes.
+
+Companion Mode → interactive chat/voice assistant on website.
+
+Tokenomics tie-in: “Luna AI — 21 Questions” game loop → finite sessions that can be expanded for token holders.
+
+2. 🧠 What Works Locally Right Now
+
+Folder: C:\Users\jmpat\Desktop\Luna AI\
+
+Virtual Environment: .venv
+
+Core Files:
+
+server.py → Flask API with /analyze, /risk, /macro, /qa.
+
+client_demo.py → test BONK/PEPE analysis pipeline.
+
+snapshot.py → builds token snapshot from Dexscreener/Coingecko.
+
+voice_adapter.py → ElevenLabs MP3 + JSON lipsync generator.
+
+lipsync.py → turns MP3 → viseme JSON (rest/mid/open).
+
+avatar_overlay.html → OBS overlay for Luna avatar + mood emoji.
+
+make_luna_assets.py → placeholder PNGs (avatar_base, mouth_rest, mouth_mid, mouth_open).
+
+tasks.bat → helper commands for demo + run.
+
+Status:
+
+BONK + PEPE analysis runs cleanly.
+
+Voice + lipsync JSON works.
+
+OBS overlay displays avatar with mouth sync + mood emoji.
+
+3. 🟢 New Features To Add
+
+21 Questions Mode
+
+Each session = 21 questions per asset.
+
+Counter decrements with each /qa.
+
+At Q21, session closes + Luna prompts user to “Copy All” responses.
+
+“Copy All” = one-click clipboard dump of entire transcript.
+
+Ephemerality
+
+Sessions + MP3s cleared at end.
+
+No persistent storage.
+
+Mass Copy UX
+
+Copy option appears when session ends.
+
+No PDFs/CSVs, just clipboard copy.
+
+4.☁️ Migration Plan (Local → Cloud)
+
+Phase 1 — Deploy Current Flask App to Cloud (Render/Railway for Dev)
+
+Create free Render account.
+
+Push server.py + requirements.txt to GitHub.
+
+Connect GitHub → Render → auto-deploy.
+
+Verify endpoints (/analyze, /qa, /voice).
+
+Phase 2 — Add 21 Questions Session Manager
+
+Add session_manager.py: tracks remaining_questions=21.
+
+Update /qa endpoint in server.py to decrement + return counter.
+
+Return {answer, remaining_questions} in JSON.
+
+Phase 3 — Frontend Integration
+
+WordPress Elementor page with Custom HTML + Vanilla JS widget.
+
+Widget = floating Luna avatar → opens chat panel.
+
+Chat panel connects to cloud API → plays voice + shows answers.
+
+At end of session, shows “Copy All” button.
+
+Phase 4 — Scale Before Launch
+
+Migrate to AWS Cloud Run / ECS / GCP Cloud Run for autoscaling.
+
+Add Cloudflare in front for DDoS + caching.
+
+Ensure Luna can handle 1,000+ concurrent users on token launch day.
+
+5. 🔮 Future Enhancements (Cloud-Only)
+
+Replace ElevenLabs with native Luna voice model (Coqui TTS / VITS).
+
+Add tickers (stocks, indices, crypto, DeFi/NFT) + side news panels for OBS mode.
+
+Add optional mic input (speech-to-text → Luna Q&A).
+
+Tokenomics:
+
+Free = 21 questions.
+
+Holders = extra questions or premium features.

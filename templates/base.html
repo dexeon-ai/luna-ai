@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{{ brand }} — Live Session</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/response_page.css') }}">
+  <script defer src="{{ url_for('static', filename='js/response_page.js') }}"></script>
+</head>
+<body class="luna">
+  {% block body %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,624 @@
+{
+  "2025-10-09 20:00 UTC": {
+    "bitcoin": {
+      "price": 120980
+    },
+    "ethereum": {
+      "price": 4334.0
+    },
+    "solana": {
+      "price": 218.38
+    },
+    "pepe": {
+      "price": 9.16e-06
+    },
+    "bonk": {
+      "price": 1.89e-05
+    },
+    "dogecoin": {
+      "price": 0.246629
+    },
+    "cardano": {
+      "price": 0.808596
+    }
+  },
+  "2025-10-09 21:00 UTC": {
+    "bitcoin": {
+      "price": 121305
+    },
+    "ethereum": {
+      "price": 4347.06
+    },
+    "solana": {
+      "price": 219.41
+    },
+    "pepe": {
+      "price": 9.2e-06
+    },
+    "bonk": {
+      "price": 1.895e-05
+    }
+  },
+  "2025-10-09 22:00 UTC": {},
+  "2025-10-09 23:00 UTC": {},
+  "2025-10-10 00:00 UTC": {
+    "bitcoin": {
+      "price": 121849
+    },
+    "ethereum": {
+      "price": 4381.45
+    },
+    "solana": {
+      "price": 221.72
+    },
+    "pepe": {
+      "price": 9.28e-06
+    },
+    "bonk": {
+      "price": 1.901e-05
+    },
+    "dogecoin": {
+      "price": 0.249592
+    },
+    "cardano": {
+      "price": 0.81646
+    }
+  },
+  "2025-10-10 01:00 UTC": {},
+  "2025-10-10 02:00 UTC": {},
+  "2025-10-10 03:00 UTC": {},
+  "2025-10-10 04:00 UTC": {},
+  "2025-10-10 05:00 UTC": {},
+  "2025-10-10 06:00 UTC": {},
+  "2025-10-10 07:00 UTC": {
+    "bitcoin": {
+      "price": 121225
+    },
+    "ethereum": {
+      "price": 4324.82
+    },
+    "solana": {
+      "price": 218.5
+    },
+    "pepe": {
+      "price": 9.26e-06
+    }
+  },
+  "2025-10-10 08:00 UTC": {
+    "bitcoin": {
+      "price": 121289
+    },
+    "ethereum": {
+      "price": 4331.41
+    },
+    "solana": {
+      "price": 218.89
+    }
+  },
+  "2025-10-10 09:00 UTC": {
+    "bitcoin": {
+      "price": 121745
+    }
+  },
+  "2025-10-10 10:00 UTC": {},
+  "2025-10-10 11:00 UTC": {},
+  "2025-10-10 12:00 UTC": {},
+  "2025-10-10 13:00 UTC": {
+    "dogecoin": {
+      "price": 0.252197
+    },
+    "cardano": {
+      "price": 0.820732
+    }
+  },
+  "2025-10-10 14:00 UTC": {
+    "ethereum": {
+      "price": 4337.16
+    },
+    "solana": {
+      "price": 222.9
+    },
+    "pepe": {
+      "price": 9.26e-06
+    },
+    "bonk": {
+      "price": 1.926e-05
+    },
+    "dogecoin": {
+      "price": 0.250214
+    }
+  },
+  "2025-10-10 15:00 UTC": {
+    "bitcoin": {
+      "price": 118727
+    },
+    "ethereum": {
+      "price": 4098.66
+    },
+    "solana": {
+      "price": 211.96
+    },
+    "bonk": {
+      "price": 1.812e-05
+    },
+    "cardano": {
+      "price": 0.78651
+    }
+  },
+  "2025-10-10 16:00 UTC": {
+    "solana": {
+      "price": 211.97
+    },
+    "pepe": {
+      "price": 8.86e-06
+    }
+  },
+  "2025-10-10 17:00 UTC": {},
+  "2025-10-10 18:00 UTC": {},
+  "2025-10-10 19:00 UTC": {
+    "bitcoin": {
+      "price": 116197
+    },
+    "ethereum": {
+      "price": 3976.33
+    },
+    "solana": {
+      "price": 204.89
+    },
+    "pepe": {
+      "price": 8.57e-06
+    },
+    "dogecoin": {
+      "price": 0.231655
+    },
+    "cardano": {
+      "price": 0.76428
+    }
+  },
+  "2025-10-10 20:00 UTC": {
+    "bitcoin": {
+      "price": 116921
+    },
+    "ethereum": {
+      "price": 4014.4
+    },
+    "solana": {
+      "price": 207.18
+    },
+    "pepe": {
+      "price": 8.62e-06
+    },
+    "bonk": {
+      "price": 1.745e-05
+    }
+  },
+  "2025-10-10 21:00 UTC": {
+    "bitcoin": {
+      "price": 111282
+    },
+    "ethereum": {
+      "price": 3774.65
+    },
+    "solana": {
+      "price": 183.07
+    },
+    "dogecoin": {
+      "price": 0.172368
+    }
+  },
+  "2025-10-10 22:00 UTC": {},
+  "2025-10-10 23:00 UTC": {},
+  "2025-10-11 00:00 UTC": {
+    "bitcoin": {
+      "price": 112284
+    }
+  },
+  "2025-10-11 01:00 UTC": {},
+  "2025-10-11 02:00 UTC": {
+    "bitcoin": {
+      "price": 112488
+    }
+  },
+  "2025-10-11 03:00 UTC": {},
+  "2025-10-11 04:00 UTC": {
+    "bitcoin": {
+      "price": 112030
+    },
+    "ethereum": {
+      "price": 3805.16
+    },
+    "solana": {
+      "price": 185.62
+    },
+    "pepe": {
+      "price": 6.99e-06
+    },
+    "bonk": {
+      "price": 1.411e-05
+    }
+  },
+  "2025-10-11 05:00 UTC": {},
+  "2025-10-11 06:00 UTC": {
+    "bitcoin": {
+      "price": 112475
+    },
+    "ethereum": {
+      "price": 3800.28
+    },
+    "solana": {
+      "price": 185.49
+    },
+    "pepe": {
+      "price": 7.04e-06
+    },
+    "bonk": {
+      "price": 1.431e-05
+    }
+  },
+  "2025-10-11 07:00 UTC": {},
+  "2025-10-11 08:00 UTC": {
+    "bitcoin": {
+      "price": 110935
+    },
+    "ethereum": {
+      "price": 3800.42
+    },
+    "solana": {
+      "price": 184.74
+    },
+    "pepe": {
+      "price": 7.14e-06
+    },
+    "bonk": {
+      "price": 1.473e-05
+    }
+  },
+  "2025-10-11 09:00 UTC": {},
+  "2025-10-11 10:00 UTC": {
+    "bitcoin": {
+      "price": 112271
+    },
+    "ethereum": {
+      "price": 3842.35
+    },
+    "solana": {
+      "price": 185.01
+    },
+    "pepe": {
+      "price": 7.22e-06
+    },
+    "bonk": {
+      "price": 1.484e-05
+    }
+  },
+  "2025-10-11 11:00 UTC": {},
+  "2025-10-11 12:00 UTC": {},
+  "2025-10-11 13:00 UTC": {
+    "bitcoin": {
+      "price": 112077
+    },
+    "ethereum": {
+      "price": 3799.53
+    },
+    "solana": {
+      "price": 182.12
+    }
+  },
+  "2025-10-11 14:00 UTC": {
+    "bitcoin": {
+      "price": 112198
+    },
+    "ethereum": {
+      "price": 3809.21
+    },
+    "solana": {
+      "price": 182.91
+    },
+    "pepe": {
+      "price": 7.05e-06
+    }
+  },
+  "2025-10-11 15:00 UTC": {
+    "bitcoin": {
+      "price": 112157
+    },
+    "ethereum": {
+      "price": 3831.36
+    },
+    "solana": {
+      "price": 184.07
+    },
+    "pepe": {
+      "price": 7.08e-06
+    }
+  },
+  "2025-10-11 16:00 UTC": {
+    "bitcoin": {
+      "price": 111844
+    },
+    "ethereum": {
+      "price": 3820.98
+    },
+    "solana": {
+      "price": 183.42
+    },
+    "pepe": {
+      "price": 7.07e-06
+    }
+  },
+  "2025-10-11 17:00 UTC": {
+    "bitcoin": {
+      "price": 112187
+    },
+    "ethereum": {
+      "price": 3829.12
+    },
+    "solana": {
+      "price": 184.15
+    },
+    "pepe": {
+      "price": 7.07e-06
+    },
+    "bonk": {
+      "price": 1.432e-05
+    }
+  },
+  "2025-10-11 18:00 UTC": {
+    "bitcoin": {
+      "price": 112011
+    },
+    "ethereum": {
+      "price": 3818.32
+    },
+    "solana": {
+      "price": 182.75
+    },
+    "pepe": {
+      "price": 7.04e-06
+    },
+    "bonk": {
+      "price": 1.416e-05
+    }
+  },
+  "2025-10-11 19:00 UTC": {
+    "bitcoin": {
+      "price": 111321
+    }
+  },
+  "2025-10-11 20:00 UTC": {
+    "bitcoin": {
+      "price": 110571
+    },
+    "ethereum": {
+      "price": 3697.07
+    },
+    "solana": {
+      "price": 175.76
+    },
+    "pepe": {
+      "price": 6.68e-06
+    },
+    "bonk": {
+      "price": 1.323e-05
+    },
+    "dogecoin": {
+      "price": 0.181662
+    }
+  },
+  "2025-10-11 21:00 UTC": {},
+  "2025-10-11 22:00 UTC": {
+    "bitcoin": {
+      "price": 111212
+    },
+    "ethereum": {
+      "price": 3755.13
+    },
+    "solana": {
+      "price": 177.29
+    },
+    "pepe": {
+      "price": 6.72e-06
+    },
+    "bonk": {
+      "price": 1.355e-05
+    }
+  },
+  "2025-10-11 23:00 UTC": {},
+  "2025-10-12 00:00 UTC": {},
+  "2025-10-12 01:00 UTC": {
+    "bitcoin": {
+      "price": 110204
+    },
+    "ethereum": {
+      "price": 3731.97
+    },
+    "solana": {
+      "price": 174.14
+    },
+    "pepe": {
+      "price": 6.62e-06
+    },
+    "bonk": {
+      "price": 1.334e-05
+    }
+  },
+  "2025-10-12 02:00 UTC": {},
+  "2025-10-12 03:00 UTC": {},
+  "2025-10-12 04:00 UTC": {},
+  "2025-10-12 05:00 UTC": {
+    "bitcoin": {
+      "price": 111606
+    },
+    "ethereum": {
+      "price": 3816.3
+    },
+    "solana": {
+      "price": 181.39
+    },
+    "pepe": {
+      "price": 6.77e-06
+    },
+    "bonk": {
+      "price": 1.383e-05
+    }
+  },
+  "2025-10-12 06:00 UTC": {},
+  "2025-10-12 07:00 UTC": {},
+  "2025-10-12 08:00 UTC": {},
+  "2025-10-12 09:00 UTC": {
+    "bitcoin": {
+      "price": 111453
+    },
+    "ethereum": {
+      "price": 3821.38
+    }
+  },
+  "2025-10-12 10:00 UTC": {},
+  "2025-10-12 11:00 UTC": {},
+  "2025-10-12 12:00 UTC": {
+    "bitcoin": {
+      "price": 111827
+    },
+    "ethereum": {
+      "price": 3832.31
+    },
+    "solana": {
+      "price": 182.57
+    },
+    "pepe": {
+      "price": 6.82e-06
+    }
+  },
+  "2025-10-12 13:00 UTC": {
+    "bitcoin": {
+      "price": 111705
+    }
+  },
+  "2025-10-12 14:00 UTC": {},
+  "2025-10-12 15:00 UTC": {},
+  "2025-10-12 16:00 UTC": {
+    "solana": {
+      "price": 192.76
+    },
+    "pepe": {
+      "price": 7.33e-06
+    },
+    "bonk": {
+      "price": 1.527e-05
+    }
+  },
+  "2025-10-12 17:00 UTC": {},
+  "2025-10-12 18:00 UTC": {
+    "bitcoin": {
+      "price": 113774
+    },
+    "ethereum": {
+      "price": 4109.76
+    },
+    "solana": {
+      "price": 193.42
+    },
+    "pepe": {
+      "price": 7.46e-06
+    },
+    "bonk": {
+      "price": 1.529e-05
+    }
+  },
+  "2025-10-12 19:00 UTC": {
+    "bitcoin": {
+      "price": 114358
+    },
+    "ethereum": {
+      "price": 4133.96
+    }
+  },
+  "2025-10-12 20:00 UTC": {
+    "bitcoin": {
+      "price": 115176
+    },
+    "ethereum": {
+      "price": 4146.28
+    },
+    "solana": {
+      "price": 196.89
+    },
+    "pepe": {
+      "price": 7.64e-06
+    }
+  },
+  "2025-10-12 21:00 UTC": {
+    "bitcoin": {
+      "price": 114737
+    },
+    "ethereum": {
+      "price": 4113.95
+    },
+    "solana": {
+      "price": 194.73
+    }
+  },
+  "2025-10-12 22:00 UTC": {
+    "bitcoin": {
+      "price": 115375
+    },
+    "ethereum": {
+      "price": 4134.55
+    },
+    "solana": {
+      "price": 197.22
+    }
+  },
+  "2025-10-12 23:00 UTC": {
+    "bitcoin": {
+      "price": 115166
+    },
+    "ethereum": {
+      "price": 4141.85
+    },
+    "solana": {
+      "price": 196.49
+    },
+    "pepe": {
+      "price": 7.47e-06
+    }
+  },
+  "2025-10-13 00:00 UTC": {
+    "bitcoin": {
+      "price": 115139
+    },
+    "ethereum": {
+      "price": 4142.45
+    },
+    "solana": {
+      "price": 196.9
+    },
+    "pepe": {
+      "price": 7.41e-06
+    }
+  },
+  "2025-10-13 01:00 UTC": {},
+  "2025-10-13 02:00 UTC": {},
+  "2025-10-13 03:00 UTC": {},
+  "2025-10-13 04:00 UTC": {
+    "bitcoin": {
+      "price": 114786
+    },
+    "ethereum": {
+      "price": 4134.14
+    },
+    "solana": {
+      "price": 195.63
+    }
+  },
+  "2025-10-13 05:00 UTC": {
+    "bitcoin": {
+      "price": 114760
+    }
+  },
+  "2025-10-13 06:00 UTC": {
+    "bitcoin": {
+      "price": 115186
+    }
+  }
+}

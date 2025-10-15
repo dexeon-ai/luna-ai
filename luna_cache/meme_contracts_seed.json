@@ -1,0 +1,3592 @@
+{
+  "tokens": {
+    "doge": {
+      "name": "Department of Gov Efficiency (deptofgovtefficiency.com)",
+      "symbol": "DOGE"
+    },
+    "shib": {
+      "name": "SHIBA INU",
+      "symbol": "SHIB"
+    },
+    "pepe": {
+      "name": "PEPE AI (pepeai.one)",
+      "symbol": "PEPE"
+    },
+    "m": {
+      "name": "MemeCore",
+      "symbol": "M"
+    },
+    "pengu": {
+      "name": "PENGU AI",
+      "symbol": "PENGU"
+    },
+    "bonk": {
+      "name": "Bonk",
+      "symbol": "BONK"
+    },
+    "trump": {
+      "name": "Donald Trump",
+      "symbol": "TRUMP"
+    },
+    "spx": {
+      "name": "SPX6900",
+      "symbol": "SPX"
+    },
+    "floki": {
+      "name": "FLOKI",
+      "symbol": "FLOKI"
+    },
+    "wif": {
+      "name": "DOGWIFHOOD",
+      "symbol": "WIF"
+    },
+    "fartcoin": {
+      "name": "FARTCOIN (fartcoin.one)",
+      "symbol": "FARTCOIN"
+    },
+    "brett": {
+      "name": "Brett (ETH)",
+      "symbol": "BRETT"
+    },
+    "ape": {
+      "name": "ApeCoin",
+      "symbol": "APE"
+    },
+    "toshi": {
+      "name": "Toshi",
+      "symbol": "TOSHI"
+    },
+    "useless": {
+      "name": "Useless Coin",
+      "symbol": "USELESS"
+    },
+    "cheems": {
+      "name": "Cheems",
+      "symbol": "CHEEMS"
+    },
+    "snek": {
+      "name": "Snek",
+      "symbol": "SNEK"
+    },
+    "mog": {
+      "name": "Mog Coin",
+      "symbol": "MOG"
+    },
+    "b": {
+      "name": "BUILDon",
+      "symbol": "B"
+    },
+    "turbo": {
+      "name": "Turbo Trump",
+      "symbol": "TURBO"
+    },
+    "mew": {
+      "name": "cat in a dogs world",
+      "symbol": "MEW"
+    },
+    "popcat": {
+      "name": "Popcat (SOL)",
+      "symbol": "POPCAT"
+    },
+    "babydoge": {
+      "name": "Baby Doge Coin",
+      "symbol": "BABYDOGE"
+    },
+    "dog": {
+      "name": "Own The Doge",
+      "symbol": "DOG"
+    },
+    "lion": {
+      "name": "Loaded Lions",
+      "symbol": "LION"
+    },
+    "aic": {
+      "name": "AI Companions",
+      "symbol": "AIC"
+    },
+    "tibbir": {
+      "name": "Ribbita by Virtuals",
+      "symbol": "TIBBIR"
+    },
+    "币安人生": {
+      "name": "币安人生",
+      "symbol": "币安人生"
+    },
+    "pnut": {
+      "name": "Peanut the Squirrel",
+      "symbol": "PNUT"
+    },
+    "rekt": {
+      "name": "Rekt (rektcoin.com)",
+      "symbol": "REKT"
+    },
+    "dora": {
+      "name": "DORA",
+      "symbol": "DORA"
+    },
+    "not": {
+      "name": "Notcoin",
+      "symbol": "NOT"
+    },
+    "melania": {
+      "name": "Official Melania Meme",
+      "symbol": "MELANIA"
+    },
+    "moodeng": {
+      "name": "MOO DENG (moodeng.vip)",
+      "symbol": "MOODENG"
+    },
+    "meme": {
+      "name": "Memetic / PepeCoin",
+      "symbol": "MEME"
+    },
+    "npc": {
+      "name": "Non-Playable Coin",
+      "symbol": "NPC"
+    },
+    "yzy": {
+      "name": "YZY MONEY",
+      "symbol": "YZY"
+    },
+    "troll": {
+      "name": "Troll (troll.run)",
+      "symbol": "TROLL"
+    },
+    "neiro": {
+      "name": "Neiro Solana (neirobropump.com)",
+      "symbol": "NEIRO"
+    },
+    "bome": {
+      "name": "Book of Meme 3.0",
+      "symbol": "BOME"
+    },
+    "giga": {
+      "name": "Gigachad",
+      "symbol": "GIGA"
+    },
+    "gohome": {
+      "name": "GOHOME",
+      "symbol": "GOHOME"
+    },
+    "ai16z": {
+      "name": "ai16z",
+      "symbol": "AI16Z"
+    },
+    "bitcoin": {
+      "name": "HarryPotterObamaSonic10Inu (ERC-20)",
+      "symbol": "BITCOIN"
+    },
+    "osak": {
+      "name": "Osaka Protocol",
+      "symbol": "OSAK"
+    },
+    "people": {
+      "name": "MAGA",
+      "symbol": "PEOPLE"
+    },
+    "giggle": {
+      "name": "Giggle Fund",
+      "symbol": "GIGGLE"
+    },
+    "goat": {
+      "name": "Sonic The Goat",
+      "symbol": "GOAT"
+    },
+    "wkc": {
+      "name": "Wiki Cat",
+      "symbol": "WKC"
+    },
+    "jellyjelly": {
+      "name": "Jelly-My-Jelly",
+      "symbol": "JELLYJELLY"
+    },
+    "bert": {
+      "name": "Bertram The Pomeranian",
+      "symbol": "BERT"
+    },
+    "aura": {
+      "name": "Aura",
+      "symbol": "AURA"
+    },
+    "tut": {
+      "name": "Tutorial",
+      "symbol": "TUT"
+    },
+    "siren": {
+      "name": "siren",
+      "symbol": "SIREN"
+    },
+    "ban": {
+      "name": "Banano",
+      "symbol": "BAN"
+    },
+    "apepe": {
+      "name": "Ape and Pepe",
+      "symbol": "APEPE"
+    },
+    "cat": {
+      "name": "CatCoin",
+      "symbol": "CAT"
+    },
+    "dogs": {
+      "name": "DOGS",
+      "symbol": "DOGS"
+    },
+    "vine": {
+      "name": "Vine Coin",
+      "symbol": "VINE"
+    },
+    "pythia": {
+      "name": "Pythia",
+      "symbol": "PYTHIA"
+    },
+    "degen": {
+      "name": "Degen Arena",
+      "symbol": "DEGEN"
+    },
+    "bananas31": {
+      "name": "Banana For Scale",
+      "symbol": "BANANAS31"
+    },
+    "ali": {
+      "name": "Artificial Liquid Intelligence",
+      "symbol": "ALI"
+    },
+    "egl1": {
+      "name": "EGL1",
+      "symbol": "EGL1"
+    },
+    "elon": {
+      "name": "Eloncoin",
+      "symbol": "ELON"
+    },
+    "look": {
+      "name": "LOOK",
+      "symbol": "LOOK"
+    },
+    "ponke": {
+      "name": "Ponke",
+      "symbol": "PONKE"
+    },
+    "andy": {
+      "name": "Andy on SOL",
+      "symbol": "ANDY"
+    },
+    "nobody": {
+      "name": "Nobody Sausage",
+      "symbol": "NOBODY"
+    },
+    "apu": {
+      "name": "Apu Apustaja",
+      "symbol": "APU"
+    },
+    "chillguy": {
+      "name": "Just a chill guy",
+      "symbol": "CHILLGUY"
+    },
+    "slerf": {
+      "name": "SLERF",
+      "symbol": "SLERF"
+    },
+    "pepeontron": {
+      "name": "PePeonTron",
+      "symbol": "PEPEONTRON"
+    },
+    "pepecoin": {
+      "name": "PepeCoin",
+      "symbol": "PEPECOIN"
+    },
+    "bnbholder": {
+      "name": "币安Holder",
+      "symbol": "BNBHOLDER"
+    },
+    "broccoli": {
+      "name": "Broccoli (broccolibnb.org)",
+      "symbol": "BROCCOLI"
+    },
+    "fartboy": {
+      "name": "Fartboy",
+      "symbol": "FARTBOY"
+    },
+    "manyu": {
+      "name": "littlemanyu",
+      "symbol": "MANYU"
+    },
+    "mubarak": {
+      "name": "Mubarak",
+      "symbol": "MUBARAK"
+    },
+    "hippo": {
+      "name": "sudeng",
+      "symbol": "HIPPO"
+    },
+    "palu": {
+      "name": "Binance's Palu",
+      "symbol": "PALU"
+    },
+    "wolf": {
+      "name": "Landwolf (firstlandwolfeth)",
+      "symbol": "WOLF"
+    },
+    "liberty": {
+      "name": "Torch of Liberty",
+      "symbol": "LIBERTY"
+    },
+    "fwog": {
+      "name": "Fwog (SOL)",
+      "symbol": "FWOG"
+    },
+    "mm": {
+      "name": "MOMOFUN",
+      "symbol": "MM"
+    },
+    "sundog": {
+      "name": "SUNDOG",
+      "symbol": "SUNDOG"
+    },
+    "客服小何": {
+      "name": "客服小何",
+      "symbol": "客服小何"
+    },
+    "coq": {
+      "name": "Coq Inu",
+      "symbol": "COQ"
+    },
+    "ski": {
+      "name": "Ski Mask Dog",
+      "symbol": "SKI"
+    },
+    "bone": {
+      "name": "Bone ShibaSwap",
+      "symbol": "BONE"
+    },
+    "tst": {
+      "name": "[Fake] Test (testtoken.me)",
+      "symbol": "TST"
+    },
+    "act": {
+      "name": "Act I : The AI Prophecy",
+      "symbol": "ACT"
+    },
+    "pep": {
+      "name": "PEPECOIN",
+      "symbol": "PEP"
+    },
+    "skyai": {
+      "name": "SKYAI",
+      "symbol": "SKYAI"
+    },
+    "usduc": {
+      "name": "Unstable Coin (usduc.org)",
+      "symbol": "USDUC"
+    },
+    "crepe": {
+      "name": "CREPE",
+      "symbol": "CREPE"
+    },
+    "wen": {
+      "name": "Wen",
+      "symbol": "WEN"
+    },
+    "mori": {
+      "name": "MORI COIN",
+      "symbol": "MORI"
+    },
+    "noice": {
+      "name": "noice",
+      "symbol": "NOICE"
+    },
+    "nub": {
+      "name": "nubcat",
+      "symbol": "NUB"
+    },
+    "keycat": {
+      "name": "Keyboard Cat",
+      "symbol": "KEYCAT"
+    },
+    "real": {
+      "name": "Real",
+      "symbol": "REAL"
+    },
+    "a47": {
+      "name": "AGENDA 47",
+      "symbol": "A47"
+    },
+    "doginme": {
+      "name": "doginme",
+      "symbol": "DOGINME"
+    },
+    "gme": {
+      "name": "GameStop Coin",
+      "symbol": "GME"
+    },
+    "bobo": {
+      "name": "BOBO",
+      "symbol": "BOBO"
+    },
+    "dji6930": {
+      "name": "DOWGE",
+      "symbol": "DJI6930"
+    },
+    "pika": {
+      "name": "Pikaboss",
+      "symbol": "PIKA"
+    },
+    "pippin": {
+      "name": "pippin",
+      "symbol": "PIPPIN"
+    },
+    "uranus": {
+      "name": "Uranus",
+      "symbol": "URANUS"
+    },
+    "arara": {
+      "name": "Araracoin",
+      "symbol": "ARARA"
+    },
+    "miggles": {
+      "name": "Mr Miggles",
+      "symbol": "MIGGLES"
+    },
+    "joe": {
+      "name": "Joe Coin",
+      "symbol": "JOE"
+    },
+    "ava": {
+      "name": "AVA",
+      "symbol": "AVA"
+    },
+    "zerebro": {
+      "name": "Zerebro",
+      "symbol": "ZEREBRO"
+    },
+    "ufd": {
+      "name": "Unicorn Fart Dust",
+      "symbol": "UFD"
+    },
+    "bob": {
+      "name": "BOB (ETH)",
+      "symbol": "BOB"
+    },
+    "quack": {
+      "name": "RichQUACK.com",
+      "symbol": "QUACK"
+    },
+    "myro": {
+      "name": "Myro",
+      "symbol": "MYRO"
+    },
+    "fair3": {
+      "name": "Fair and Free",
+      "symbol": "FAIR3"
+    },
+    "booe": {
+      "name": "Book of Ethereum",
+      "symbol": "BOOE"
+    },
+    "wojak": {
+      "name": "Wojak",
+      "symbol": "WOJAK"
+    },
+    "caw": {
+      "name": "crow with knife",
+      "symbol": "CAW"
+    },
+    "bulla": {
+      "name": "Bulla",
+      "symbol": "BULLA"
+    },
+    "kekius": {
+      "name": "Kekius Maximus (kekiusmaximus.vip)",
+      "symbol": "KEKIUS"
+    },
+    "pup": {
+      "name": "PUP (pupxbnb.com)",
+      "symbol": "PUP"
+    },
+    "borgy": {
+      "name": "BORGY",
+      "symbol": "BORGY"
+    },
+    "lofi": {
+      "name": "LOFI",
+      "symbol": "LOFI"
+    },
+    "daddy": {
+      "name": "Daddy Tate",
+      "symbol": "DADDY"
+    },
+    "ladys": {
+      "name": "Milady Meme Coin",
+      "symbol": "LADYS"
+    },
+    "pork": {
+      "name": "PepeFork",
+      "symbol": "PORK"
+    },
+    "tears": {
+      "name": "Liberals Tears",
+      "symbol": "TEARS"
+    },
+    "donkey": {
+      "name": "Donkey (DONKEY_BSC_MEME)",
+      "symbol": "DONKEY"
+    },
+    "aidoge": {
+      "name": "ArbDoge AI",
+      "symbol": "AIDOGE"
+    },
+    "pit": {
+      "name": "Pitbull",
+      "symbol": "PIT"
+    },
+    "omikami": {
+      "name": "Amaterasu Omikami",
+      "symbol": "OMIKAMI"
+    },
+    "aix": {
+      "name": "Ai Xovia",
+      "symbol": "AIX"
+    },
+    "peipei": {
+      "name": "PeiPei (ETH)",
+      "symbol": "PEIPEI"
+    },
+    "moby": {
+      "name": "Moby",
+      "symbol": "MOBY"
+    },
+    "why": {
+      "name": "WHY",
+      "symbol": "WHY"
+    },
+    "vinu": {
+      "name": "Vita Inu",
+      "symbol": "VINU"
+    },
+    "$purpe": {
+      "name": "Purple Pepe",
+      "symbol": "$PURPE"
+    },
+    "kendu": {
+      "name": "Kendu",
+      "symbol": "KENDU"
+    },
+    "ndq": {
+      "name": "NDQ666",
+      "symbol": "NDQ"
+    },
+    "token": {
+      "name": "TokenFi",
+      "symbol": "TOKEN"
+    },
+    "jager": {
+      "name": "Jager Hunter",
+      "symbol": "JAGER"
+    },
+    "koma": {
+      "name": "Koma Inu",
+      "symbol": "KOMA"
+    },
+    "gork": {
+      "name": "New XAI gork",
+      "symbol": "GORK"
+    },
+    "benji": {
+      "name": "Basenji",
+      "symbol": "BENJI"
+    },
+    "sp": {
+      "name": "Smart Pocket",
+      "symbol": "SP"
+    },
+    "hosky": {
+      "name": "HOSKY Token",
+      "symbol": "HOSKY"
+    },
+    "maneki": {
+      "name": "MANEKI",
+      "symbol": "MANEKI"
+    },
+    "bells": {
+      "name": "Bellscoin",
+      "symbol": "BELLS"
+    },
+    "retardio": {
+      "name": "RETARDIO",
+      "symbol": "RETARDIO"
+    },
+    "luna": {
+      "name": "Luna by Virtuals",
+      "symbol": "LUNA"
+    },
+    "cate": {
+      "name": "Cate",
+      "symbol": "CATE"
+    },
+    "vader": {
+      "name": "VaderAI by Virtuals",
+      "symbol": "VADER"
+    },
+    "hyper": {
+      "name": "Hyperpigmentation",
+      "symbol": "HYPER"
+    },
+    "san": {
+      "name": "San Chan",
+      "symbol": "SAN"
+    },
+    "priceless": {
+      "name": "Priceless",
+      "symbol": "PRICELESS"
+    },
+    "dust": {
+      "name": "Dust",
+      "symbol": "DUST"
+    },
+    "smog": {
+      "name": "Smog",
+      "symbol": "SMOG"
+    },
+    "light": {
+      "name": "Light",
+      "symbol": "LIGHT"
+    },
+    "sigma": {
+      "name": "SIGMA",
+      "symbol": "SIGMA"
+    },
+    "leash": {
+      "name": "Doge Killer",
+      "symbol": "LEASH"
+    },
+    "$michi": {
+      "name": "michi (SOL)",
+      "symbol": "$MICHI"
+    },
+    "wepe": {
+      "name": "Wall Street Pepe",
+      "symbol": "WEPE"
+    },
+    "phnix": {
+      "name": "Phoenix",
+      "symbol": "PHNIX"
+    },
+    "volt": {
+      "name": "Volt Inu",
+      "symbol": "VOLT"
+    },
+    "hosico": {
+      "name": "Hosico",
+      "symbol": "HOSICO"
+    },
+    "wuf": {
+      "name": "WUFFI",
+      "symbol": "WUF"
+    },
+    "kibshi": {
+      "name": "KiboShib",
+      "symbol": "KIBSHI"
+    },
+    "wbull": {
+      "name": "Wall St. Bull",
+      "symbol": "WBULL"
+    },
+    "pups": {
+      "name": "Pups (Bitcoin)",
+      "symbol": "PUPS"
+    },
+    "car": {
+      "name": "Central African Republic Meme",
+      "symbol": "CAR"
+    },
+    "mona": {
+      "name": "MonaCoin",
+      "symbol": "MONA"
+    },
+    "jyai": {
+      "name": "Jerry The Turtle By Matt Furie",
+      "symbol": "JYAI"
+    },
+    "sbbtc": {
+      "name": "ShibaBitcoin",
+      "symbol": "SBBTC"
+    },
+    "feg": {
+      "name": "FEED EVERY GORILLA",
+      "symbol": "FEG"
+    },
+    "pain": {
+      "name": "Pain (paintoken.com)",
+      "symbol": "PAIN"
+    },
+    "midas": {
+      "name": "Midas The Minotaur",
+      "symbol": "MIDAS"
+    },
+    "mochi": {
+      "name": "Mochi (New)",
+      "symbol": "MOCHI"
+    },
+    "rizzmas": {
+      "name": "Rizzmas",
+      "symbol": "RIZZMAS"
+    },
+    "monky": {
+      "name": "Wise Monkey",
+      "symbol": "MONKY"
+    },
+    "house": {
+      "name": "Housecoin",
+      "symbol": "HOUSE"
+    },
+    "yuru": {
+      "name": "YURU COIN",
+      "symbol": "YURU"
+    },
+    "stnk": {
+      "name": "Stonks",
+      "symbol": "STNK"
+    },
+    "mia": {
+      "name": "MIA",
+      "symbol": "MIA"
+    },
+    "grok": {
+      "name": "BOME GROK",
+      "symbol": "GROK"
+    },
+    "billy": {
+      "name": "Billy",
+      "symbol": "BILLY"
+    },
+    "usa": {
+      "name": "American Coin",
+      "symbol": "USA"
+    },
+    "jesus": {
+      "name": "Jesus Coin",
+      "symbol": "JESUS"
+    },
+    "boop": {
+      "name": "Boop",
+      "symbol": "BOOP"
+    },
+    "lobo": {
+      "name": "LOBO•THE•WOLF•PUP (Bitcoin)",
+      "symbol": "LOBO"
+    },
+    "kokok": {
+      "name": "KoKoK The Roach",
+      "symbol": "KOKOK"
+    },
+    "mother": {
+      "name": "Mother Iggy",
+      "symbol": "MOTHER"
+    },
+    "px": {
+      "name": "Not Pixel",
+      "symbol": "PX"
+    },
+    "gochu": {
+      "name": "Gochujangcoin",
+      "symbol": "GOCHU"
+    },
+    "kishu": {
+      "name": "Kishu Inu",
+      "symbol": "KISHU"
+    },
+    "hoge": {
+      "name": "Hoge Finance",
+      "symbol": "HOGE"
+    },
+    "russell": {
+      "name": "Russell",
+      "symbol": "RUSSELL"
+    },
+    "hoppy": {
+      "name": "Hoppy",
+      "symbol": "HOPPY"
+    },
+    "dobo": {
+      "name": "DogeBonk",
+      "symbol": "DOBO"
+    },
+    "roar": {
+      "name": "Roaring Kitty",
+      "symbol": "ROAR"
+    },
+    "nya": {
+      "name": "Nya",
+      "symbol": "NYA"
+    },
+    "samo": {
+      "name": "Samoyedcoin",
+      "symbol": "SAMO"
+    },
+    "mery": {
+      "name": "Mistery On Cro",
+      "symbol": "MERY"
+    },
+    "aerobud": {
+      "name": "Aerobud",
+      "symbol": "AEROBUD"
+    },
+    "vct": {
+      "name": "VCHAT Token",
+      "symbol": "VCT"
+    },
+    "hege": {
+      "name": "Hege",
+      "symbol": "HEGE"
+    },
+    "starl": {
+      "name": "Starlink",
+      "symbol": "STARL"
+    },
+    "byte": {
+      "name": "Byte",
+      "symbol": "BYTE"
+    },
+    "mumu": {
+      "name": "Mumu",
+      "symbol": "MUMU"
+    },
+    "hodl": {
+      "name": "HODL Coin",
+      "symbol": "HODL"
+    },
+    "mask": {
+      "name": "catwifmask",
+      "symbol": "MASK"
+    },
+    "kata": {
+      "name": "Katana Inu",
+      "symbol": "KATA"
+    },
+    "labubu": {
+      "name": "LABUBU",
+      "symbol": "LABUBU"
+    },
+    "sloth": {
+      "name": "Slothana",
+      "symbol": "SLOTH"
+    },
+    "rain": {
+      "name": "Rain Coin",
+      "symbol": "RAIN"
+    },
+    "tsuka": {
+      "name": "Dejitaru Tsuka",
+      "symbol": "TSUKA"
+    },
+    "cummies": {
+      "name": "CumRocket",
+      "symbol": "CUMMIES"
+    },
+    "happy": {
+      "name": "Happy Cat",
+      "symbol": "HAPPY"
+    },
+    "startup": {
+      "name": "Startup",
+      "symbol": "STARTUP"
+    },
+    "pwease": {
+      "name": "Pwease",
+      "symbol": "PWEASE"
+    },
+    "pepe2.0": {
+      "name": "Pepe 2.0 (pepe20.vip)",
+      "symbol": "PEPE2.0"
+    },
+    "rizo": {
+      "name": "HahaYes",
+      "symbol": "RIZO"
+    },
+    "dolan": {
+      "name": "Dolan Duck",
+      "symbol": "DOLAN"
+    },
+    "crypto": {
+      "name": "Cryptocurrency Coin",
+      "symbol": "CRYPTO"
+    },
+    "shi": {
+      "name": "Shina Inu",
+      "symbol": "SHI"
+    },
+    "frog": {
+      "name": "Frodo the virtual samurai",
+      "symbol": "FROG"
+    },
+    "shibdoge": {
+      "name": "ShibaDoge",
+      "symbol": "SHIBDOGE"
+    },
+    "dingo": {
+      "name": "Dingocoin",
+      "symbol": "DINGO"
+    },
+    "akita": {
+      "name": "Akita Inu",
+      "symbol": "AKITA"
+    },
+    "ddbam": {
+      "name": "Didi Bam Bam",
+      "symbol": "DDBAM"
+    },
+    "milli": {
+      "name": "MILLI",
+      "symbol": "MILLI"
+    },
+    "jailstool": {
+      "name": "Stool Prisondente",
+      "symbol": "JAILSTOOL"
+    },
+    "gorilla": {
+      "name": "Gorilla",
+      "symbol": "GORILLA"
+    },
+    "cocoro": {
+      "name": "COCORO",
+      "symbol": "COCORO"
+    },
+    "xavier": {
+      "name": "Xavier: Renegade Angel",
+      "symbol": "XAVIER"
+    },
+    "moew": {
+      "name": "donotfomoew",
+      "symbol": "MOEW"
+    },
+    "jeets": {
+      "name": "I'm a Jeet",
+      "symbol": "JEETS"
+    },
+    "omnom": {
+      "name": "Doge Eat Doge",
+      "symbol": "OMNOM"
+    },
+    "bnb card": {
+      "name": "BNB Card",
+      "symbol": "BNB CARD"
+    },
+    "$1": {
+      "name": "just buy $1 worth of this coin",
+      "symbol": "$1"
+    },
+    "foxsy": {
+      "name": "Foxsy AI",
+      "symbol": "FOXSY"
+    },
+    "peezy": {
+      "name": "Peezy 0x69",
+      "symbol": "PEEZY"
+    },
+    "quq": {
+      "name": "Quq",
+      "symbol": "QUQ"
+    },
+    "u": {
+      "name": "U",
+      "symbol": "U"
+    },
+    "libra": {
+      "name": "LIBRA",
+      "symbol": "LIBRA"
+    },
+    "yee": {
+      "name": "Yee Token",
+      "symbol": "YEE"
+    },
+    "scf": {
+      "name": "Smoking Chicken Fish",
+      "symbol": "SCF"
+    },
+    "chkn": {
+      "name": "Chickencoin",
+      "symbol": "CHKN"
+    },
+    "cwif": {
+      "name": "catwifhat",
+      "symbol": "CWIF"
+    },
+    "smurfcat": {
+      "name": "Real Smurf Cat",
+      "symbol": "SMURFCAT"
+    },
+    "sc": {
+      "name": "Shark Cat",
+      "symbol": "SC"
+    },
+    "bull": {
+      "name": "Tron Bull",
+      "symbol": "BULL"
+    },
+    "npcs": {
+      "name": "Non-Playable Coin Solana",
+      "symbol": "NPCS"
+    },
+    "$waffles": {
+      "name": "Waffles Davincij15's Cat",
+      "symbol": "$WAFFLES"
+    },
+    "slap": {
+      "name": "CatSlap",
+      "symbol": "SLAP"
+    },
+    "mad": {
+      "name": "MAD",
+      "symbol": "MAD"
+    },
+    "maga": {
+      "name": "TRUMP MAGA",
+      "symbol": "MAGA"
+    },
+    "boba": {
+      "name": "Boba Cat",
+      "symbol": "BOBA"
+    },
+    "shoggoth": {
+      "name": "Shoggoth (shoggoth.monster)",
+      "symbol": "SHOGGOTH"
+    },
+    "fric": {
+      "name": "Fric",
+      "symbol": "FRIC"
+    },
+    "patriot": {
+      "name": "Patriot",
+      "symbol": "PATRIOT"
+    },
+    "ubc": {
+      "name": "Universe Boss Coin",
+      "symbol": "UBC"
+    },
+    "crappy": {
+      "name": "CrappyBird",
+      "symbol": "CRAPPY"
+    },
+    "gui": {
+      "name": "Gui Inu",
+      "symbol": "GUI"
+    },
+    "mindfak": {
+      "name": "Mindfak By Matt Furie",
+      "symbol": "MINDFAK"
+    },
+    "mstr": {
+      "name": "MSTR2100",
+      "symbol": "MSTR"
+    },
+    "nato": {
+      "name": "The Nation Token",
+      "symbol": "NATO"
+    },
+    "kpop": {
+      "name": "OFFICIAL K-POP",
+      "symbol": "KPOP"
+    },
+    "koko": {
+      "name": "Koala AI",
+      "symbol": "KOKO"
+    },
+    "fred": {
+      "name": "First Convicted Raccon Fred",
+      "symbol": "FRED"
+    },
+    "babygrok": {
+      "name": "Baby Grok (babygrok.ai)",
+      "symbol": "BABYGROK"
+    },
+    "tigershark": {
+      "name": "Tiger Shark",
+      "symbol": "TIGERSHARK"
+    },
+    "chadette": {
+      "name": "CHADETTE",
+      "symbol": "CHADETTE"
+    },
+    "huahua": {
+      "name": "Chihuahua",
+      "symbol": "HUAHUA"
+    },
+    "degenai": {
+      "name": "Degen Spartan AI",
+      "symbol": "DEGENAI"
+    },
+    "opti": {
+      "name": "Optimus AI",
+      "symbol": "OPTI"
+    },
+    "totakeke": {
+      "name": "Dark Cheems",
+      "symbol": "TOTAKEKE"
+    },
+    "skbdi": {
+      "name": "Skibidi Toilet",
+      "symbol": "SKBDI"
+    },
+    "solama": {
+      "name": "Solama",
+      "symbol": "SOLAMA"
+    },
+    "bad": {
+      "name": "Bad Idea AI",
+      "symbol": "BAD"
+    },
+    "pooh": {
+      "name": "POOH",
+      "symbol": "POOH"
+    },
+    "zerc": {
+      "name": "zkRace",
+      "symbol": "ZERC"
+    },
+    "oscar": {
+      "name": "OSCAR",
+      "symbol": "OSCAR"
+    },
+    "luce": {
+      "name": "LUCE",
+      "symbol": "LUCE"
+    },
+    "sugar": {
+      "name": "Sugar Boy",
+      "symbol": "SUGAR"
+    },
+    "terminus": {
+      "name": "TERMINUS",
+      "symbol": "TERMINUS"
+    },
+    "szn": {
+      "name": "BNB MEME SZN",
+      "symbol": "SZN"
+    },
+    "hehe": {
+      "name": "hehe",
+      "symbol": "HEHE"
+    },
+    "bubb": {
+      "name": "Bubb",
+      "symbol": "BUBB"
+    },
+    "$mong": {
+      "name": "MongCoin",
+      "symbol": "$MONG"
+    },
+    "phil": {
+      "name": "Binance Mascot",
+      "symbol": "PHIL"
+    },
+    "qom": {
+      "name": "Shiba Predator",
+      "symbol": "QOM"
+    },
+    "dc": {
+      "name": "Dogechain",
+      "symbol": "DC"
+    },
+    "nitro": {
+      "name": "Nitro",
+      "symbol": "NITRO"
+    },
+    "rift": {
+      "name": "RIFT AI",
+      "symbol": "RIFT"
+    },
+    "oiiaoiia": {
+      "name": "spinning cat",
+      "symbol": "OIIAOIIA"
+    },
+    "rage": {
+      "name": "Rage Guy",
+      "symbol": "RAGE"
+    },
+    "brainlet": {
+      "name": "Brainlet",
+      "symbol": "BRAINLET"
+    },
+    "crash": {
+      "name": "Crash",
+      "symbol": "CRASH"
+    },
+    "shitcoin": {
+      "name": "Just A Shitcoin",
+      "symbol": "SHITCOIN"
+    },
+    "shiro": {
+      "name": "Shiro Neko",
+      "symbol": "SHIRO"
+    },
+    "hemule": {
+      "name": "Hemule",
+      "symbol": "HEMULE"
+    },
+    "lolcoin": {
+      "name": "Worlds First Memecoin",
+      "symbol": "LOLCOIN"
+    },
+    "letsbonk": {
+      "name": "Let's BONK",
+      "symbol": "LETSBONK"
+    },
+    "bnbxbt": {
+      "name": "BNBXBT",
+      "symbol": "BNBXBT"
+    },
+    "welsh": {
+      "name": "Welshcorgicoin",
+      "symbol": "WELSH"
+    },
+    "wtfo": {
+      "name": "WTF Opossum",
+      "symbol": "WTFO"
+    },
+    "duko": {
+      "name": "DUKO",
+      "symbol": "DUKO"
+    },
+    "marie": {
+      "name": "Marie Rose",
+      "symbol": "MARIE"
+    },
+    "astros": {
+      "name": "ASTROS",
+      "symbol": "ASTROS"
+    },
+    "zeus": {
+      "name": "ZEUS (zeusthedog.vip)",
+      "symbol": "ZEUS"
+    },
+    "wizard": {
+      "name": "Wizard Gang",
+      "symbol": "WIZARD"
+    },
+    "boss": {
+      "name": "Boss Token",
+      "symbol": "BOSS"
+    },
+    "paws": {
+      "name": "PAWS",
+      "symbol": "PAWS"
+    },
+    "rys": {
+      "name": "RefundYourSOL",
+      "symbol": "RYS"
+    },
+    "vvaifu": {
+      "name": "Dasha",
+      "symbol": "VVAIFU"
+    },
+    "trog": {
+      "name": "Trog",
+      "symbol": "TROG"
+    },
+    "pino": {
+      "name": "PINO",
+      "symbol": "PINO"
+    },
+    "max": {
+      "name": "MAX",
+      "symbol": "MAX"
+    },
+    "kimbo": {
+      "name": "Kimbo",
+      "symbol": "KIMBO"
+    },
+    "shrub": {
+      "name": "Shrub",
+      "symbol": "SHRUB"
+    },
+    "gass": {
+      "name": "Gasspas",
+      "symbol": "GASS"
+    },
+    "stupid": {
+      "name": "StupidCoin",
+      "symbol": "STUPID"
+    },
+    "ai": {
+      "name": "Any Inu",
+      "symbol": "AI"
+    },
+    "perry": {
+      "name": "Perry",
+      "symbol": "PERRY"
+    },
+    "selfie": {
+      "name": "SelfieDogCoin",
+      "symbol": "SELFIE"
+    },
+    "suncat": {
+      "name": "SUNCAT",
+      "symbol": "SUNCAT"
+    },
+    "ghibli": {
+      "name": "GhibliCZ",
+      "symbol": "GHIBLI"
+    },
+    "befe": {
+      "name": "BEFE",
+      "symbol": "BEFE"
+    },
+    "agon": {
+      "name": "AGON Agent",
+      "symbol": "AGON"
+    },
+    "janitor": {
+      "name": "Janitor",
+      "symbol": "JANITOR"
+    },
+    "moonpig": {
+      "name": "moonpig",
+      "symbol": "MOONPIG"
+    },
+    "ca": {
+      "name": "Caila",
+      "symbol": "CA"
+    },
+    "wyac": {
+      "name": "Woman Yelling At Cat",
+      "symbol": "WYAC"
+    },
+    "aixcb": {
+      "name": "aixCB by Virtuals",
+      "symbol": "AIXCB"
+    },
+    "nomnom": {
+      "name": "nomnom",
+      "symbol": "NOMNOM"
+    },
+    "lambo": {
+      "name": "LAMBO",
+      "symbol": "LAMBO"
+    },
+    "wsm": {
+      "name": "Wall Street Memes",
+      "symbol": "WSM"
+    },
+    "babyshark": {
+      "name": "Baby Shark Meme",
+      "symbol": "BABYSHARK"
+    },
+    "coin": {
+      "name": "[Fake] Wrapped COINBASE",
+      "symbol": "COIN"
+    },
+    "lbai": {
+      "name": "Lemmy The Bat",
+      "symbol": "LBAI"
+    },
+    "bomo": {
+      "name": "BOMO",
+      "symbol": "BOMO"
+    },
+    "tbull": {
+      "name": "Tron Bull",
+      "symbol": "TBULL"
+    },
+    "msia": {
+      "name": "Messiah",
+      "symbol": "MSIA"
+    },
+    "aimonica": {
+      "name": "Aimonica Brands",
+      "symbol": "AIMONICA"
+    },
+    "buttcoin": {
+      "name": "The Next Bitcoin",
+      "symbol": "BUTTCOIN"
+    },
+    "peng": {
+      "name": "Peng",
+      "symbol": "PENG"
+    },
+    "wdog": {
+      "name": "Wrapped Dog",
+      "symbol": "WDOG"
+    },
+    "big": {
+      "name": "BIG",
+      "symbol": "BIG"
+    },
+    "ap": {
+      "name": "America Party",
+      "symbol": "AP"
+    },
+    "ccdog": {
+      "name": "Courage The Dog",
+      "symbol": "CCDOG"
+    },
+    "sen": {
+      "name": "Sentio AI",
+      "symbol": "SEN"
+    },
+    "$gremly": {
+      "name": "Gremly",
+      "symbol": "$GREMLY"
+    },
+    "eliza": {
+      "name": "Eliza (ai16zeliza)",
+      "symbol": "ELIZA"
+    },
+    "babybnb": {
+      "name": "Baby BNB",
+      "symbol": "BABYBNB"
+    },
+    "babyneiro": {
+      "name": "Baby Neiro BNB",
+      "symbol": "BABYNEIRO"
+    },
+    "axol": {
+      "name": "Axol",
+      "symbol": "AXOL"
+    },
+    "powsche": {
+      "name": "Powsche",
+      "symbol": "POWSCHE"
+    },
+    "crybb": {
+      "name": "CryBaby",
+      "symbol": "CRYBB"
+    },
+    "memesai": {
+      "name": "Memes AI",
+      "symbol": "MEMESAI"
+    },
+    "fck925": {
+      "name": "FCK925",
+      "symbol": "FCK925"
+    },
+    "pussy": {
+      "name": "Pussy Financial",
+      "symbol": "PUSSY"
+    },
+    "hood": {
+      "name": "Robinhood (robinhood.codes)",
+      "symbol": "HOOD"
+    },
+    "bdogito": {
+      "name": "BullDogito",
+      "symbol": "BDOGITO"
+    },
+    "km": {
+      "name": "Kekius Maximus (kekiusmaximus.army)",
+      "symbol": "KM"
+    },
+    "durev": {
+      "name": "Povel Durev",
+      "symbol": "DUREV"
+    },
+    "hammy": {
+      "name": "SAD HAMSTER",
+      "symbol": "HAMMY"
+    },
+    "chuck": {
+      "name": "Chuck",
+      "symbol": "CHUCK"
+    },
+    "regret": {
+      "name": "Regret",
+      "symbol": "REGRET"
+    },
+    "asterinu": {
+      "name": "Aster Inu",
+      "symbol": "ASTERINU"
+    },
+    "niko": {
+      "name": "NikolAI",
+      "symbol": "NIKO"
+    },
+    "jenner": {
+      "name": "Caitlyn Jenner (ETH)",
+      "symbol": "JENNER"
+    },
+    "babypepe": {
+      "name": "Baby Pepe",
+      "symbol": "BABYPEPE"
+    },
+    "knine": {
+      "name": "K9 Finance",
+      "symbol": "KNINE"
+    },
+    "kingshib": {
+      "name": "King Shiba",
+      "symbol": "KINGSHIB"
+    },
+    "buckazoids": {
+      "name": "Buckazoids",
+      "symbol": "BUCKAZOIDS"
+    },
+    "long": {
+      "name": "Long",
+      "symbol": "LONG"
+    },
+    "crai": {
+      "name": "Cryptify AI",
+      "symbol": "CRAI"
+    },
+    "skicat": {
+      "name": "Ski Mask Cat",
+      "symbol": "SKICAT"
+    },
+    "smi": {
+      "name": "SafeMoon Inu",
+      "symbol": "SMI"
+    },
+    "ebull": {
+      "name": "ETHEREUM IS GOOD",
+      "symbol": "EBULL"
+    },
+    "hat": {
+      "name": "Top Hat",
+      "symbol": "HAT"
+    },
+    "carlo": {
+      "name": "Carlo",
+      "symbol": "CARLO"
+    },
+    "honk": {
+      "name": "Pepoclown",
+      "symbol": "HONK"
+    },
+    "scam": {
+      "name": "Scamcoin",
+      "symbol": "SCAM"
+    },
+    "rocky": {
+      "name": "rocky",
+      "symbol": "ROCKY"
+    },
+    "fu": {
+      "name": "FU Coin",
+      "symbol": "FU"
+    },
+    "spore": {
+      "name": "Spore",
+      "symbol": "SPORE"
+    },
+    "nut": {
+      "name": "Nutcoin",
+      "symbol": "NUT"
+    },
+    "keke": {
+      "name": "KEK",
+      "symbol": "KEKE"
+    },
+    "grlc": {
+      "name": "Garlicoin",
+      "symbol": "GRLC"
+    },
+    "speedy": {
+      "name": "Speedy",
+      "symbol": "SPEEDY"
+    },
+    "hund": {
+      "name": "HUND",
+      "symbol": "HUND"
+    },
+    "kai": {
+      "name": "KAIKO",
+      "symbol": "KAI"
+    },
+    "ladyf": {
+      "name": "Milady Wif Hat",
+      "symbol": "LADYF"
+    },
+    "pikachu": {
+      "name": "PIKACHU INU",
+      "symbol": "PIKACHU"
+    },
+    "llm": {
+      "name": "Large Language Model",
+      "symbol": "LLM"
+    },
+    "goodboy": {
+      "name": "GoodBoy",
+      "symbol": "GOODBOY"
+    },
+    "boatkid": {
+      "name": "Pacu Jalur",
+      "symbol": "BOATKID"
+    },
+    "expert": {
+      "name": "EXPERT_MONEY",
+      "symbol": "EXPERT"
+    },
+    "gnon": {
+      "name": "Numogram",
+      "symbol": "GNON"
+    },
+    "fefe": {
+      "name": "Fefe",
+      "symbol": "FEFE"
+    },
+    "luigi": {
+      "name": "Luigi Inu",
+      "symbol": "LUIGI"
+    },
+    "doggy": {
+      "name": "DOGGY",
+      "symbol": "DOGGY"
+    },
+    "xrp": {
+      "name": "HarryPotterObamaPacMan8Inu",
+      "symbol": "XRP"
+    },
+    "xmoney": {
+      "name": "XMoney Solana",
+      "symbol": "XMONEY"
+    },
+    "mintme": {
+      "name": "MintMe.com Coin",
+      "symbol": "MINTME"
+    },
+    "roost": {
+      "name": "Roost Coin",
+      "symbol": "ROOST"
+    },
+    "bully": {
+      "name": "Dolos The Bully",
+      "symbol": "BULLY"
+    },
+    "dogk": {
+      "name": "Dagknight Dog",
+      "symbol": "DOGK"
+    },
+    "looby": {
+      "name": "Looby By Stephen Bliss",
+      "symbol": "LOOBY"
+    },
+    "biao": {
+      "name": "Biao",
+      "symbol": "BIAO"
+    },
+    "catgirl": {
+      "name": "catgirl",
+      "symbol": "CATGIRL"
+    },
+    "gondola": {
+      "name": "Gondola",
+      "symbol": "GONDOLA"
+    },
+    "torsy": {
+      "name": "TORSY",
+      "symbol": "TORSY"
+    },
+    "barsik": {
+      "name": "Hasbulla's Cat",
+      "symbol": "BARSIK"
+    },
+    "defrogs": {
+      "name": "DeFrogs",
+      "symbol": "DEFROGS"
+    },
+    "dinu": {
+      "name": "Dogey-Inu",
+      "symbol": "DINU"
+    },
+    "moomoo": {
+      "name": "MOOMOO THE BULL",
+      "symbol": "MOOMOO"
+    },
+    "stoshi": {
+      "name": "Sultanoshi",
+      "symbol": "STOSHI"
+    },
+    "trisig": {
+      "name": "TRI SIGMA",
+      "symbol": "TRISIG"
+    },
+    "usdwon": {
+      "name": "Won Chang",
+      "symbol": "USDWON"
+    },
+    "rat": {
+      "name": "RAT Escape",
+      "symbol": "RAT"
+    },
+    "alpha": {
+      "name": "Alpha",
+      "symbol": "ALPHA"
+    },
+    "biggie": {
+      "name": "Biggie",
+      "symbol": "BIGGIE"
+    },
+    "mystery": {
+      "name": "Mystery",
+      "symbol": "MYSTERY"
+    },
+    "sato": {
+      "name": "Sato The Dog",
+      "symbol": "SATO"
+    },
+    "doga": {
+      "name": "DOGAMÍ",
+      "symbol": "DOGA"
+    },
+    "lfgo": {
+      "name": "Lets Fuckin Go",
+      "symbol": "LFGO"
+    },
+    "hami": {
+      "name": "HAMI",
+      "symbol": "HAMI"
+    },
+    "mars": {
+      "name": "Mars",
+      "symbol": "MARS"
+    },
+    "beats": {
+      "name": "Beats on Base",
+      "symbol": "BEATS"
+    },
+    "skid": {
+      "name": "Success Kid",
+      "symbol": "SKID"
+    },
+    "bendog": {
+      "name": "Ben the Dog",
+      "symbol": "BENDOG"
+    },
+    "cook": {
+      "name": "LET HIM COOK",
+      "symbol": "COOK"
+    },
+    "dons": {
+      "name": "The Dons",
+      "symbol": "DONS"
+    },
+    "coinye": {
+      "name": "Coinye West",
+      "symbol": "COINYE"
+    },
+    "gec": {
+      "name": "Gecko Inu",
+      "symbol": "GEC"
+    },
+    "alt": {
+      "name": "Altcoin",
+      "symbol": "ALT"
+    },
+    "lowb": {
+      "name": "Loser Coin",
+      "symbol": "LOWB"
+    },
+    "boppy": {
+      "name": "BOPPY",
+      "symbol": "BOPPY"
+    },
+    "pepemusk": {
+      "name": "PepeMusk",
+      "symbol": "PEPEMUSK"
+    },
+    "pesto": {
+      "name": "Pesto the Baby King Penguin",
+      "symbol": "PESTO"
+    },
+    "analos": {
+      "name": "analoS",
+      "symbol": "ANALOS"
+    },
+    "toilet": {
+      "name": "Toilet Dust",
+      "symbol": "TOILET"
+    },
+    "lou": {
+      "name": "Lou",
+      "symbol": "LOU"
+    },
+    "$peep": {
+      "name": "Peepo (SOL)",
+      "symbol": "$PEEP"
+    },
+    "elmo": {
+      "name": "Elmo",
+      "symbol": "ELMO"
+    },
+    "daboo": {
+      "name": "Daboo - The Untold Stories!",
+      "symbol": "DABOO"
+    },
+    "rats": {
+      "name": "Ratscoin",
+      "symbol": "RATS"
+    },
+    "kdt": {
+      "name": "Kenyan Digital Token",
+      "symbol": "KDT"
+    },
+    "updog": {
+      "name": "What's Updog",
+      "symbol": "UPDOG"
+    },
+    "kiki": {
+      "name": "KIKICat",
+      "symbol": "KIKI"
+    },
+    "dino": {
+      "name": "Coding Dino",
+      "symbol": "DINO"
+    },
+    "ivfun": {
+      "name": "Invest Zone",
+      "symbol": "IVFUN"
+    },
+    "czgoat": {
+      "name": "CZ THE GOAT",
+      "symbol": "CZGOAT"
+    },
+    "ginnan": {
+      "name": "Ginnan The Cat",
+      "symbol": "GINNAN"
+    },
+    "wat": {
+      "name": "Wat",
+      "symbol": "WAT"
+    },
+    "usdut": {
+      "name": "Unstable Tether",
+      "symbol": "USDUT"
+    },
+    "oggy": {
+      "name": "Oggy Inu (BSC)",
+      "symbol": "OGGY"
+    },
+    "evan": {
+      "name": "Evan",
+      "symbol": "EVAN"
+    },
+    "etf500": {
+      "name": "Elon Trump Fart",
+      "symbol": "ETF500"
+    },
+    "woof": {
+      "name": "WOOF",
+      "symbol": "WOOF"
+    },
+    "ccc": {
+      "name": "Coconut Chicken",
+      "symbol": "CCC"
+    },
+    "dbc": {
+      "name": "Don’t Burn Capital",
+      "symbol": "DBC"
+    },
+    "matt": {
+      "name": "MATT",
+      "symbol": "MATT"
+    },
+    "moona": {
+      "name": "Moona Lisa",
+      "symbol": "MOONA"
+    },
+    "strump": {
+      "name": "Super Trump Coin",
+      "symbol": "STRUMP"
+    },
+    "dtr": {
+      "name": "dextoro",
+      "symbol": "DTR"
+    },
+    "saitama": {
+      "name": "SAITAMA INU",
+      "symbol": "SAITAMA"
+    },
+    "draggy": {
+      "name": "Draggy",
+      "symbol": "DRAGGY"
+    },
+    "aped": {
+      "name": "APED",
+      "symbol": "APED"
+    },
+    "x": {
+      "name": "X",
+      "symbol": "X"
+    },
+    "bnblion": {
+      "name": "BNB LION",
+      "symbol": "BNBLION"
+    },
+    "boochie": {
+      "name": "Boochie by Matt Furie",
+      "symbol": "BOOCHIE"
+    },
+    "catdog": {
+      "name": "CatDog",
+      "symbol": "CATDOG"
+    },
+    "moutai": {
+      "name": "Moutai",
+      "symbol": "MOUTAI"
+    },
+    "soy": {
+      "name": "Soyjak",
+      "symbol": "SOY"
+    },
+    "apple": {
+      "name": "dog with apple in mouth",
+      "symbol": "APPLE"
+    },
+    "scihub": {
+      "name": "sci-hub",
+      "symbol": "SCIHUB"
+    },
+    "jhh": {
+      "name": "Jen-Hsun Huang",
+      "symbol": "JHH"
+    },
+    "elgato": {
+      "name": "el gato",
+      "symbol": "ELGATO"
+    },
+    "ai4": {
+      "name": "AI⁴ | Recursive Superintelligence",
+      "symbol": "AI4"
+    },
+    "muskit": {
+      "name": "Musk It",
+      "symbol": "MUSKIT"
+    },
+    "hana": {
+      "name": "Hana",
+      "symbol": "HANA"
+    },
+    "fofar": {
+      "name": "Fofar (fofar.meme)",
+      "symbol": "FOFAR"
+    },
+    "pajamas": {
+      "name": "The First Youtube Cat",
+      "symbol": "PAJAMAS"
+    },
+    "babyu": {
+      "name": "BabyUnicorn",
+      "symbol": "BABYU"
+    },
+    "hokk": {
+      "name": "Hokkaidu Inu",
+      "symbol": "HOKK"
+    },
+    "flork": {
+      "name": "flork cto",
+      "symbol": "FLORK"
+    },
+    "rodai": {
+      "name": "ROD.AI",
+      "symbol": "RODAI"
+    },
+    "uni": {
+      "name": "UNI",
+      "symbol": "UNI"
+    },
+    "babybtc": {
+      "name": "Baby Bitcoin",
+      "symbol": "BABYBTC"
+    },
+    "tcat": {
+      "name": "TON Cat",
+      "symbol": "TCAT"
+    },
+    "btc": {
+      "name": "Bitcoin AI",
+      "symbol": "BTC"
+    },
+    "treeincat": {
+      "name": "Tree Stuck in Cat",
+      "symbol": "TREEINCAT"
+    },
+    "sov": {
+      "name": "Shib Original Vision",
+      "symbol": "SOV"
+    },
+    "vibe": {
+      "name": "Vibe Cat (Jupiter Studio)",
+      "symbol": "VIBE"
+    },
+    "nvda": {
+      "name": "NVIDIA",
+      "symbol": "NVDA"
+    },
+    "miharu": {
+      "name": "smiling dolphin",
+      "symbol": "MIHARU"
+    },
+    "bachi": {
+      "name": "Bachi on Base",
+      "symbol": "BACHI"
+    },
+    "tama": {
+      "name": "Tamadoge",
+      "symbol": "TAMA"
+    },
+    "memeai": {
+      "name": "Meme Ai",
+      "symbol": "MEMEAI"
+    },
+    "kangal": {
+      "name": "Kangal",
+      "symbol": "KANGAL"
+    },
+    "dogebase": {
+      "name": "Doge Base",
+      "symbol": "DOGEBASE"
+    },
+    "ginux": {
+      "name": "Green Shiba Inu [New]",
+      "symbol": "GINUX"
+    },
+    "wlfi": {
+      "name": "Wen Lambo Financial",
+      "symbol": "WLFI"
+    },
+    "best": {
+      "name": "Bestcoin",
+      "symbol": "BEST"
+    },
+    "dogefather": {
+      "name": "DOGEFATHER",
+      "symbol": "DOGEFATHER"
+    },
+    "deepseek": {
+      "name": "Global DePIN Chain",
+      "symbol": "DEEPSEEK"
+    },
+    "smoon": {
+      "name": "SAFEMOON",
+      "symbol": "SMOON"
+    },
+    "aipump": {
+      "name": "aiPump",
+      "symbol": "AIPUMP"
+    },
+    "dogmi": {
+      "name": "DOGMI",
+      "symbol": "DOGMI"
+    },
+    "slop": {
+      "name": "Slop",
+      "symbol": "SLOP"
+    },
+    "usacoin": {
+      "name": "USAcoin",
+      "symbol": "USACOIN"
+    },
+    "sheb": {
+      "name": "Sheboshis",
+      "symbol": "SHEB"
+    },
+    "mao": {
+      "name": "Mao",
+      "symbol": "MAO"
+    },
+    "trumpius": {
+      "name": "Trumpius Maximus",
+      "symbol": "TRUMPIUS"
+    },
+    "bozo": {
+      "name": "BOZO",
+      "symbol": "BOZO"
+    },
+    "hawktuah": {
+      "name": "Hawk Tuah (hawktuah.vip)",
+      "symbol": "HAWKTUAH"
+    },
+    "klaus": {
+      "name": "Klaus",
+      "symbol": "KLAUS"
+    },
+    "$mbag": {
+      "name": "MoonBag",
+      "symbol": "$MBAG"
+    },
+    "spike": {
+      "name": "Spike",
+      "symbol": "SPIKE"
+    },
+    "izzy": {
+      "name": "Izzy",
+      "symbol": "IZZY"
+    },
+    "pochita": {
+      "name": "Pochita (pochita.biz)",
+      "symbol": "POCHITA"
+    },
+    "babytrump": {
+      "name": "BABYTRUMP",
+      "symbol": "BABYTRUMP"
+    },
+    "cats": {
+      "name": "Cats (catshouse.live)",
+      "symbol": "CATS"
+    },
+    "vix": {
+      "name": "VIX777",
+      "symbol": "VIX"
+    },
+    "puffy": {
+      "name": "Puffy",
+      "symbol": "PUFFY"
+    },
+    "solcat": {
+      "name": "CatSolHat",
+      "symbol": "SOLCAT"
+    },
+    "e": {
+      "name": "EAGLEBUILDER",
+      "symbol": "E"
+    },
+    "retard": {
+      "name": "retardcoin",
+      "symbol": "RETARD"
+    },
+    "wap": {
+      "name": "Wet Ass Pussy",
+      "symbol": "WAP"
+    },
+    "cata": {
+      "name": "CATAMOTO",
+      "symbol": "CATA"
+    },
+    "king": {
+      "name": "KING",
+      "symbol": "KING"
+    },
+    "anus": {
+      "name": "Uranus (SOL)",
+      "symbol": "ANUS"
+    },
+    "janet": {
+      "name": "Janet",
+      "symbol": "JANET"
+    },
+    "milkbag": {
+      "name": "MILKBAG",
+      "symbol": "MILKBAG"
+    },
+    "sunpepe": {
+      "name": "sunpepe",
+      "symbol": "SUNPEPE"
+    },
+    "buttplug": {
+      "name": "fartcoin killer",
+      "symbol": "BUTTPLUG"
+    },
+    "simon": {
+      "name": "Simon the Gator",
+      "symbol": "SIMON"
+    },
+    "fuku": {
+      "name": "Fuku-Kun",
+      "symbol": "FUKU"
+    },
+    "ninu": {
+      "name": "Nvidia Inu",
+      "symbol": "NINU"
+    },
+    "toad": {
+      "name": "Acid Toad",
+      "symbol": "TOAD"
+    },
+    "baby": {
+      "name": "Baby",
+      "symbol": "BABY"
+    },
+    "concho": {
+      "name": "Sapo Concho",
+      "symbol": "CONCHO"
+    },
+    "ducky": {
+      "name": "Ducky",
+      "symbol": "DUCKY"
+    },
+    "mvp": {
+      "name": "MAGA VP",
+      "symbol": "MVP"
+    },
+    "peanut": {
+      "name": "#1 Tiktok Squirrel",
+      "symbol": "PEANUT"
+    },
+    "amc": {
+      "name": "AMC",
+      "symbol": "AMC"
+    },
+    "pjn": {
+      "name": "PJN",
+      "symbol": "PJN"
+    },
+    "etf": {
+      "name": "Eat, Trade, Fart",
+      "symbol": "ETF"
+    },
+    "flavia": {
+      "name": "Flavia Is Online",
+      "symbol": "FLAVIA"
+    },
+    "babybonk": {
+      "name": "Baby Bonk",
+      "symbol": "BABYBONK"
+    },
+    "oni": {
+      "name": "Onigiri",
+      "symbol": "ONI"
+    },
+    "lanlan": {
+      "name": "LanLan Cat",
+      "symbol": "LANLAN"
+    },
+    "raptor": {
+      "name": "Philosoraptor",
+      "symbol": "RAPTOR"
+    },
+    "bshib": {
+      "name": "Based Shiba Inu",
+      "symbol": "BSHIB"
+    },
+    "star10": {
+      "name": "Ronaldinho Coin",
+      "symbol": "STAR10"
+    },
+    "moondoge": {
+      "name": "MOONDOGE",
+      "symbol": "MOONDOGE"
+    },
+    "gome": {
+      "name": "Game of Memes",
+      "symbol": "GOME"
+    },
+    "tds": {
+      "name": "Trump Derangement Syndrome (tearsforTDS)",
+      "symbol": "TDS"
+    },
+    "$akuma": {
+      "name": "Akuma Inu",
+      "symbol": "$AKUMA"
+    },
+    "doug": {
+      "name": "Doug The Duck",
+      "symbol": "DOUG"
+    },
+    "dogeai": {
+      "name": "DOGEai",
+      "symbol": "DOGEAI"
+    },
+    "egg": {
+      "name": "Eggdog",
+      "symbol": "EGG"
+    },
+    "valentine": {
+      "name": "Valentine Grok Companion (valentinebase.xyz)",
+      "symbol": "VALENTINE"
+    },
+    "nibbles": {
+      "name": "Nibbles",
+      "symbol": "NIBBLES"
+    },
+    "mdb": {
+      "name": "MOODENG (moodengbnb.com)",
+      "symbol": "MDB"
+    },
+    "jin": {
+      "name": "JinPeng",
+      "symbol": "JIN"
+    },
+    "fomo": {
+      "name": "FOMO BULL CLUB",
+      "symbol": "FOMO"
+    },
+    "omalley": {
+      "name": "OMalley",
+      "symbol": "OMALLEY"
+    },
+    "yelpe": {
+      "name": "Yellow Pepe",
+      "symbol": "YELPE"
+    },
+    "solzilla": {
+      "name": "Solzilla",
+      "symbol": "SOLZILLA"
+    },
+    "snibbu": {
+      "name": "Snibbu",
+      "symbol": "SNIBBU"
+    },
+    "meow": {
+      "name": "MeowCat",
+      "symbol": "MEOW"
+    },
+    "shia": {
+      "name": "Shiba Saga",
+      "symbol": "SHIA"
+    },
+    "kobushi": {
+      "name": "Kobushi",
+      "symbol": "KOBUSHI"
+    },
+    "buffi": {
+      "name": "Bufficorn",
+      "symbol": "BUFFI"
+    },
+    "never": {
+      "name": "neversol",
+      "symbol": "NEVER"
+    },
+    "olivia": {
+      "name": "AIGOV",
+      "symbol": "OLIVIA"
+    },
+    "sink": {
+      "name": "Let that sink in",
+      "symbol": "SINK"
+    },
+    "eth": {
+      "name": "Shrek2HulkSimbaAnusHannahMontanInu",
+      "symbol": "ETH"
+    },
+    "pengy": {
+      "name": "Pengycoin",
+      "symbol": "PENGY"
+    },
+    "rgoat": {
+      "name": "RealGOAT",
+      "symbol": "RGOAT"
+    },
+    "dogenarii": {
+      "name": "Dogenarii",
+      "symbol": "DOGENARII"
+    },
+    "bruh": {
+      "name": "Bruh",
+      "symbol": "BRUH"
+    },
+    "pope": {
+      "name": "Pope meme",
+      "symbol": "POPE"
+    },
+    "utyab": {
+      "name": "UTYABSWAP",
+      "symbol": "UTYAB"
+    },
+    "sofac": {
+      "name": "SofaCat",
+      "symbol": "SOFAC"
+    },
+    "corgib": {
+      "name": "The Corgi of PolkaBridge",
+      "symbol": "CORGIB"
+    },
+    "aaahhm": {
+      "name": "Plankton in Pain",
+      "symbol": "AAAHHM"
+    },
+    "mambo": {
+      "name": "Mambo",
+      "symbol": "MAMBO"
+    },
+    "suilama": {
+      "name": "Suilama",
+      "symbol": "SUILAMA"
+    },
+    "minu": {
+      "name": "Minu",
+      "symbol": "MINU"
+    },
+    "pdoge": {
+      "name": "Poor Doge",
+      "symbol": "PDOGE"
+    },
+    "∑": {
+      "name": "∑",
+      "symbol": "∑"
+    },
+    "bill": {
+      "name": "BILL THE BEAR",
+      "symbol": "BILL"
+    },
+    "sunpump": {
+      "name": "To The Sun",
+      "symbol": "SUNPUMP"
+    },
+    "younes": {
+      "name": "YOUNES",
+      "symbol": "YOUNES"
+    },
+    "taddy": {
+      "name": "DADDY TRUMP",
+      "symbol": "TADDY"
+    },
+    "dogy": {
+      "name": "Dogy",
+      "symbol": "DOGY"
+    },
+    "soba": {
+      "name": "Sol Bastard",
+      "symbol": "SOBA"
+    },
+    "punch": {
+      "name": "ONE PUNCH CAT",
+      "symbol": "PUNCH"
+    },
+    "$rdog": {
+      "name": "Repost Dog",
+      "symbol": "$RDOG"
+    },
+    "bub": {
+      "name": "Lil Bub",
+      "symbol": "BUB"
+    },
+    "doky": {
+      "name": "Donkey King",
+      "symbol": "DOKY"
+    },
+    "$venko": {
+      "name": "VENKO",
+      "symbol": "$VENKO"
+    },
+    "aibb": {
+      "name": "BullBear AI",
+      "symbol": "AIBB"
+    },
+    "efr": {
+      "name": "End Federal Reserve",
+      "symbol": "EFR"
+    },
+    "godcat": {
+      "name": "Godcat Exploding Kittens",
+      "symbol": "GODCAT"
+    },
+    "papu": {
+      "name": "Papu Token",
+      "symbol": "PAPU"
+    },
+    "kimba": {
+      "name": "The White Lion",
+      "symbol": "KIMBA"
+    },
+    "babycate": {
+      "name": "BabyCate",
+      "symbol": "BABYCATE"
+    },
+    "cots": {
+      "name": "Children Of The Sky",
+      "symbol": "COTS"
+    },
+    "corgi": {
+      "name": "Corgi Inu (corgibnb.com)",
+      "symbol": "CORGI"
+    },
+    "katchu": {
+      "name": "Katchu Coin",
+      "symbol": "KATCHU"
+    },
+    "sqrl": {
+      "name": "Squirrel Swap",
+      "symbol": "SQRL"
+    },
+    "bigfacts": {
+      "name": "BIGFACTS",
+      "symbol": "BIGFACTS"
+    },
+    "arnold": {
+      "name": "ARNOLD",
+      "symbol": "ARNOLD"
+    },
+    "gb": {
+      "name": "Gary Banking",
+      "symbol": "GB"
+    },
+    "bog": {
+      "name": "Brotherhood",
+      "symbol": "BOG"
+    },
+    "zoo": {
+      "name": "Zoo World",
+      "symbol": "ZOO"
+    },
+    "abds": {
+      "name": "ABDS Token",
+      "symbol": "ABDS"
+    },
+    "sbabe": {
+      "name": "SNOOPYBABE",
+      "symbol": "SBABE"
+    },
+    "wally": {
+      "name": "OKX Mascot",
+      "symbol": "WALLY"
+    },
+    "sadant": {
+      "name": "SADANT",
+      "symbol": "SADANT"
+    },
+    "dcoin": {
+      "name": "Dogcoin",
+      "symbol": "DCOIN"
+    },
+    "mcoin": {
+      "name": "MCOIN",
+      "symbol": "MCOIN"
+    },
+    "aicell": {
+      "name": "AICell",
+      "symbol": "AICELL"
+    },
+    "財務自由": {
+      "name": "財務自由",
+      "symbol": "財務自由"
+    },
+    "froggie": {
+      "name": "Froggie",
+      "symbol": "FROGGIE"
+    },
+    "ani": {
+      "name": "Ani Grok Companion (anicompanion.org)",
+      "symbol": "ANI"
+    },
+    "aol": {
+      "name": "AOL (America Online)",
+      "symbol": "AOL"
+    },
+    "vitastem": {
+      "name": "VitaStem",
+      "symbol": "VITASTEM"
+    },
+    "kori": {
+      "name": "Kori The Pom",
+      "symbol": "KORI"
+    },
+    "avaai": {
+      "name": "avaai.top",
+      "symbol": "AVAAI"
+    },
+    "gor": {
+      "name": "Gorbagana",
+      "symbol": "GOR"
+    },
+    "charlie": {
+      "name": "Charlie Kirk",
+      "symbol": "CHARLIE"
+    },
+    "jobiess": {
+      "name": "JobIess (jobless4meme.fun)",
+      "symbol": "JOBIESS"
+    },
+    "dupe": {
+      "name": "Dupe",
+      "symbol": "DUPE"
+    },
+    "memecoin": {
+      "name": "just memecoin",
+      "symbol": "MEMECOIN"
+    },
+    "facy": {
+      "name": "ArAIstotle Fact Checker (Facy_OfficialHQ)",
+      "symbol": "FACY"
+    },
+    "momo": {
+      "name": "Momo (momocoin.space)",
+      "symbol": "MOMO"
+    },
+    "purr": {
+      "name": "Purr",
+      "symbol": "PURR"
+    },
+    "d": {
+      "name": "D",
+      "symbol": "D"
+    },
+    "pi": {
+      "name": "PI TRUMP (pitrumphub.com)",
+      "symbol": "PI"
+    },
+    "cult": {
+      "name": "Milady Cult Coin",
+      "symbol": "CULT"
+    },
+    "hbtc": {
+      "name": "Hold BTC",
+      "symbol": "HBTC"
+    },
+    "xdog": {
+      "name": "XDOG",
+      "symbol": "XDOG"
+    },
+    "stonks": {
+      "name": "STONKS",
+      "symbol": "STONKS"
+    },
+    "dew": {
+      "name": "DEW",
+      "symbol": "DEW"
+    },
+    "fur": {
+      "name": "Furfication",
+      "symbol": "FUR"
+    },
+    "titcoin": {
+      "name": "titcoin",
+      "symbol": "TITCOIN"
+    },
+    "bitch": {
+      "name": "OurBitch",
+      "symbol": "BITCH"
+    },
+    "puppies": {
+      "name": "I love puppies",
+      "symbol": "PUPPIES"
+    },
+    "oly": {
+      "name": "OLY",
+      "symbol": "OLY"
+    },
+    "fds": {
+      "name": "Foodie Squirrel",
+      "symbol": "FDS"
+    },
+    "tsla": {
+      "name": "Tesla",
+      "symbol": "TSLA"
+    },
+    "orange diamond": {
+      "name": "Orange Diamond",
+      "symbol": "ORANGE DIAMOND"
+    },
+    "ssx": {
+      "name": "Solana Stock Index",
+      "symbol": "SSX"
+    },
+    "sunwukong": {
+      "name": "SunWukong",
+      "symbol": "SUNWUKONG"
+    },
+    "旺柴": {
+      "name": "wechat doge",
+      "symbol": "旺柴"
+    },
+    "solx": {
+      "name": "Solaxy",
+      "symbol": "SOLX"
+    },
+    "fartless": {
+      "name": "FARTLESS COIN",
+      "symbol": "FARTLESS"
+    },
+    "bongo": {
+      "name": "Bongo Cat",
+      "symbol": "BONGO"
+    },
+    "grippy": {
+      "name": "GRIPPY",
+      "symbol": "GRIPPY"
+    },
+    "z": {
+      "name": "Z",
+      "symbol": "Z"
+    },
+    "beer": {
+      "name": "Beers",
+      "symbol": "BEER"
+    },
+    "safu": {
+      "name": "Funds are SAFU",
+      "symbol": "SAFU"
+    },
+    "champagne": {
+      "name": "Formula 1",
+      "symbol": "CHAMPAGNE"
+    },
+    "punchi": {
+      "name": "Punchimals",
+      "symbol": "PUNCHI"
+    },
+    "foxy": {
+      "name": "Foxy",
+      "symbol": "FOXY"
+    },
+    "fafo": {
+      "name": "FAFO",
+      "symbol": "FAFO"
+    },
+    "moolah": {
+      "name": "Moolah",
+      "symbol": "MOOLAH"
+    },
+    "fat": {
+      "name": "Fat Fella",
+      "symbol": "FAT"
+    },
+    "lockin": {
+      "name": "LOCK IN",
+      "symbol": "LOCKIN"
+    },
+    "gib": {
+      "name": "gib",
+      "symbol": "GIB"
+    },
+    "mcq": {
+      "name": "Mecha Conquest",
+      "symbol": "MCQ"
+    },
+    "michi": {
+      "name": "Michi",
+      "symbol": "MICHI"
+    },
+    "dopu": {
+      "name": "DOPU The Dog with A Purpose",
+      "symbol": "DOPU"
+    },
+    "tremp": {
+      "name": "Doland Tremp",
+      "symbol": "TREMP"
+    },
+    "pepper": {
+      "name": "Pepper",
+      "symbol": "PEPPER"
+    },
+    "tdccp": {
+      "name": "TDCCP",
+      "symbol": "TDCCP"
+    },
+    "froge": {
+      "name": "Froge (ETH)",
+      "symbol": "FROGE"
+    },
+    "mission": {
+      "name": "MISSION PAWSIBLE",
+      "symbol": "MISSION"
+    },
+    "niannian": {
+      "name": "NianNian",
+      "symbol": "NIANNIAN"
+    },
+    "belg": {
+      "name": "Belgian Malinois",
+      "symbol": "BELG"
+    },
+    "trencher": {
+      "name": "Trencher",
+      "symbol": "TRENCHER"
+    },
+    "$nap": {
+      "name": "SNAP",
+      "symbol": "$NAP"
+    },
+    "nacho": {
+      "name": "Nacho the Kat",
+      "symbol": "NACHO"
+    },
+    "pepeai": {
+      "name": "PepeAI",
+      "symbol": "PEPEAI"
+    },
+    "sbr": {
+      "name": "STRATEGIC BITCOIN RESERVE",
+      "symbol": "SBR"
+    },
+    "lester": {
+      "name": "Lester",
+      "symbol": "LESTER"
+    },
+    "los": {
+      "name": "ANALOS",
+      "symbol": "LOS"
+    },
+    "dna": {
+      "name": "DNA",
+      "symbol": "DNA"
+    },
+    "gummy": {
+      "name": "GUMMY",
+      "symbol": "GUMMY"
+    },
+    "1piece": {
+      "name": "OnePiece",
+      "symbol": "1PIECE"
+    },
+    "jet2": {
+      "name": "Jet2Holidays",
+      "symbol": "JET2"
+    },
+    "treat": {
+      "name": "Shiba Inu TREAT",
+      "symbol": "TREAT"
+    },
+    "bbft": {
+      "name": "Baby BFT",
+      "symbol": "BBFT"
+    },
+    "doge-1": {
+      "name": "DOGE-1 Satellite",
+      "symbol": "DOGE-1"
+    },
+    "tenge": {
+      "name": "TENGE TENGE",
+      "symbol": "TENGE"
+    },
+    "mini": {
+      "name": "mini",
+      "symbol": "MINI"
+    },
+    "higher": {
+      "name": "Higher",
+      "symbol": "HIGHER"
+    },
+    "dickbutt": {
+      "name": "Dickbutt",
+      "symbol": "DICKBUTT"
+    },
+    "bitty": {
+      "name": "The Bitcoin Mascot",
+      "symbol": "BITTY"
+    },
+    "cope": {
+      "name": "Cope",
+      "symbol": "COPE"
+    },
+    "trust": {
+      "name": "Trust The Process",
+      "symbol": "TRUST"
+    },
+    "captainbnb": {
+      "name": "CaptainBNB",
+      "symbol": "CAPTAINBNB"
+    },
+    "kcake": {
+      "name": "KittyCake",
+      "symbol": "KCAKE"
+    },
+    "awr": {
+      "name": "All Will Retire",
+      "symbol": "AWR"
+    },
+    "miu": {
+      "name": "Miu",
+      "symbol": "MIU"
+    },
+    "pundu": {
+      "name": "Pundu",
+      "symbol": "PUNDU"
+    },
+    "piai": {
+      "name": "Pi Network AI",
+      "symbol": "PIAI"
+    },
+    "mkt": {
+      "name": "MikeToken",
+      "symbol": "MKT"
+    },
+    "pndc": {
+      "name": "Pond Coin",
+      "symbol": "PNDC"
+    },
+    "blub": {
+      "name": "BLUB",
+      "symbol": "BLUB"
+    },
+    "giko": {
+      "name": "Giko Cat",
+      "symbol": "GIKO"
+    },
+    "yes": {
+      "name": "Yes Chad",
+      "symbol": "YES"
+    },
+    "哈喽": {
+      "name": "哈喽",
+      "symbol": "哈喽"
+    },
+    "rato": {
+      "name": "Rato The Rat (ratotherat.com)",
+      "symbol": "RATO"
+    },
+    "pech": {
+      "name": "PEPECASH (pepecash.live)",
+      "symbol": "PECH"
+    },
+    "loulou": {
+      "name": "LOULOU",
+      "symbol": "LOULOU"
+    },
+    "cow": {
+      "name": "COW",
+      "symbol": "COW"
+    },
+    "astherus": {
+      "name": "Astherus",
+      "symbol": "ASTHERUS"
+    },
+    "focai": {
+      "name": "Focai.fun",
+      "symbol": "FOCAI"
+    },
+    "chillhouse": {
+      "name": "Chill House",
+      "symbol": "CHILLHOUSE"
+    },
+    "gift": {
+      "name": "GIFT",
+      "symbol": "GIFT"
+    },
+    "hold": {
+      "name": "Everybody Holds",
+      "symbol": "HOLD"
+    },
+    "dawg": {
+      "name": "Dawg Coin",
+      "symbol": "DAWG"
+    },
+    "mooncat": {
+      "name": "Mooncat",
+      "symbol": "MOONCAT"
+    },
+    "lilpump": {
+      "name": "lilpump",
+      "symbol": "LILPUMP"
+    },
+    "tema": {
+      "name": "Tema",
+      "symbol": "TEMA"
+    },
+    "dorky": {
+      "name": "Dork Lord",
+      "symbol": "DORKY"
+    },
+    "kappa": {
+      "name": "the face of sarcasm",
+      "symbol": "KAPPA"
+    },
+    "btcbull": {
+      "name": "Bitcoin Bull",
+      "symbol": "BTCBULL"
+    },
+    "kaka": {
+      "name": "KAKA",
+      "symbol": "KAKA"
+    },
+    "send": {
+      "name": "Sendcoin",
+      "symbol": "SEND"
+    },
+    "gpton": {
+      "name": "GPTON",
+      "symbol": "GPTON"
+    },
+    "rfd": {
+      "name": "RefundCoin",
+      "symbol": "RFD"
+    },
+    "bnkrs": {
+      "name": "Bonkers Meme Token",
+      "symbol": "BNKRS"
+    },
+    "founder": {
+      "name": "Founder",
+      "symbol": "FOUNDER"
+    },
+    "project89": {
+      "name": "Project89",
+      "symbol": "PROJECT89"
+    },
+    "would": {
+      "name": "would",
+      "symbol": "WOULD"
+    },
+    "bbsnek": {
+      "name": "BabySNEK",
+      "symbol": "BBSNEK"
+    },
+    "kitty": {
+      "name": "Hello Kitty",
+      "symbol": "KITTY"
+    },
+    "snakes": {
+      "name": "Blue Snakes",
+      "symbol": "SNAKES"
+    },
+    "ket": {
+      "name": "yellow ket",
+      "symbol": "KET"
+    },
+    "berry": {
+      "name": "Strawberry In Bloom",
+      "symbol": "BERRY"
+    },
+    "infofi": {
+      "name": "WAGMI HUB",
+      "symbol": "INFOFI"
+    },
+    "chmpz": {
+      "name": "Chimpzee",
+      "symbol": "CHMPZ"
+    },
+    "tooker": {
+      "name": "tooker kurlson",
+      "symbol": "TOOKER"
+    },
+    "bnbtiger": {
+      "name": "Bnb Tiger Inu",
+      "symbol": "BNBTIGER"
+    },
+    "army": {
+      "name": "Army",
+      "symbol": "ARMY"
+    },
+    "inu": {
+      "name": "INU",
+      "symbol": "INU"
+    },
+    "babyaster": {
+      "name": "Baby Aster",
+      "symbol": "BABYASTER"
+    },
+    "froc": {
+      "name": "Based Froc",
+      "symbol": "FROC"
+    },
+    "marsmi": {
+      "name": "Mars Meme Inc",
+      "symbol": "MARSMI"
+    },
+    "andrea": {
+      "name": "Andrea Von Speed",
+      "symbol": "ANDREA"
+    },
+    "val": {
+      "name": "Store of Value",
+      "symbol": "VAL"
+    },
+    "neko": {
+      "name": "NeonNeko",
+      "symbol": "NEKO"
+    },
+    "tcapy": {
+      "name": "TonCapy",
+      "symbol": "TCAPY"
+    },
+    "candle": {
+      "name": "Candle TV",
+      "symbol": "CANDLE"
+    },
+    "gnc": {
+      "name": "Greenchie",
+      "symbol": "GNC"
+    },
+    "disco": {
+      "name": "Disco By Matt Furie",
+      "symbol": "DISCO"
+    },
+    "goonc": {
+      "name": "gooncoin",
+      "symbol": "GOONC"
+    },
+    "coco": {
+      "name": "COCOCOIN",
+      "symbol": "COCO"
+    },
+    "safemoonsol": {
+      "name": "Safemoon CTO on Solana",
+      "symbol": "SAFEMOONSOL"
+    },
+    "tom": {
+      "name": "TOMCoin",
+      "symbol": "TOM"
+    },
+    "bomet": {
+      "name": "BOMET",
+      "symbol": "BOMET"
+    },
+    "goldn": {
+      "name": "GOLDN",
+      "symbol": "GOLDN"
+    },
+    "bar": {
+      "name": "Gold Standard",
+      "symbol": "BAR"
+    },
+    "caocao": {
+      "name": "CaoCao",
+      "symbol": "CAOCAO"
+    },
+    "ybnb": {
+      "name": "Yellow BNB",
+      "symbol": "YBNB"
+    },
+    "uwu": {
+      "name": "Unicorn",
+      "symbol": "UWU"
+    },
+    "magatrump": {
+      "name": "MAGA Trump",
+      "symbol": "MAGATRUMP"
+    },
+    "zenai": {
+      "name": "Zen AI",
+      "symbol": "ZENAI"
+    },
+    "birddog": {
+      "name": "Bird Dog",
+      "symbol": "BIRDDOG"
+    },
+    "hariko": {
+      "name": "Inu Hariko",
+      "symbol": "HARIKO"
+    },
+    "epik": {
+      "name": "TEH EPIK DUCK",
+      "symbol": "EPIK"
+    },
+    "beenz": {
+      "name": "BEENZ",
+      "symbol": "BEENZ"
+    },
+    "capy": {
+      "name": "capybara",
+      "symbol": "CAPY"
+    },
+    "$chido": {
+      "name": "Chinese Doge Wow",
+      "symbol": "$CHIDO"
+    },
+    "tfny": {
+      "name": "TFNY",
+      "symbol": "TFNY"
+    },
+    "summit": {
+      "name": "Summit",
+      "symbol": "SUMMIT"
+    },
+    "four": {
+      "name": "Four",
+      "symbol": "FOUR"
+    },
+    "djt": {
+      "name": "TrumpCoin",
+      "symbol": "DJT"
+    },
+    "bnbdog": {
+      "name": "BNB DOG INU",
+      "symbol": "BNBDOG"
+    },
+    "baby4": {
+      "name": "Baby 4",
+      "symbol": "BABY4"
+    },
+    "ass": {
+      "name": "Australian Safe Shepherd",
+      "symbol": "ASS"
+    },
+    "imf": {
+      "name": "International Meme Fund",
+      "symbol": "IMF"
+    },
+    "shegen": {
+      "name": "Fi - Ai With Daddy Issues",
+      "symbol": "SHEGEN"
+    },
+    "hip": {
+      "name": "HIPPOP",
+      "symbol": "HIP"
+    },
+    "mirai": {
+      "name": "Project MIRAI",
+      "symbol": "MIRAI"
+    },
+    "don": {
+      "name": "Salamanca",
+      "symbol": "DON"
+    },
+    "hfun": {
+      "name": "Hypurr Fun",
+      "symbol": "HFUN"
+    },
+    "tybg": {
+      "name": "Base God",
+      "symbol": "TYBG"
+    },
+    "sharbi": {
+      "name": "SHARBI",
+      "symbol": "SHARBI"
+    },
+    "santa": {
+      "name": "Santacoin",
+      "symbol": "SANTA"
+    },
+    "catana": {
+      "name": "Catana",
+      "symbol": "CATANA"
+    },
+    "fight": {
+      "name": "FIGHT TO MAGA",
+      "symbol": "FIGHT"
+    },
+    "$mfer": {
+      "name": "mfercoin",
+      "symbol": "$MFER"
+    },
+    "pig": {
+      "name": "Pig Finance",
+      "symbol": "PIG"
+    },
+    "bobaoppa": {
+      "name": "Bobaoppa",
+      "symbol": "BOBAOPPA"
+    },
+    "clifford": {
+      "name": "Clifford",
+      "symbol": "CLIFFORD"
+    },
+    "kaspy": {
+      "name": "Kaspy",
+      "symbol": "KASPY"
+    },
+    "duckai": {
+      "name": "Duck AI",
+      "symbol": "DUCKAI"
+    },
+    "lmeow": {
+      "name": "lmeow",
+      "symbol": "LMEOW"
+    },
+    "saint": {
+      "name": "Satoshi AI agent by Virtuals",
+      "symbol": "SAINT"
+    },
+    "sora": {
+      "name": "Sora",
+      "symbol": "SORA"
+    },
+    "naiive": {
+      "name": "Naiive",
+      "symbol": "NAIIVE"
+    },
+    "anita": {
+      "name": "Anita AI",
+      "symbol": "ANITA"
+    },
+    "fusaka": {
+      "name": "Fusaka",
+      "symbol": "FUSAKA"
+    },
+    "rnt": {
+      "name": "Real Nigger Tate",
+      "symbol": "RNT"
+    },
+    "lum": {
+      "name": "Luminous",
+      "symbol": "LUM"
+    },
+    "wsb": {
+      "name": "Wall Street Baby",
+      "symbol": "WSB"
+    },
+    "ocn": {
+      "name": "Official Crypto Nostra",
+      "symbol": "OCN"
+    },
+    "$kekius": {
+      "name": "Kekius Maximus (kekius.club)",
+      "symbol": "$KEKIUS"
+    },
+    "pip": {
+      "name": "PiP (Hyperliquid)",
+      "symbol": "PIP"
+    },
+    "burt": {
+      "name": "BURT",
+      "symbol": "BURT"
+    },
+    "ross": {
+      "name": "Ross Ulbricht",
+      "symbol": "ROSS"
+    },
+    "nochill": {
+      "name": "AVAX HAS NO CHILL",
+      "symbol": "NOCHILL"
+    },
+    "maxeth": {
+      "name": "Max on ETH",
+      "symbol": "MAXETH"
+    },
+    "buddy": {
+      "name": "alright buddy",
+      "symbol": "BUDDY"
+    },
+    "piza": {
+      "name": "PIZA (Ordinals)",
+      "symbol": "PIZA"
+    },
+    "sssss": {
+      "name": "Snake wif Hat",
+      "symbol": "SSSSS"
+    },
+    "lily": {
+      "name": "Lily's Coin",
+      "symbol": "LILY"
+    },
+    "adasol": {
+      "name": "ADA",
+      "symbol": "ADASOL"
+    },
+    "blu": {
+      "name": "Based Blu Alien",
+      "symbol": "BLU"
+    },
+    "neiroinu": {
+      "name": "Neiro Inu",
+      "symbol": "NEIROINU"
+    },
+    "routine": {
+      "name": "Morning Routine",
+      "symbol": "ROUTINE"
+    },
+    "cuut": {
+      "name": "CUTTLEFISHY",
+      "symbol": "CUUT"
+    },
+    "monk": {
+      "name": "monkeyhaircut",
+      "symbol": "MONK"
+    },
+    "goku": {
+      "name": "Goku Super Saiyan",
+      "symbol": "GOKU"
+    },
+    "pwog": {
+      "name": "Purple Fwog",
+      "symbol": "PWOG"
+    },
+    "rock": {
+      "name": "ROCK",
+      "symbol": "ROCK"
+    },
+    "trumpjr": {
+      "name": "OFFICIAL TRUMP JR",
+      "symbol": "TRUMPJR"
+    },
+    "sugr": {
+      "name": "Sugar",
+      "symbol": "SUGR"
+    },
+    "hachi": {
+      "name": "Hachiko",
+      "symbol": "HACHI"
+    },
+    "gekko": {
+      "name": "Gekko HQ",
+      "symbol": "GEKKO"
+    },
+    "babyfwog": {
+      "name": "Baby Fwog",
+      "symbol": "BABYFWOG"
+    },
+    "cwoin": {
+      "name": "cwoin",
+      "symbol": "CWOIN"
+    },
+    "get": {
+      "name": "Get AI",
+      "symbol": "GET"
+    },
+    "slt": {
+      "name": "Salute",
+      "symbol": "SLT"
+    },
+    "guan": {
+      "name": "Guanciale by Virtuals",
+      "symbol": "GUAN"
+    },
+    "popdog": {
+      "name": "PopDog",
+      "symbol": "POPDOG"
+    },
+    "mind": {
+      "name": "Mind of Pepe",
+      "symbol": "MIND"
+    },
+    "laika": {
+      "name": "LAIKA The Cosmodog",
+      "symbol": "LAIKA"
+    },
+    "bark": {
+      "name": "BARK",
+      "symbol": "BARK"
+    },
+    "tora": {
+      "name": "TORA NEKO",
+      "symbol": "TORA"
+    },
+    "troppy": {
+      "name": "TROPPY",
+      "symbol": "TROPPY"
+    },
+    "bets": {
+      "name": "All Street Bets",
+      "symbol": "BETS"
+    },
+    "holo": {
+      "name": "HOLO (holol0gs.lovable.app)",
+      "symbol": "HOLO"
+    },
+    "puff": {
+      "name": "Puff The Dragon",
+      "symbol": "PUFF"
+    },
+    "corgiai": {
+      "name": "CorgiAI",
+      "symbol": "CORGIAI"
+    },
+    "pvc": {
+      "name": "PVC Meta",
+      "symbol": "PVC"
+    },
+    "smt": {
+      "name": "SmartMall",
+      "symbol": "SMT"
+    },
+    "dogen": {
+      "name": "DOGEN",
+      "symbol": "DOGEN"
+    },
+    "1cat": {
+      "name": "Bitcoin Cats",
+      "symbol": "1CAT"
+    },
+    "zhoa": {
+      "name": "Chengpang Zhoa",
+      "symbol": "ZHOA"
+    },
+    "$symp": {
+      "name": "Sympson AI",
+      "symbol": "$SYMP"
+    },
+    "babyeth": {
+      "name": "Baby Ethereum",
+      "symbol": "BABYETH"
+    },
+    "son": {
+      "name": "ARE YA WINNING, SON?",
+      "symbol": "SON"
+    },
+    "bcat": {
+      "name": "BilliCat",
+      "symbol": "BCAT"
+    },
+    "finvesta": {
+      "name": "Finvesta",
+      "symbol": "FINVESTA"
+    },
+    "moo": {
+      "name": "Moo",
+      "symbol": "MOO"
+    },
+    "timeless": {
+      "name": "Timeless",
+      "symbol": "TIMELESS"
+    },
+    "book": {
+      "name": "Book of Binance",
+      "symbol": "BOOK"
+    },
+    "kurt": {
+      "name": "Kurt",
+      "symbol": "KURT"
+    },
+    "guac": {
+      "name": "Guacamole",
+      "symbol": "GUAC"
+    },
+    "pug": {
+      "name": "Pug Inu",
+      "symbol": "PUG"
+    },
+    "smole": {
+      "name": "smolecoin",
+      "symbol": "SMOLE"
+    },
+    "sfm": {
+      "name": "SafeMoon V2",
+      "symbol": "SFM"
+    },
+    "c": {
+      "name": "CROAK",
+      "symbol": "C"
+    },
+    "mepad": {
+      "name": "MemePad",
+      "symbol": "MEPAD"
+    },
+    "larry": {
+      "name": "Evil Larry",
+      "symbol": "LARRY"
+    },
+    "moon": {
+      "name": "Moon",
+      "symbol": "MOON"
+    },
+    "boopa": {
+      "name": "Boopa",
+      "symbol": "BOOPA"
+    },
+    "nasdaq420": {
+      "name": "Nasdaq420",
+      "symbol": "NASDAQ420"
+    },
+    "skop": {
+      "name": "Skulls of Pepe Token",
+      "symbol": "SKOP"
+    },
+    "$sponge": {
+      "name": "Sponge",
+      "symbol": "$SPONGE"
+    },
+    "wassie": {
+      "name": "WASSIE",
+      "symbol": "WASSIE"
+    },
+    "lumint": {
+      "name": "Lumint",
+      "symbol": "LUMINT"
+    },
+    "conan": {
+      "name": "Conan",
+      "symbol": "CONAN"
+    },
+    "xiaobai": {
+      "name": "XiaoBai (xiaobai.digital)",
+      "symbol": "XIAOBAI"
+    },
+    "degod": {
+      "name": "DEGOD",
+      "symbol": "DEGOD"
+    },
+    "chomp": {
+      "name": "ChompCoin",
+      "symbol": "CHOMP"
+    },
+    "binanciens": {
+      "name": "Binanciens",
+      "symbol": "BINANCIENS"
+    },
+    "fearnot": {
+      "name": "FEAR NOT",
+      "symbol": "FEARNOT"
+    },
+    "bbob": {
+      "name": "BabyBuilder",
+      "symbol": "BBOB"
+    },
+    "gugo": {
+      "name": "GUGO",
+      "symbol": "GUGO"
+    },
+    "fud": {
+      "name": "FUD",
+      "symbol": "FUD"
+    }
+  }
+}

@@ -1,0 +1,4992 @@
+[
+  {
+    "key": "club-token",
+    "rank": 48,
+    "name": "Club Token",
+    "symbol": "KOGE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bitcoin",
+    "rank": null,
+    "name": "Bitcoin",
+    "symbol": "BTC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ethereum",
+    "rank": null,
+    "name": "Ethereum",
+    "symbol": "ETH",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "tether",
+    "rank": null,
+    "name": "Tether",
+    "symbol": "USDT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bnb",
+    "rank": null,
+    "name": "BNB",
+    "symbol": "BNB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "xrp",
+    "rank": null,
+    "name": "XRP",
+    "symbol": "XRP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "solana",
+    "rank": null,
+    "name": "Solana",
+    "symbol": "SOL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "usdc",
+    "rank": null,
+    "name": "USDC",
+    "symbol": "USDC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "dogecoin",
+    "rank": null,
+    "name": "Dogecoin",
+    "symbol": "DOGE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "tron",
+    "rank": null,
+    "name": "TRON",
+    "symbol": "TRX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "cardano",
+    "rank": null,
+    "name": "Cardano",
+    "symbol": "ADA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "chainlink",
+    "rank": null,
+    "name": "Chainlink",
+    "symbol": "LINK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ethena-usde",
+    "rank": null,
+    "name": "Ethena USDe",
+    "symbol": "USDE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "hyperliquid",
+    "rank": null,
+    "name": "Hyperliquid",
+    "symbol": "HYPE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sui",
+    "rank": null,
+    "name": "Sui",
+    "symbol": "SUI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "stellar",
+    "rank": null,
+    "name": "Stellar",
+    "symbol": "XLM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "avalanche",
+    "rank": null,
+    "name": "Avalanche",
+    "symbol": "AVAX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bitcoin-cash",
+    "rank": null,
+    "name": "Bitcoin Cash",
+    "symbol": "BCH",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "litecoin",
+    "rank": null,
+    "name": "Litecoin",
+    "symbol": "LTC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "hedera",
+    "rank": null,
+    "name": "Hedera",
+    "symbol": "HBAR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "unus-sed-leo",
+    "rank": null,
+    "name": "UNUS SED LEO",
+    "symbol": "LEO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "mantle",
+    "rank": null,
+    "name": "Mantle",
+    "symbol": "MNT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "shiba-inu",
+    "rank": null,
+    "name": "Shiba Inu",
+    "symbol": "SHIB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "toncoin",
+    "rank": null,
+    "name": "Toncoin",
+    "symbol": "TON",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "cronos",
+    "rank": null,
+    "name": "Cronos",
+    "symbol": "CRO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "polkadot",
+    "rank": null,
+    "name": "Polkadot",
+    "symbol": "DOT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "monero",
+    "rank": null,
+    "name": "Monero",
+    "symbol": "XMR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "dai",
+    "rank": null,
+    "name": "Dai",
+    "symbol": "DAI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "uniswap",
+    "rank": null,
+    "name": "Uniswap",
+    "symbol": "UNI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "world-liberty-financial",
+    "rank": null,
+    "name": "World Liberty Financial",
+    "symbol": "WLFI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "okb",
+    "rank": null,
+    "name": "OKB",
+    "symbol": "OKB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aave",
+    "rank": null,
+    "name": "Aave",
+    "symbol": "AAVE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bitget-token",
+    "rank": null,
+    "name": "Bitget Token",
+    "symbol": "BGB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ethena",
+    "rank": null,
+    "name": "Ethena",
+    "symbol": "ENA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pepe",
+    "rank": null,
+    "name": "Pepe",
+    "symbol": "PEPE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "near-protocol",
+    "rank": null,
+    "name": "NEAR Protocol",
+    "symbol": "NEAR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aptos",
+    "rank": null,
+    "name": "Aptos",
+    "symbol": "APT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "zcash",
+    "rank": null,
+    "name": "Zcash",
+    "symbol": "ZEC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bittensor",
+    "rank": null,
+    "name": "Bittensor",
+    "symbol": "TAO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ethereum-classic",
+    "rank": null,
+    "name": "Ethereum Classic",
+    "symbol": "ETC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aster",
+    "rank": null,
+    "name": "Aster",
+    "symbol": "ASTER",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "story",
+    "rank": null,
+    "name": "Story",
+    "symbol": "IP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ondo",
+    "rank": null,
+    "name": "Ondo",
+    "symbol": "ONDO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "worldcoin",
+    "rank": null,
+    "name": "Worldcoin",
+    "symbol": "WLD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "world-liberty-financial-usd",
+    "rank": null,
+    "name": "World Liberty Financial USD",
+    "symbol": "USD1",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "paypal-usd",
+    "rank": null,
+    "name": "PayPal USD",
+    "symbol": "PYUSD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "polygon-prev-matic",
+    "rank": null,
+    "name": "Polygon (prev. MATIC)",
+    "symbol": "POL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "internet-computer",
+    "rank": null,
+    "name": "Internet Computer",
+    "symbol": "ICP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "arbitrum",
+    "rank": null,
+    "name": "Arbitrum",
+    "symbol": "ARB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "memecore",
+    "rank": null,
+    "name": "MemeCore",
+    "symbol": "M",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "kucoin-token",
+    "rank": null,
+    "name": "KuCoin Token",
+    "symbol": "KCS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "kaspa",
+    "rank": null,
+    "name": "Kaspa",
+    "symbol": "KAS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pump-fun",
+    "rank": null,
+    "name": "Pump.fun",
+    "symbol": "PUMP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "algorand",
+    "rank": null,
+    "name": "Algorand",
+    "symbol": "ALGO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "cosmos",
+    "rank": null,
+    "name": "Cosmos",
+    "symbol": "ATOM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pudgy-penguins",
+    "rank": null,
+    "name": "Pudgy Penguins",
+    "symbol": "PENGU",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "vechain",
+    "rank": null,
+    "name": "VeChain",
+    "symbol": "VET",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pi",
+    "rank": null,
+    "name": "Pi",
+    "symbol": "PI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sei",
+    "rank": null,
+    "name": "Sei",
+    "symbol": "SEI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "flare",
+    "rank": null,
+    "name": "Flare",
+    "symbol": "FLR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "render",
+    "rank": null,
+    "name": "Render",
+    "symbol": "RENDER",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "filecoin",
+    "rank": null,
+    "name": "Filecoin",
+    "symbol": "FIL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sky",
+    "rank": null,
+    "name": "Sky",
+    "symbol": "SKY",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bonk",
+    "rank": null,
+    "name": "Bonk",
+    "symbol": "BONK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "official-trump",
+    "rank": null,
+    "name": "OFFICIAL TRUMP",
+    "symbol": "TRUMP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "jupiter",
+    "rank": null,
+    "name": "Jupiter",
+    "symbol": "JUP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "plasma",
+    "rank": null,
+    "name": "Plasma",
+    "symbol": "XPL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "immutable",
+    "rank": null,
+    "name": "Immutable",
+    "symbol": "IMX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "spx6900",
+    "rank": null,
+    "name": "SPX6900",
+    "symbol": "SPX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gatetoken",
+    "rank": null,
+    "name": "GateToken",
+    "symbol": "GT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "doublezero",
+    "rank": null,
+    "name": "DoubleZero",
+    "symbol": "2Z",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "xdc-network",
+    "rank": null,
+    "name": "XDC Network",
+    "symbol": "XDC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pancakeswap",
+    "rank": null,
+    "name": "PancakeSwap",
+    "symbol": "CAKE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "optimism",
+    "rank": null,
+    "name": "Optimism",
+    "symbol": "OP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "quant",
+    "rank": null,
+    "name": "Quant",
+    "symbol": "QNT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pax-gold",
+    "rank": null,
+    "name": "PAX Gold",
+    "symbol": "PAXG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "injective",
+    "rank": null,
+    "name": "Injective",
+    "symbol": "INJ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "artificial-superintelligence-alliance",
+    "rank": null,
+    "name": "Artificial Superintelligence Alliance",
+    "symbol": "FET",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "celestia",
+    "rank": null,
+    "name": "Celestia",
+    "symbol": "TIA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "first-digital-usd",
+    "rank": null,
+    "name": "First Digital USD",
+    "symbol": "FDUSD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "stacks",
+    "rank": null,
+    "name": "Stacks",
+    "symbol": "STX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "lido-dao",
+    "rank": null,
+    "name": "Lido DAO",
+    "symbol": "LDO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "curve-dao-token",
+    "rank": null,
+    "name": "Curve DAO Token",
+    "symbol": "CRV",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "myx-finance",
+    "rank": null,
+    "name": "MYX Finance",
+    "symbol": "MYX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "tether-gold",
+    "rank": null,
+    "name": "Tether Gold",
+    "symbol": "XAUT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aerodrome-finance",
+    "rank": null,
+    "name": "Aerodrome Finance",
+    "symbol": "AERO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "dexe",
+    "rank": null,
+    "name": "DeXe",
+    "symbol": "DEXE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pyth-network",
+    "rank": null,
+    "name": "Pyth Network",
+    "symbol": "PYTH",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "floki",
+    "rank": null,
+    "name": "FLOKI",
+    "symbol": "FLOKI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "kaia",
+    "rank": null,
+    "name": "Kaia",
+    "symbol": "KAIA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "the-graph",
+    "rank": null,
+    "name": "The Graph",
+    "symbol": "GRT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ether-fi",
+    "rank": null,
+    "name": "ether.fi",
+    "symbol": "ETHFI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "nexo",
+    "rank": null,
+    "name": "Nexo",
+    "symbol": "NEXO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ripple-usd",
+    "rank": null,
+    "name": "Ripple USD",
+    "symbol": "RLUSD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sonic",
+    "rank": null,
+    "name": "Sonic",
+    "symbol": "S",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ethereum-name-service",
+    "rank": null,
+    "name": "Ethereum Name Service",
+    "symbol": "ENS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pendle",
+    "rank": null,
+    "name": "Pendle",
+    "symbol": "PENDLE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "iota",
+    "rank": null,
+    "name": "IOTA",
+    "symbol": "IOTA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "conflux",
+    "rank": null,
+    "name": "Conflux",
+    "symbol": "CFX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "raydium",
+    "rank": null,
+    "name": "Raydium",
+    "symbol": "RAY",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "tezos",
+    "rank": null,
+    "name": "Tezos",
+    "symbol": "XTZ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gala",
+    "rank": null,
+    "name": "Gala",
+    "symbol": "GALA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "theta-network",
+    "rank": null,
+    "name": "Theta Network",
+    "symbol": "THETA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "dogwifhat",
+    "rank": null,
+    "name": "dogwifhat",
+    "symbol": "WIF",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "virtuals-protocol",
+    "rank": null,
+    "name": "Virtuals Protocol",
+    "symbol": "VIRTUAL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "eigenlayer",
+    "rank": null,
+    "name": "EigenLayer",
+    "symbol": "EIGEN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "the-sandbox",
+    "rank": null,
+    "name": "The Sandbox",
+    "symbol": "SAND",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ab",
+    "rank": null,
+    "name": "AB",
+    "symbol": "AB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "starknet",
+    "rank": null,
+    "name": "Starknet",
+    "symbol": "STRK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aethir",
+    "rank": null,
+    "name": "Aethir",
+    "symbol": "ATH",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "trust-wallet-token",
+    "rank": null,
+    "name": "Trust Wallet Token",
+    "symbol": "TWT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "fartcoin",
+    "rank": null,
+    "name": "Fartcoin",
+    "symbol": "FARTCOIN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "decentraland",
+    "rank": null,
+    "name": "Decentraland",
+    "symbol": "MANA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "vaulta",
+    "rank": null,
+    "name": "Vaulta",
+    "symbol": "A",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "jasmycoin",
+    "rank": null,
+    "name": "JasmyCoin",
+    "symbol": "JASMY",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "layerzero",
+    "rank": null,
+    "name": "LayerZero",
+    "symbol": "ZRO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "jito",
+    "rank": null,
+    "name": "Jito",
+    "symbol": "JTO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bittorrent-new",
+    "rank": null,
+    "name": "BitTorrent [New]",
+    "symbol": "BTT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "flow",
+    "rank": null,
+    "name": "Flow",
+    "symbol": "FLOW",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "morpho",
+    "rank": null,
+    "name": "Morpho",
+    "symbol": "MORPHO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "deepbook-protocol",
+    "rank": null,
+    "name": "DeepBook Protocol",
+    "symbol": "DEEP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "walrus",
+    "rank": null,
+    "name": "Walrus",
+    "symbol": "WAL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "0g",
+    "rank": null,
+    "name": "0G",
+    "symbol": "0G",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "wormhole",
+    "rank": null,
+    "name": "Wormhole",
+    "symbol": "W",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "trueusd",
+    "rank": null,
+    "name": "TrueUSD",
+    "symbol": "TUSD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bitcoin-sv",
+    "rank": null,
+    "name": "Bitcoin SV",
+    "symbol": "BSV",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sun-new",
+    "rank": null,
+    "name": "Sun [New]",
+    "symbol": "SUN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "helium",
+    "rank": null,
+    "name": "Helium",
+    "symbol": "HNT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "usdd",
+    "rank": null,
+    "name": "USDD",
+    "symbol": "USDD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "maple-finance",
+    "rank": null,
+    "name": "Maple Finance",
+    "symbol": "SYRUP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "four",
+    "rank": null,
+    "name": "Four",
+    "symbol": "FORM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "zebec-network",
+    "rank": null,
+    "name": "Zebec Network",
+    "symbol": "ZBCN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "dydx",
+    "rank": null,
+    "name": "dYdX",
+    "symbol": "DYDX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "zksync",
+    "rank": null,
+    "name": "ZKsync",
+    "symbol": "ZK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "dash",
+    "rank": null,
+    "name": "Dash",
+    "symbol": "DASH",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "apenft",
+    "rank": null,
+    "name": "APENFT",
+    "symbol": "NFT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "neo",
+    "rank": null,
+    "name": "Neo",
+    "symbol": "NEO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "beam",
+    "rank": null,
+    "name": "Beam",
+    "symbol": "BEAM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "brett-based",
+    "rank": null,
+    "name": "Brett (Based)",
+    "symbol": "BRETT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "apecoin",
+    "rank": null,
+    "name": "ApeCoin",
+    "symbol": "APE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "toshi",
+    "rank": null,
+    "name": "Toshi",
+    "symbol": "TOSHI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "chiliz",
+    "rank": null,
+    "name": "Chiliz",
+    "symbol": "CHZ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "thorchain",
+    "rank": null,
+    "name": "THORChain",
+    "symbol": "RUNE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "compound",
+    "rank": null,
+    "name": "Compound",
+    "symbol": "COMP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "synthetix",
+    "rank": null,
+    "name": "Synthetix",
+    "symbol": "SNX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "linea",
+    "rank": null,
+    "name": "Linea",
+    "symbol": "LINEA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gnosis",
+    "rank": null,
+    "name": "Gnosis",
+    "symbol": "GNO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "core",
+    "rank": null,
+    "name": "Core",
+    "symbol": "CORE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "multiversx",
+    "rank": null,
+    "name": "MultiversX",
+    "symbol": "EGLD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "useless-coin",
+    "rank": null,
+    "name": "Useless Coin",
+    "symbol": "USELESS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "arweave",
+    "rank": null,
+    "name": "Arweave",
+    "symbol": "AR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "onyxcoin",
+    "rank": null,
+    "name": "Onyxcoin",
+    "symbol": "XCN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "axie-infinity",
+    "rank": null,
+    "name": "Axie Infinity",
+    "symbol": "AXS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "cheems-cheems-pet",
+    "rank": null,
+    "name": "Cheems (cheems.pet)",
+    "symbol": "CHEEMS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "kava",
+    "rank": null,
+    "name": "Kava",
+    "symbol": "KAVA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "zora",
+    "rank": null,
+    "name": "ZORA",
+    "symbol": "ZORA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "reserve-rights",
+    "rank": null,
+    "name": "Reserve Rights",
+    "symbol": "RSR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ecash",
+    "rank": null,
+    "name": "eCash",
+    "symbol": "XEC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "superverse",
+    "rank": null,
+    "name": "SuperVerse",
+    "symbol": "SUPER",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "1inch",
+    "rank": null,
+    "name": "1inch",
+    "symbol": "1INCH",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "berachain",
+    "rank": null,
+    "name": "Berachain",
+    "symbol": "BERA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "falcon-finance",
+    "rank": null,
+    "name": "Falcon Finance",
+    "symbol": "FF",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "merlin-chain",
+    "rank": null,
+    "name": "Merlin Chain",
+    "symbol": "MERL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aioz-network",
+    "rank": null,
+    "name": "AIOZ Network",
+    "symbol": "AIOZ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ronin",
+    "rank": null,
+    "name": "Ronin",
+    "symbol": "RON",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "just",
+    "rank": null,
+    "name": "JUST",
+    "symbol": "JST",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "kaito",
+    "rank": null,
+    "name": "KAITO",
+    "symbol": "KAITO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "convex-finance",
+    "rank": null,
+    "name": "Convex Finance",
+    "symbol": "CVX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "decred",
+    "rank": null,
+    "name": "Decred",
+    "symbol": "DCR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "plume",
+    "rank": null,
+    "name": "Plume",
+    "symbol": "PLUME",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "axelar",
+    "rank": null,
+    "name": "Axelar",
+    "symbol": "AXL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "movement",
+    "rank": null,
+    "name": "Movement",
+    "symbol": "MOVE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "moca-network",
+    "rank": null,
+    "name": "Moca Network",
+    "symbol": "MOCA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "terra-classic",
+    "rank": null,
+    "name": "Terra Classic",
+    "symbol": "LUNC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "drift",
+    "rank": null,
+    "name": "Drift",
+    "symbol": "DRIFT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "snek",
+    "rank": null,
+    "name": "Snek",
+    "symbol": "SNEK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "wemix",
+    "rank": null,
+    "name": "WEMIX",
+    "symbol": "WEMIX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ftx-token",
+    "rank": null,
+    "name": "FTX Token",
+    "symbol": "FTT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "livepeer",
+    "rank": null,
+    "name": "Livepeer",
+    "symbol": "LPT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "mog-coin",
+    "rank": null,
+    "name": "Mog Coin",
+    "symbol": "MOG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "akash-network",
+    "rank": null,
+    "name": "Akash Network",
+    "symbol": "AKT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "creditcoin",
+    "rank": null,
+    "name": "Creditcoin",
+    "symbol": "CTC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "eurc",
+    "rank": null,
+    "name": "EURC",
+    "symbol": "EURC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "basic-attention-token",
+    "rank": null,
+    "name": "Basic Attention Token",
+    "symbol": "BAT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "safepal",
+    "rank": null,
+    "name": "SafePal",
+    "symbol": "SFP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "amp",
+    "rank": null,
+    "name": "Amp",
+    "symbol": "AMP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "qtum",
+    "rank": null,
+    "name": "Qtum",
+    "symbol": "QTUM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "kusama",
+    "rank": null,
+    "name": "Kusama",
+    "symbol": "KSM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "buildon",
+    "rank": null,
+    "name": "BUILDon",
+    "symbol": "B",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "origintrail",
+    "rank": null,
+    "name": "OriginTrail",
+    "symbol": "TRAC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "mx-token",
+    "rank": null,
+    "name": "MX Token",
+    "symbol": "MX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "turbo",
+    "rank": null,
+    "name": "Turbo",
+    "symbol": "TURBO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "safe",
+    "rank": null,
+    "name": "Safe",
+    "symbol": "SAFE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "cat-in-a-dogs-world",
+    "rank": null,
+    "name": "cat in a dogs world",
+    "symbol": "MEW",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "iotex",
+    "rank": null,
+    "name": "IoTeX",
+    "symbol": "IOTX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "theta-fuel",
+    "rank": null,
+    "name": "Theta Fuel",
+    "symbol": "TFUEL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "popcat-sol",
+    "rank": null,
+    "name": "Popcat (SOL)",
+    "symbol": "POPCAT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "golem",
+    "rank": null,
+    "name": "Golem",
+    "symbol": "GLM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "baby-doge-coin",
+    "rank": null,
+    "name": "Baby Doge Coin",
+    "symbol": "BABYDOGE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "kamino-finance",
+    "rank": null,
+    "name": "Kamino Finance",
+    "symbol": "KMNO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "dog-bitcoin",
+    "rank": null,
+    "name": "Dog (Bitcoin)",
+    "symbol": "DOG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "jupiter-perps-lp",
+    "rank": null,
+    "name": "Jupiter Perps LP",
+    "symbol": "JLP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "falcon-usd",
+    "rank": null,
+    "name": "Falcon USD",
+    "symbol": "USDF",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "chainopera-ai",
+    "rank": null,
+    "name": "ChainOpera AI",
+    "symbol": "COAI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "fasttoken",
+    "rank": null,
+    "name": "Fasttoken",
+    "symbol": "FTN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "global-dollar",
+    "rank": null,
+    "name": "Global Dollar",
+    "symbol": "USDG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "saros",
+    "rank": null,
+    "name": "Saros",
+    "symbol": "SAROS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "zeebu",
+    "rank": null,
+    "name": "Zeebu",
+    "symbol": "ZBU",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "apx",
+    "rank": null,
+    "name": "APX",
+    "symbol": "APX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ondo-us-dollar-yield",
+    "rank": null,
+    "name": "Ondo US Dollar Yield",
+    "symbol": "USDY",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "usual-usd",
+    "rank": null,
+    "name": "Usual USD",
+    "symbol": "USD0",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "beldex",
+    "rank": null,
+    "name": "Beldex",
+    "symbol": "BDX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "swissborg",
+    "rank": null,
+    "name": "SwissBorg",
+    "symbol": "BORG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "usdai",
+    "rank": null,
+    "name": "USDai",
+    "symbol": "USDAI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "fluid",
+    "rank": null,
+    "name": "Fluid",
+    "symbol": "FLUID",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "loaded-lions",
+    "rank": null,
+    "name": "Loaded Lions",
+    "symbol": "LION",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "vision",
+    "rank": null,
+    "name": "Vision",
+    "symbol": "VSN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ai-companions",
+    "rank": null,
+    "name": "AI Companions",
+    "symbol": "AIC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "telcoin",
+    "rank": null,
+    "name": "Telcoin",
+    "symbol": "TEL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gho",
+    "rank": null,
+    "name": "GHO",
+    "symbol": "GHO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aster-usdf",
+    "rank": null,
+    "name": "Aster USDF",
+    "symbol": "USDF",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "kinesis-gold",
+    "rank": null,
+    "name": "Kinesis Gold",
+    "symbol": "KAU",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "legacy-frax-dollar",
+    "rank": null,
+    "name": "Legacy Frax Dollar",
+    "symbol": "FRAX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "soon",
+    "rank": null,
+    "name": "SOON",
+    "symbol": "SOON",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ribbita-by-virtuals",
+    "rank": null,
+    "name": "Ribbita by Virtuals",
+    "symbol": "TIBBIR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "",
+    "rank": null,
+    "name": "币安人生",
+    "symbol": "币安人生",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "apex-protocol",
+    "rank": null,
+    "name": "ApeX Protocol",
+    "symbol": "APEX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "nexusmind",
+    "rank": null,
+    "name": "Nexusmind",
+    "symbol": "NMD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "qubic",
+    "rank": null,
+    "name": "Qubic",
+    "symbol": "QUBIC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "celo",
+    "rank": null,
+    "name": "Celo",
+    "symbol": "CELO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "velo",
+    "rank": null,
+    "name": "Velo",
+    "symbol": "VELO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "concordium",
+    "rank": null,
+    "name": "Concordium",
+    "symbol": "CCD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "avantis",
+    "rank": null,
+    "name": "Avantis",
+    "symbol": "AVNT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "subsquid",
+    "rank": null,
+    "name": "Subsquid",
+    "symbol": "SQD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "astar",
+    "rank": null,
+    "name": "Astar",
+    "symbol": "ASTR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "0x-protocol",
+    "rank": null,
+    "name": "0x Protocol",
+    "symbol": "ZRX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "zilliqa",
+    "rank": null,
+    "name": "Zilliqa",
+    "symbol": "ZIL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ailey",
+    "rank": null,
+    "name": "Ailey",
+    "symbol": "ALE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "keeta",
+    "rank": null,
+    "name": "Keeta",
+    "symbol": "KTA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sosovalue",
+    "rank": null,
+    "name": "SoSoValue",
+    "symbol": "SOSO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "legacy-token",
+    "rank": null,
+    "name": "Legacy Token",
+    "symbol": "LGCT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "peanut-the-squirrel",
+    "rank": null,
+    "name": "Peanut the Squirrel",
+    "symbol": "PNUT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "upcx",
+    "rank": null,
+    "name": "UPCX",
+    "symbol": "UPC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "mina",
+    "rank": null,
+    "name": "Mina",
+    "symbol": "MINA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "nervos-network",
+    "rank": null,
+    "name": "Nervos Network",
+    "symbol": "CKB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "euler",
+    "rank": null,
+    "name": "Euler",
+    "symbol": "EUL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sushiswap",
+    "rank": null,
+    "name": "SushiSwap",
+    "symbol": "SUSHI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gas",
+    "rank": null,
+    "name": "Gas",
+    "symbol": "GAS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "go-ining",
+    "rank": null,
+    "name": "GoМining",
+    "symbol": "GOMINING",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bio-protocol",
+    "rank": null,
+    "name": "Bio Protocol",
+    "symbol": "BIO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "standx-dusd",
+    "rank": null,
+    "name": "StandX DUSD",
+    "symbol": "DUSD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "grass",
+    "rank": null,
+    "name": "Grass",
+    "symbol": "GRASS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "frax-prev-fxs",
+    "rank": null,
+    "name": "Frax (prev. FXS)",
+    "symbol": "FRAX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aleo",
+    "rank": null,
+    "name": "Aleo",
+    "symbol": "ALEO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "prom",
+    "rank": null,
+    "name": "Prom",
+    "symbol": "PROM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "awe",
+    "rank": null,
+    "name": "AWE",
+    "symbol": "AWE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "oasis",
+    "rank": null,
+    "name": "Oasis",
+    "symbol": "ROSE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "vvs-finance",
+    "rank": null,
+    "name": "VVS Finance",
+    "symbol": "VVS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "rekt-rektcoin-com",
+    "rank": null,
+    "name": "Rekt (rektcoin.com)",
+    "symbol": "REKT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "blur",
+    "rank": null,
+    "name": "Blur",
+    "symbol": "BLUR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "zetachain",
+    "rank": null,
+    "name": "ZetaChain",
+    "symbol": "ZETA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "alchemy-pay",
+    "rank": null,
+    "name": "Alchemy Pay",
+    "symbol": "ACH",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ravencoin",
+    "rank": null,
+    "name": "Ravencoin",
+    "symbol": "RVN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "yearn-finance",
+    "rank": null,
+    "name": "yearn.finance",
+    "symbol": "YFI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "whiterock",
+    "rank": null,
+    "name": "WhiteRock",
+    "symbol": "WHITE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sahara-ai",
+    "rank": null,
+    "name": "Sahara AI",
+    "symbol": "SAHARA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "mantra",
+    "rank": null,
+    "name": "MANTRA",
+    "symbol": "OM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "space-id",
+    "rank": null,
+    "name": "SPACE ID",
+    "symbol": "ID",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "dora",
+    "rank": null,
+    "name": "DORA",
+    "symbol": "DORA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "4",
+    "rank": null,
+    "name": "4",
+    "symbol": "4",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "lombard",
+    "rank": null,
+    "name": "Lombard",
+    "symbol": "BARD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ordi",
+    "rank": null,
+    "name": "ORDI",
+    "symbol": "ORDI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ultima",
+    "rank": null,
+    "name": "Ultima",
+    "symbol": "ULTIMA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "xpr-network",
+    "rank": null,
+    "name": "XPR Network",
+    "symbol": "XPR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "metaplex",
+    "rank": null,
+    "name": "Metaplex",
+    "symbol": "MPLX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "centrifuge",
+    "rank": null,
+    "name": "Centrifuge",
+    "symbol": "CFG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "peaq",
+    "rank": null,
+    "name": "peaq",
+    "symbol": "PEAQ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "succinct",
+    "rank": null,
+    "name": "Succinct",
+    "symbol": "PROVE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "threshold",
+    "rank": null,
+    "name": "Threshold",
+    "symbol": "T",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "notcoin",
+    "rank": null,
+    "name": "Notcoin",
+    "symbol": "NOT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "official-melania-meme",
+    "rank": null,
+    "name": "Official Melania Meme",
+    "symbol": "MELANIA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "anoma",
+    "rank": null,
+    "name": "Anoma",
+    "symbol": "XAN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "zigchain",
+    "rank": null,
+    "name": "ZIGChain",
+    "symbol": "ZIG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "holo",
+    "rank": null,
+    "name": "Holo",
+    "symbol": "HOT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "moo-deng-moodengsol-com",
+    "rank": null,
+    "name": "Moo Deng (moodengsol.com)",
+    "symbol": "MOODENG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "humanity-protocol",
+    "rank": null,
+    "name": "Humanity Protocol",
+    "symbol": "H",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ethereumpow",
+    "rank": null,
+    "name": "EthereumPoW",
+    "symbol": "ETHW",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "siacoin",
+    "rank": null,
+    "name": "Siacoin",
+    "symbol": "SC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "vethor-token",
+    "rank": null,
+    "name": "VeThor Token",
+    "symbol": "VTHO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gems",
+    "rank": null,
+    "name": "Gems",
+    "symbol": "GEMS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "stasis-euro",
+    "rank": null,
+    "name": "STASIS EURO",
+    "symbol": "EURS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "cow-protocol",
+    "rank": null,
+    "name": "CoW Protocol",
+    "symbol": "COW",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gmx",
+    "rank": null,
+    "name": "GMX",
+    "symbol": "GMX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "fellaz",
+    "rank": null,
+    "name": "Fellaz",
+    "symbol": "FLZ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "skale",
+    "rank": null,
+    "name": "SKALE",
+    "symbol": "SKL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "rollbit-coin",
+    "rank": null,
+    "name": "Rollbit Coin",
+    "symbol": "RLB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "quantum-resistant-ledger",
+    "rank": null,
+    "name": "Quantum Resistant Ledger",
+    "symbol": "QRL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aelf",
+    "rank": null,
+    "name": "aelf",
+    "symbol": "ELF",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "digibyte",
+    "rank": null,
+    "name": "DigiByte",
+    "symbol": "DGB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "redstone",
+    "rank": null,
+    "name": "RedStone",
+    "symbol": "RED",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bouncebit",
+    "rank": null,
+    "name": "BounceBit",
+    "symbol": "BB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "deagentai",
+    "rank": null,
+    "name": "DeAgentAI",
+    "symbol": "AIA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ankr",
+    "rank": null,
+    "name": "Ankr",
+    "symbol": "ANKR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "harmony",
+    "rank": null,
+    "name": "Harmony",
+    "symbol": "ONE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "memecoin",
+    "rank": null,
+    "name": "Memecoin",
+    "symbol": "MEME",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "non-playable-coin",
+    "rank": null,
+    "name": "Non-Playable Coin",
+    "symbol": "NPC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "world-mobile-token",
+    "rank": null,
+    "name": "World Mobile Token",
+    "symbol": "WMTX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "stargate-finance",
+    "rank": null,
+    "name": "Stargate Finance",
+    "symbol": "STG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ausd",
+    "rank": null,
+    "name": "AUSD",
+    "symbol": "AUSD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "yzy-money",
+    "rank": null,
+    "name": "YZY MONEY",
+    "symbol": "YZY",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "woo",
+    "rank": null,
+    "name": "WOO",
+    "symbol": "WOO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "venom",
+    "rank": null,
+    "name": "Venom",
+    "symbol": "VENOM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "babylon",
+    "rank": null,
+    "name": "Babylon",
+    "symbol": "BABY",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "troll-sol",
+    "rank": null,
+    "name": "TROLL (SOL)",
+    "symbol": "TROLL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "altlayer",
+    "rank": null,
+    "name": "Altlayer",
+    "symbol": "ALT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "chia",
+    "rank": null,
+    "name": "Chia",
+    "symbol": "XCH",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "mask-network",
+    "rank": null,
+    "name": "Mask Network",
+    "symbol": "MASK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "yala",
+    "rank": null,
+    "name": "Yala",
+    "symbol": "YU",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "lcx",
+    "rank": null,
+    "name": "LCX",
+    "symbol": "LCX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "shuffle",
+    "rank": null,
+    "name": "Shuffle",
+    "symbol": "SHFL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "icon",
+    "rank": null,
+    "name": "ICON",
+    "symbol": "ICX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "numeraire",
+    "rank": null,
+    "name": "Numeraire",
+    "symbol": "NMR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "verge",
+    "rank": null,
+    "name": "Verge",
+    "symbol": "XVG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "xyo",
+    "rank": null,
+    "name": "XYO",
+    "symbol": "XYO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "slt",
+    "rank": null,
+    "name": "SLT",
+    "symbol": "SLT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "casper",
+    "rank": null,
+    "name": "Casper",
+    "symbol": "CSPR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "orca",
+    "rank": null,
+    "name": "Orca",
+    "symbol": "ORCA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bitmart-token",
+    "rank": null,
+    "name": "BitMart Token",
+    "symbol": "BMX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "coti",
+    "rank": null,
+    "name": "COTI",
+    "symbol": "COTI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "somnia",
+    "rank": null,
+    "name": "Somnia",
+    "symbol": "SOMI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "openledger",
+    "rank": null,
+    "name": "OpenLedger",
+    "symbol": "OPEN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "hashkey-platform-token",
+    "rank": null,
+    "name": "HashKey Platform Token",
+    "symbol": "HSK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "staika",
+    "rank": null,
+    "name": "Staika",
+    "symbol": "STIK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gmt",
+    "rank": null,
+    "name": "GMT",
+    "symbol": "GMT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "kadena",
+    "rank": null,
+    "name": "Kadena",
+    "symbol": "KDA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "launch-coin-on-believe",
+    "rank": null,
+    "name": "Launch Coin on Believe",
+    "symbol": "LAUNCHCOIN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "loopring",
+    "rank": null,
+    "name": "Loopring",
+    "symbol": "LRC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "arkham",
+    "rank": null,
+    "name": "Arkham",
+    "symbol": "ARKM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "noble-dollar",
+    "rank": null,
+    "name": "Noble Dollar",
+    "symbol": "USDN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "vana",
+    "rank": null,
+    "name": "Vana",
+    "symbol": "VANA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "enjin-coin",
+    "rank": null,
+    "name": "Enjin Coin",
+    "symbol": "ENJ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "elixir-deusd",
+    "rank": null,
+    "name": "Elixir deUSD",
+    "symbol": "DEUSD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "polymesh",
+    "rank": null,
+    "name": "Polymesh",
+    "symbol": "POLYX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "waves",
+    "rank": null,
+    "name": "Waves",
+    "symbol": "WAVES",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "osmosis",
+    "rank": null,
+    "name": "Osmosis",
+    "symbol": "OSMO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ontology",
+    "rank": null,
+    "name": "Ontology",
+    "symbol": "ONT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "venus",
+    "rank": null,
+    "name": "Venus",
+    "symbol": "XVS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "neiro",
+    "rank": null,
+    "name": "Neiro",
+    "symbol": "NEIRO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "vicicoin",
+    "rank": null,
+    "name": "ViciCoin",
+    "symbol": "VCNT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ssv-network",
+    "rank": null,
+    "name": "ssv.network",
+    "symbol": "SSV",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "reallink",
+    "rank": null,
+    "name": "RealLink",
+    "symbol": "REAL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "book-of-meme",
+    "rank": null,
+    "name": "BOOK OF MEME",
+    "symbol": "BOME",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "io-net",
+    "rank": null,
+    "name": "io.net",
+    "symbol": "IO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "band",
+    "rank": null,
+    "name": "Band",
+    "symbol": "BAND",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "solayer",
+    "rank": null,
+    "name": "Solayer",
+    "symbol": "LAYER",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "lista-dao",
+    "rank": null,
+    "name": "Lista DAO",
+    "symbol": "LISTA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "nano",
+    "rank": null,
+    "name": "Nano",
+    "symbol": "XNO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "stbl",
+    "rank": null,
+    "name": "STBL",
+    "symbol": "STBL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "uma",
+    "rank": null,
+    "name": "UMA",
+    "symbol": "UMA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "rocket-pool",
+    "rank": null,
+    "name": "Rocket Pool",
+    "symbol": "RPL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "request",
+    "rank": null,
+    "name": "Request",
+    "symbol": "REQ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "undeads-games",
+    "rank": null,
+    "name": "Undeads Games",
+    "symbol": "UDS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "status",
+    "rank": null,
+    "name": "Status",
+    "symbol": "SNT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "kub-coin",
+    "rank": null,
+    "name": "KUB Coin",
+    "symbol": "KUB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "victoria-vr",
+    "rank": null,
+    "name": "Victoria VR",
+    "symbol": "VR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "nexpace",
+    "rank": null,
+    "name": "NEXPACE",
+    "symbol": "NXPC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "solar",
+    "rank": null,
+    "name": "Solar",
+    "symbol": "SXP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "clearpool",
+    "rank": null,
+    "name": "Clearpool",
+    "symbol": "CPOOL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "yield-guild-games",
+    "rank": null,
+    "name": "Yield Guild Games",
+    "symbol": "YGG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "paycoin",
+    "rank": null,
+    "name": "Paycoin",
+    "symbol": "PCI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gigachad",
+    "rank": null,
+    "name": "Gigachad",
+    "symbol": "GIGA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "metamask-usd",
+    "rank": null,
+    "name": "MetaMask USD",
+    "symbol": "MUSD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gohome",
+    "rank": null,
+    "name": "GOHOME",
+    "symbol": "GOHOME",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "space-and-time",
+    "rank": null,
+    "name": "Space and Time",
+    "symbol": "SXT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "wilder-world",
+    "rank": null,
+    "name": "Wilder World",
+    "symbol": "WILD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "gravity-by-galxe",
+    "rank": null,
+    "name": "Gravity (by Galxe)",
+    "symbol": "G",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "magic-eden",
+    "rank": null,
+    "name": "Magic Eden",
+    "symbol": "ME",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ai16z",
+    "rank": null,
+    "name": "ai16z",
+    "symbol": "AI16Z",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "big-time",
+    "rank": null,
+    "name": "Big Time",
+    "symbol": "BIGTIME",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "venice-token",
+    "rank": null,
+    "name": "Venice Token",
+    "symbol": "VVV",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "storj",
+    "rank": null,
+    "name": "Storj",
+    "symbol": "STORJ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "orderly",
+    "rank": null,
+    "name": "Orderly",
+    "symbol": "ORDER",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "terra",
+    "rank": null,
+    "name": "Terra",
+    "symbol": "LUNA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "nillion",
+    "rank": null,
+    "name": "Nillion",
+    "symbol": "NIL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "funtoken",
+    "rank": null,
+    "name": "FUNToken",
+    "symbol": "FUN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "doodles",
+    "rank": null,
+    "name": "Doodles",
+    "symbol": "DOOD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "illuvium",
+    "rank": null,
+    "name": "Illuvium",
+    "symbol": "ILV",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "iexec-rlc",
+    "rank": null,
+    "name": "iExec RLC",
+    "symbol": "RLC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "destra-network",
+    "rank": null,
+    "name": "Destra Network",
+    "symbol": "DSYNC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "blast",
+    "rank": null,
+    "name": "Blast",
+    "symbol": "BLAST",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "portal-to-bitcoin",
+    "rank": null,
+    "name": "Portal To Bitcoin",
+    "symbol": "PTB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "harrypotterobamasonic10inu-erc-20",
+    "rank": null,
+    "name": "HarryPotterObamaSonic10Inu (ERC-20)",
+    "symbol": "BITCOIN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sologenic",
+    "rank": null,
+    "name": "Sologenic",
+    "symbol": "SOLO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "tornado-cash",
+    "rank": null,
+    "name": "Tornado Cash",
+    "symbol": "TORN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "orbler",
+    "rank": null,
+    "name": "Orbler",
+    "symbol": "ORBR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "multibank-group",
+    "rank": null,
+    "name": "MultiBank Group",
+    "symbol": "MBG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ika",
+    "rank": null,
+    "name": "Ika",
+    "symbol": "IKA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "biconomy",
+    "rank": null,
+    "name": "Biconomy",
+    "symbol": "BICO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aixbt",
+    "rank": null,
+    "name": "aixbt",
+    "symbol": "AIXBT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "hive",
+    "rank": null,
+    "name": "Hive",
+    "symbol": "HIVE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "mira",
+    "rank": null,
+    "name": "Mira",
+    "symbol": "MIRA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "tellor",
+    "rank": null,
+    "name": "Tellor",
+    "symbol": "TRB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aevo",
+    "rank": null,
+    "name": "Aevo",
+    "symbol": "AEVO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "iost",
+    "rank": null,
+    "name": "IOST",
+    "symbol": "IOST",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "lisusd",
+    "rank": null,
+    "name": "lisUSD",
+    "symbol": "LISUSD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bora",
+    "rank": null,
+    "name": "BORA",
+    "symbol": "BORA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "metis",
+    "rank": null,
+    "name": "Metis",
+    "symbol": "METIS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "osaka-protocol",
+    "rank": null,
+    "name": "Osaka Protocol",
+    "symbol": "OSAK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "nomina",
+    "rank": null,
+    "name": "Nomina",
+    "symbol": "NOM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "giggle-fund",
+    "rank": null,
+    "name": "Giggle Fund",
+    "symbol": "GIGGLE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bitdca",
+    "rank": null,
+    "name": "BitDCA",
+    "symbol": "BDCA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "spark",
+    "rank": null,
+    "name": "Spark",
+    "symbol": "SPK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "open-campus",
+    "rank": null,
+    "name": "Open Campus",
+    "symbol": "EDU",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "hemi",
+    "rank": null,
+    "name": "Hemi",
+    "symbol": "HEMI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "constitutiondao",
+    "rank": null,
+    "name": "ConstitutionDAO",
+    "symbol": "PEOPLE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sign",
+    "rank": null,
+    "name": "Sign",
+    "symbol": "SIGN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "swftcoin",
+    "rank": null,
+    "name": "SwftCoin",
+    "symbol": "SWFTC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ark",
+    "rank": null,
+    "name": "Ark",
+    "symbol": "ARK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "freysa",
+    "rank": null,
+    "name": "Freysa",
+    "symbol": "FAI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "unibase",
+    "rank": null,
+    "name": "Unibase",
+    "symbol": "UB",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "stronghold-shx",
+    "rank": null,
+    "name": "Stronghold SHx",
+    "symbol": "SHX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "xai",
+    "rank": null,
+    "name": "Xai",
+    "symbol": "XAI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "goatseus-maximus",
+    "rank": null,
+    "name": "Goatseus Maximus",
+    "symbol": "GOAT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "civic",
+    "rank": null,
+    "name": "Civic",
+    "symbol": "CVC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bim",
+    "rank": null,
+    "name": "BIM",
+    "symbol": "BIM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "manta-network",
+    "rank": null,
+    "name": "Manta Network",
+    "symbol": "MANTA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ardor",
+    "rank": null,
+    "name": "Ardor",
+    "symbol": "ARDR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "wiki-cat",
+    "rank": null,
+    "name": "Wiki Cat",
+    "symbol": "WKC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pixels",
+    "rank": null,
+    "name": "Pixels",
+    "symbol": "PIXEL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "powerledger",
+    "rank": null,
+    "name": "Powerledger",
+    "symbol": "POWR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "defi-app",
+    "rank": null,
+    "name": "Defi App",
+    "symbol": "HOME",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "phala-network",
+    "rank": null,
+    "name": "Phala Network",
+    "symbol": "PHA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "cyber",
+    "rank": null,
+    "name": "Cyber",
+    "symbol": "CYBER",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pundi-x-new",
+    "rank": null,
+    "name": "Pundi X (New)",
+    "symbol": "PUNDIX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "constellation",
+    "rank": null,
+    "name": "Constellation",
+    "symbol": "DAG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bless",
+    "rank": null,
+    "name": "Bless",
+    "symbol": "BLESS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bancor",
+    "rank": null,
+    "name": "Bancor",
+    "symbol": "BNT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bonfida",
+    "rank": null,
+    "name": "Bonfida",
+    "symbol": "FIDA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "stratis-new",
+    "rank": null,
+    "name": "Stratis [New]",
+    "symbol": "STRAX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "wax",
+    "rank": null,
+    "name": "WAX",
+    "symbol": "WAXP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "huma-finance",
+    "rank": null,
+    "name": "Huma Finance",
+    "symbol": "HUMA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sats-ordinals",
+    "rank": null,
+    "name": "SATS (Ordinals)",
+    "symbol": "SATS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "frax-usd",
+    "rank": null,
+    "name": "Frax USD",
+    "symbol": "FRXUSD",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "jelly-my-jelly",
+    "rank": null,
+    "name": "Jelly-My-Jelly",
+    "symbol": "JELLYJELLY",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "balancer",
+    "rank": null,
+    "name": "Balancer",
+    "symbol": "BAL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ecomi",
+    "rank": null,
+    "name": "ECOMI",
+    "symbol": "OMI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "animecoin",
+    "rank": null,
+    "name": "Animecoin",
+    "symbol": "ANIME",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "bertram-the-pomeranian",
+    "rank": null,
+    "name": "Bertram The Pomeranian",
+    "symbol": "BERT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "quantixai",
+    "rank": null,
+    "name": "QuantixAI",
+    "symbol": "QAI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "aura",
+    "rank": null,
+    "name": "Aura",
+    "symbol": "AURA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "caldera",
+    "rank": null,
+    "name": "Caldera",
+    "symbol": "ERA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "audius",
+    "rank": null,
+    "name": "Audius",
+    "symbol": "AUDIO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "spell-token",
+    "rank": null,
+    "name": "Spell Token",
+    "symbol": "SPELL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "tutorial",
+    "rank": null,
+    "name": "Tutorial",
+    "symbol": "TUT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "okzoo",
+    "rank": null,
+    "name": "OKZOO",
+    "symbol": "AIOT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "chromia",
+    "rank": null,
+    "name": "Chromia",
+    "symbol": "CHR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "mvl",
+    "rank": null,
+    "name": "MVL",
+    "symbol": "MVL",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "siren",
+    "rank": null,
+    "name": "siren",
+    "symbol": "SIREN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "lagrange",
+    "rank": null,
+    "name": "Lagrange",
+    "symbol": "LA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "iq",
+    "rank": null,
+    "name": "IQ",
+    "symbol": "IQ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "cookie-dao",
+    "rank": null,
+    "name": "Cookie DAO",
+    "symbol": "COOKIE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "og-fan-token",
+    "rank": null,
+    "name": "OG Fan Token",
+    "symbol": "OG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "flux",
+    "rank": null,
+    "name": "Flux",
+    "symbol": "FLUX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "chintai",
+    "rank": null,
+    "name": "Chintai",
+    "symbol": "CHEX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "carv",
+    "rank": null,
+    "name": "CARV",
+    "symbol": "CARV",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "cross",
+    "rank": null,
+    "name": "CROSS",
+    "symbol": "CROSS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "hivemapper",
+    "rank": null,
+    "name": "Hivemapper",
+    "symbol": "HONEY",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "keep-network",
+    "rank": null,
+    "name": "Keep Network",
+    "symbol": "KEEP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "banana-gun",
+    "rank": null,
+    "name": "Banana Gun",
+    "symbol": "BANANA",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "mnee",
+    "rank": null,
+    "name": "MNEE",
+    "symbol": "MNEE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "across-protocol",
+    "rank": null,
+    "name": "Across Protocol",
+    "symbol": "ACX",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "propy",
+    "rank": null,
+    "name": "Propy",
+    "symbol": "PRO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "api3",
+    "rank": null,
+    "name": "API3",
+    "symbol": "API3",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "comedian",
+    "rank": null,
+    "name": "Comedian",
+    "symbol": "BAN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "liquity",
+    "rank": null,
+    "name": "Liquity",
+    "symbol": "LQTY",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "tradoor",
+    "rank": null,
+    "name": "Tradoor",
+    "symbol": "TRADOOR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "camp-network",
+    "rank": null,
+    "name": "Camp Network",
+    "symbol": "CAMP",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "chaingpt",
+    "rank": null,
+    "name": "ChainGPT",
+    "symbol": "CGPT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "sonic-svm",
+    "rank": null,
+    "name": "Sonic SVM",
+    "symbol": "SONIC",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "holoworld-ai",
+    "rank": null,
+    "name": "Holoworld AI",
+    "symbol": "HOLO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "spacen",
+    "rank": null,
+    "name": "SpaceN",
+    "symbol": "SN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "eur-coinvertible",
+    "rank": null,
+    "name": "EUR CoinVertible",
+    "symbol": "EURCV",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "tokenlon-network-token",
+    "rank": null,
+    "name": "Tokenlon Network Token",
+    "symbol": "LON",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "renzo",
+    "rank": null,
+    "name": "Renzo",
+    "symbol": "REZ",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "uchain",
+    "rank": null,
+    "name": "Uchain",
+    "symbol": "UCN",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ape-and-pepe",
+    "rank": null,
+    "name": "Ape and Pepe",
+    "symbol": "APEPE",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "taiko",
+    "rank": null,
+    "name": "Taiko",
+    "symbol": "TAIKO",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "mil-k",
+    "rank": null,
+    "name": "MiL.k",
+    "symbol": "MLK",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "pirate-chain",
+    "rank": null,
+    "name": "Pirate Chain",
+    "symbol": "ARRR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "debridge",
+    "rank": null,
+    "name": "deBridge",
+    "symbol": "DBR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "marlin",
+    "rank": null,
+    "name": "Marlin",
+    "symbol": "POND",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "celer-network",
+    "rank": null,
+    "name": "Celer Network",
+    "symbol": "CELR",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "collector-crypt",
+    "rank": null,
+    "name": "Collector Crypt",
+    "symbol": "CARDS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "dymension",
+    "rank": null,
+    "name": "Dymension",
+    "symbol": "DYM",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "zentry",
+    "rank": null,
+    "name": "Zentry",
+    "symbol": "ZENT",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "delysium",
+    "rank": null,
+    "name": "Delysium",
+    "symbol": "AGI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "orbs",
+    "rank": null,
+    "name": "Orbs",
+    "symbol": "ORBS",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "ontology-gas",
+    "rank": null,
+    "name": "Ontology Gas",
+    "symbol": "ONG",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  },
+  {
+    "key": "cartesi",
+    "rank": null,
+    "name": "Cartesi",
+    "symbol": "CTSI",
+    "id": null,
+    "chain": null,
+    "contract": null,
+    "verified": false
+  }
+]

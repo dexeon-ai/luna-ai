@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block body %}
+<main class="layout">
+  <header class="topbar">
+    <div class="logo-block">
+      <img src="{{ url_for('static', filename='img/luna-logo.svg') }}" alt="Luna AI" class="logo">
+      <h1>{{ brand }}</h1>
+    </div>
+    <div class="analysis-block">
+      <h2>Luna Analysis — {{ coin_name }}</h2>
+      <p>This is where Luna’s real-time text or voice analysis appears.</p>
+    </div>
+    <div class="partner-block">
+      <img src="{{ url_for('static', filename='img/dexeon-logo.svg') }}" alt="Dexeon AI" class="logo">
+    </div>
+  </header>
+
+  <section class="grid">
+    <div class="side left">
+      <div class="chart small">
+        <img src="{{ imgs.bb }}" alt="Bollinger">
+        <p class="blurb">{{ blurbs.bb }}</p>
+      </div>
+      <div class="chart small">
+        <img src="{{ imgs.trend }}" alt="Trend">
+        <p class="blurb">{{ blurbs.trend }}</p>
+      </div>
+    </div>
+
+    <div class="center-chart">
+      <img src="{{ imgs.center }}" alt="Main chart">
+      <div class="legend">Price • Trend • MA20</div>
+    </div>
+
+    <div class="side right">
+      <div class="chart small">
+        <img src="{{ imgs.macd }}" alt="MACD">
+        <p class="blurb">{{ blurbs.macd }}</p>
+      </div>
+      <div class="chart small">
+        <img src="{{ imgs.volume }}" alt="Volume">
+        <p class="blurb">{{ blurbs.volume }}</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bottom-row">
+    <div class="chart small"><img src="{{ imgs.price }}"><p class="blurb">{{ blurbs.price }}</p></div>
+    <div class="chart small"><img src="{{ imgs.rsi }}"><p class="blurb">{{ blurbs.rsi }}</p></div>
+    <div class="chart small"><img src="{{ imgs.marketcap }}"><p class="blurb">{{ blurbs.marketcap }}</p></div>
+    <div class="chart small"><img src="{{ imgs.liquidity }}"><p class="blurb">{{ blurbs.liquidity }}</p></div>
+  </footer>
+</main>
+{% endblock %}

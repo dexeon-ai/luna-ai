@@ -1,0 +1,500 @@
+key,rank,name,symbol,id,chain,contract,verified
+club-token,48.0,Club Token,KOGE,,,,False
+bitcoin,,Bitcoin,BTC,,,,False
+ethereum,,Ethereum,ETH,,,,False
+tether,,Tether,USDT,,,,False
+bnb,,BNB,BNB,,,,False
+xrp,,XRP,XRP,,,,False
+solana,,Solana,SOL,,,,False
+usdc,,USDC,USDC,,,,False
+dogecoin,,Dogecoin,DOGE,,,,False
+tron,,TRON,TRX,,,,False
+cardano,,Cardano,ADA,,,,False
+chainlink,,Chainlink,LINK,,,,False
+ethena-usde,,Ethena USDe,USDE,,,,False
+hyperliquid,,Hyperliquid,HYPE,,,,False
+sui,,Sui,SUI,,,,False
+stellar,,Stellar,XLM,,,,False
+avalanche,,Avalanche,AVAX,,,,False
+bitcoin-cash,,Bitcoin Cash,BCH,,,,False
+litecoin,,Litecoin,LTC,,,,False
+hedera,,Hedera,HBAR,,,,False
+unus-sed-leo,,UNUS SED LEO,LEO,,,,False
+mantle,,Mantle,MNT,,,,False
+shiba-inu,,Shiba Inu,SHIB,,,,False
+toncoin,,Toncoin,TON,,,,False
+cronos,,Cronos,CRO,,,,False
+polkadot,,Polkadot,DOT,,,,False
+monero,,Monero,XMR,,,,False
+dai,,Dai,DAI,,,,False
+uniswap,,Uniswap,UNI,,,,False
+world-liberty-financial,,World Liberty Financial,WLFI,,,,False
+okb,,OKB,OKB,,,,False
+aave,,Aave,AAVE,,,,False
+bitget-token,,Bitget Token,BGB,,,,False
+ethena,,Ethena,ENA,,,,False
+pepe,,Pepe,PEPE,,,,False
+near-protocol,,NEAR Protocol,NEAR,,,,False
+aptos,,Aptos,APT,,,,False
+zcash,,Zcash,ZEC,,,,False
+bittensor,,Bittensor,TAO,,,,False
+ethereum-classic,,Ethereum Classic,ETC,,,,False
+aster,,Aster,ASTER,,,,False
+story,,Story,IP,,,,False
+ondo,,Ondo,ONDO,,,,False
+worldcoin,,Worldcoin,WLD,,,,False
+world-liberty-financial-usd,,World Liberty Financial USD,USD1,,,,False
+paypal-usd,,PayPal USD,PYUSD,,,,False
+polygon-prev-matic,,Polygon (prev. MATIC),POL,,,,False
+internet-computer,,Internet Computer,ICP,,,,False
+arbitrum,,Arbitrum,ARB,,,,False
+memecore,,MemeCore,M,,,,False
+kucoin-token,,KuCoin Token,KCS,,,,False
+kaspa,,Kaspa,KAS,,,,False
+pump-fun,,Pump.fun,PUMP,,,,False
+algorand,,Algorand,ALGO,,,,False
+cosmos,,Cosmos,ATOM,,,,False
+pudgy-penguins,,Pudgy Penguins,PENGU,,,,False
+vechain,,VeChain,VET,,,,False
+pi,,Pi,PI,,,,False
+sei,,Sei,SEI,,,,False
+flare,,Flare,FLR,,,,False
+render,,Render,RENDER,,,,False
+filecoin,,Filecoin,FIL,,,,False
+sky,,Sky,SKY,,,,False
+bonk,,Bonk,BONK,,,,False
+official-trump,,OFFICIAL TRUMP,TRUMP,,,,False
+jupiter,,Jupiter,JUP,,,,False
+plasma,,Plasma,XPL,,,,False
+immutable,,Immutable,IMX,,,,False
+spx6900,,SPX6900,SPX,,,,False
+gatetoken,,GateToken,GT,,,,False
+doublezero,,DoubleZero,2Z,,,,False
+xdc-network,,XDC Network,XDC,,,,False
+pancakeswap,,PancakeSwap,CAKE,,,,False
+optimism,,Optimism,OP,,,,False
+quant,,Quant,QNT,,,,False
+pax-gold,,PAX Gold,PAXG,,,,False
+injective,,Injective,INJ,,,,False
+artificial-superintelligence-alliance,,Artificial Superintelligence Alliance,FET,,,,False
+celestia,,Celestia,TIA,,,,False
+first-digital-usd,,First Digital USD,FDUSD,,,,False
+stacks,,Stacks,STX,,,,False
+lido-dao,,Lido DAO,LDO,,,,False
+curve-dao-token,,Curve DAO Token,CRV,,,,False
+myx-finance,,MYX Finance,MYX,,,,False
+tether-gold,,Tether Gold,XAUT,,,,False
+aerodrome-finance,,Aerodrome Finance,AERO,,,,False
+dexe,,DeXe,DEXE,,,,False
+pyth-network,,Pyth Network,PYTH,,,,False
+floki,,FLOKI,FLOKI,,,,False
+kaia,,Kaia,KAIA,,,,False
+the-graph,,The Graph,GRT,,,,False
+ether-fi,,ether.fi,ETHFI,,,,False
+nexo,,Nexo,NEXO,,,,False
+ripple-usd,,Ripple USD,RLUSD,,,,False
+sonic,,Sonic,S,,,,False
+ethereum-name-service,,Ethereum Name Service,ENS,,,,False
+pendle,,Pendle,PENDLE,,,,False
+iota,,IOTA,IOTA,,,,False
+conflux,,Conflux,CFX,,,,False
+raydium,,Raydium,RAY,,,,False
+tezos,,Tezos,XTZ,,,,False
+gala,,Gala,GALA,,,,False
+theta-network,,Theta Network,THETA,,,,False
+dogwifhat,,dogwifhat,WIF,,,,False
+virtuals-protocol,,Virtuals Protocol,VIRTUAL,,,,False
+eigenlayer,,EigenLayer,EIGEN,,,,False
+the-sandbox,,The Sandbox,SAND,,,,False
+ab,,AB,AB,,,,False
+starknet,,Starknet,STRK,,,,False
+aethir,,Aethir,ATH,,,,False
+trust-wallet-token,,Trust Wallet Token,TWT,,,,False
+fartcoin,,Fartcoin,FARTCOIN,,,,False
+decentraland,,Decentraland,MANA,,,,False
+vaulta,,Vaulta,A,,,,False
+jasmycoin,,JasmyCoin,JASMY,,,,False
+layerzero,,LayerZero,ZRO,,,,False
+jito,,Jito,JTO,,,,False
+bittorrent-new,,BitTorrent [New],BTT,,,,False
+flow,,Flow,FLOW,,,,False
+morpho,,Morpho,MORPHO,,,,False
+deepbook-protocol,,DeepBook Protocol,DEEP,,,,False
+walrus,,Walrus,WAL,,,,False
+0g,,0G,0G,,,,False
+wormhole,,Wormhole,W,,,,False
+trueusd,,TrueUSD,TUSD,,,,False
+bitcoin-sv,,Bitcoin SV,BSV,,,,False
+sun-new,,Sun [New],SUN,,,,False
+helium,,Helium,HNT,,,,False
+usdd,,USDD,USDD,,,,False
+maple-finance,,Maple Finance,SYRUP,,,,False
+four,,Four,FORM,,,,False
+zebec-network,,Zebec Network,ZBCN,,,,False
+dydx,,dYdX,DYDX,,,,False
+zksync,,ZKsync,ZK,,,,False
+dash,,Dash,DASH,,,,False
+apenft,,APENFT,NFT,,,,False
+neo,,Neo,NEO,,,,False
+beam,,Beam,BEAM,,,,False
+brett-based,,Brett (Based),BRETT,,,,False
+apecoin,,ApeCoin,APE,,,,False
+toshi,,Toshi,TOSHI,,,,False
+chiliz,,Chiliz,CHZ,,,,False
+thorchain,,THORChain,RUNE,,,,False
+compound,,Compound,COMP,,,,False
+synthetix,,Synthetix,SNX,,,,False
+linea,,Linea,LINEA,,,,False
+gnosis,,Gnosis,GNO,,,,False
+core,,Core,CORE,,,,False
+multiversx,,MultiversX,EGLD,,,,False
+useless-coin,,Useless Coin,USELESS,,,,False
+arweave,,Arweave,AR,,,,False
+onyxcoin,,Onyxcoin,XCN,,,,False
+axie-infinity,,Axie Infinity,AXS,,,,False
+cheems-cheems-pet,,Cheems (cheems.pet),CHEEMS,,,,False
+kava,,Kava,KAVA,,,,False
+zora,,ZORA,ZORA,,,,False
+reserve-rights,,Reserve Rights,RSR,,,,False
+ecash,,eCash,XEC,,,,False
+superverse,,SuperVerse,SUPER,,,,False
+1inch,,1inch,1INCH,,,,False
+berachain,,Berachain,BERA,,,,False
+falcon-finance,,Falcon Finance,FF,,,,False
+merlin-chain,,Merlin Chain,MERL,,,,False
+aioz-network,,AIOZ Network,AIOZ,,,,False
+ronin,,Ronin,RON,,,,False
+just,,JUST,JST,,,,False
+kaito,,KAITO,KAITO,,,,False
+convex-finance,,Convex Finance,CVX,,,,False
+decred,,Decred,DCR,,,,False
+plume,,Plume,PLUME,,,,False
+axelar,,Axelar,AXL,,,,False
+movement,,Movement,MOVE,,,,False
+moca-network,,Moca Network,MOCA,,,,False
+terra-classic,,Terra Classic,LUNC,,,,False
+drift,,Drift,DRIFT,,,,False
+snek,,Snek,SNEK,,,,False
+wemix,,WEMIX,WEMIX,,,,False
+ftx-token,,FTX Token,FTT,,,,False
+livepeer,,Livepeer,LPT,,,,False
+mog-coin,,Mog Coin,MOG,,,,False
+akash-network,,Akash Network,AKT,,,,False
+creditcoin,,Creditcoin,CTC,,,,False
+eurc,,EURC,EURC,,,,False
+basic-attention-token,,Basic Attention Token,BAT,,,,False
+safepal,,SafePal,SFP,,,,False
+amp,,Amp,AMP,,,,False
+qtum,,Qtum,QTUM,,,,False
+kusama,,Kusama,KSM,,,,False
+buildon,,BUILDon,B,,,,False
+origintrail,,OriginTrail,TRAC,,,,False
+mx-token,,MX Token,MX,,,,False
+turbo,,Turbo,TURBO,,,,False
+safe,,Safe,SAFE,,,,False
+cat-in-a-dogs-world,,cat in a dogs world,MEW,,,,False
+iotex,,IoTeX,IOTX,,,,False
+theta-fuel,,Theta Fuel,TFUEL,,,,False
+popcat-sol,,Popcat (SOL),POPCAT,,,,False
+golem,,Golem,GLM,,,,False
+baby-doge-coin,,Baby Doge Coin,BABYDOGE,,,,False
+kamino-finance,,Kamino Finance,KMNO,,,,False
+dog-bitcoin,,Dog (Bitcoin),DOG,,,,False
+jupiter-perps-lp,,Jupiter Perps LP,JLP,,,,False
+falcon-usd,,Falcon USD,USDF,,,,False
+chainopera-ai,,ChainOpera AI,COAI,,,,False
+fasttoken,,Fasttoken,FTN,,,,False
+global-dollar,,Global Dollar,USDG,,,,False
+saros,,Saros,SAROS,,,,False
+zeebu,,Zeebu,ZBU,,,,False
+apx,,APX,APX,,,,False
+ondo-us-dollar-yield,,Ondo US Dollar Yield,USDY,,,,False
+usual-usd,,Usual USD,USD0,,,,False
+beldex,,Beldex,BDX,,,,False
+swissborg,,SwissBorg,BORG,,,,False
+usdai,,USDai,USDAI,,,,False
+fluid,,Fluid,FLUID,,,,False
+loaded-lions,,Loaded Lions,LION,,,,False
+vision,,Vision,VSN,,,,False
+ai-companions,,AI Companions,AIC,,,,False
+telcoin,,Telcoin,TEL,,,,False
+gho,,GHO,GHO,,,,False
+aster-usdf,,Aster USDF,USDF,,,,False
+kinesis-gold,,Kinesis Gold,KAU,,,,False
+legacy-frax-dollar,,Legacy Frax Dollar,FRAX,,,,False
+soon,,SOON,SOON,,,,False
+ribbita-by-virtuals,,Ribbita by Virtuals,TIBBIR,,,,False
+,,币安人生,币安人生,,,,False
+apex-protocol,,ApeX Protocol,APEX,,,,False
+nexusmind,,Nexusmind,NMD,,,,False
+qubic,,Qubic,QUBIC,,,,False
+celo,,Celo,CELO,,,,False
+velo,,Velo,VELO,,,,False
+concordium,,Concordium,CCD,,,,False
+avantis,,Avantis,AVNT,,,,False
+subsquid,,Subsquid,SQD,,,,False
+astar,,Astar,ASTR,,,,False
+0x-protocol,,0x Protocol,ZRX,,,,False
+zilliqa,,Zilliqa,ZIL,,,,False
+ailey,,Ailey,ALE,,,,False
+keeta,,Keeta,KTA,,,,False
+sosovalue,,SoSoValue,SOSO,,,,False
+legacy-token,,Legacy Token,LGCT,,,,False
+peanut-the-squirrel,,Peanut the Squirrel,PNUT,,,,False
+upcx,,UPCX,UPC,,,,False
+mina,,Mina,MINA,,,,False
+nervos-network,,Nervos Network,CKB,,,,False
+euler,,Euler,EUL,,,,False
+sushiswap,,SushiSwap,SUSHI,,,,False
+gas,,Gas,GAS,,,,False
+go-ining,,GoМining,GOMINING,,,,False
+bio-protocol,,Bio Protocol,BIO,,,,False
+standx-dusd,,StandX DUSD,DUSD,,,,False
+grass,,Grass,GRASS,,,,False
+frax-prev-fxs,,Frax (prev. FXS),FRAX,,,,False
+aleo,,Aleo,ALEO,,,,False
+prom,,Prom,PROM,,,,False
+awe,,AWE,AWE,,,,False
+oasis,,Oasis,ROSE,,,,False
+vvs-finance,,VVS Finance,VVS,,,,False
+rekt-rektcoin-com,,Rekt (rektcoin.com),REKT,,,,False
+blur,,Blur,BLUR,,,,False
+zetachain,,ZetaChain,ZETA,,,,False
+alchemy-pay,,Alchemy Pay,ACH,,,,False
+ravencoin,,Ravencoin,RVN,,,,False
+yearn-finance,,yearn.finance,YFI,,,,False
+whiterock,,WhiteRock,WHITE,,,,False
+sahara-ai,,Sahara AI,SAHARA,,,,False
+mantra,,MANTRA,OM,,,,False
+space-id,,SPACE ID,ID,,,,False
+dora,,DORA,DORA,,,,False
+4,,4,4,,,,False
+lombard,,Lombard,BARD,,,,False
+ordi,,ORDI,ORDI,,,,False
+ultima,,Ultima,ULTIMA,,,,False
+xpr-network,,XPR Network,XPR,,,,False
+metaplex,,Metaplex,MPLX,,,,False
+centrifuge,,Centrifuge,CFG,,,,False
+peaq,,peaq,PEAQ,,,,False
+succinct,,Succinct,PROVE,,,,False
+threshold,,Threshold,T,,,,False
+notcoin,,Notcoin,NOT,,,,False
+official-melania-meme,,Official Melania Meme,MELANIA,,,,False
+anoma,,Anoma,XAN,,,,False
+zigchain,,ZIGChain,ZIG,,,,False
+holo,,Holo,HOT,,,,False
+moo-deng-moodengsol-com,,Moo Deng (moodengsol.com),MOODENG,,,,False
+humanity-protocol,,Humanity Protocol,H,,,,False
+ethereumpow,,EthereumPoW,ETHW,,,,False
+siacoin,,Siacoin,SC,,,,False
+vethor-token,,VeThor Token,VTHO,,,,False
+gems,,Gems,GEMS,,,,False
+stasis-euro,,STASIS EURO,EURS,,,,False
+cow-protocol,,CoW Protocol,COW,,,,False
+gmx,,GMX,GMX,,,,False
+fellaz,,Fellaz,FLZ,,,,False
+skale,,SKALE,SKL,,,,False
+rollbit-coin,,Rollbit Coin,RLB,,,,False
+quantum-resistant-ledger,,Quantum Resistant Ledger,QRL,,,,False
+aelf,,aelf,ELF,,,,False
+digibyte,,DigiByte,DGB,,,,False
+redstone,,RedStone,RED,,,,False
+bouncebit,,BounceBit,BB,,,,False
+deagentai,,DeAgentAI,AIA,,,,False
+ankr,,Ankr,ANKR,,,,False
+harmony,,Harmony,ONE,,,,False
+memecoin,,Memecoin,MEME,,,,False
+non-playable-coin,,Non-Playable Coin,NPC,,,,False
+world-mobile-token,,World Mobile Token,WMTX,,,,False
+stargate-finance,,Stargate Finance,STG,,,,False
+ausd,,AUSD,AUSD,,,,False
+yzy-money,,YZY MONEY,YZY,,,,False
+woo,,WOO,WOO,,,,False
+venom,,Venom,VENOM,,,,False
+babylon,,Babylon,BABY,,,,False
+troll-sol,,TROLL (SOL),TROLL,,,,False
+altlayer,,Altlayer,ALT,,,,False
+chia,,Chia,XCH,,,,False
+mask-network,,Mask Network,MASK,,,,False
+yala,,Yala,YU,,,,False
+lcx,,LCX,LCX,,,,False
+shuffle,,Shuffle,SHFL,,,,False
+icon,,ICON,ICX,,,,False
+numeraire,,Numeraire,NMR,,,,False
+verge,,Verge,XVG,,,,False
+xyo,,XYO,XYO,,,,False
+slt,,SLT,SLT,,,,False
+casper,,Casper,CSPR,,,,False
+orca,,Orca,ORCA,,,,False
+bitmart-token,,BitMart Token,BMX,,,,False
+coti,,COTI,COTI,,,,False
+somnia,,Somnia,SOMI,,,,False
+openledger,,OpenLedger,OPEN,,,,False
+hashkey-platform-token,,HashKey Platform Token,HSK,,,,False
+staika,,Staika,STIK,,,,False
+gmt,,GMT,GMT,,,,False
+kadena,,Kadena,KDA,,,,False
+launch-coin-on-believe,,Launch Coin on Believe,LAUNCHCOIN,,,,False
+loopring,,Loopring,LRC,,,,False
+arkham,,Arkham,ARKM,,,,False
+noble-dollar,,Noble Dollar,USDN,,,,False
+vana,,Vana,VANA,,,,False
+enjin-coin,,Enjin Coin,ENJ,,,,False
+elixir-deusd,,Elixir deUSD,DEUSD,,,,False
+polymesh,,Polymesh,POLYX,,,,False
+waves,,Waves,WAVES,,,,False
+osmosis,,Osmosis,OSMO,,,,False
+ontology,,Ontology,ONT,,,,False
+venus,,Venus,XVS,,,,False
+neiro,,Neiro,NEIRO,,,,False
+vicicoin,,ViciCoin,VCNT,,,,False
+ssv-network,,ssv.network,SSV,,,,False
+reallink,,RealLink,REAL,,,,False
+book-of-meme,,BOOK OF MEME,BOME,,,,False
+io-net,,io.net,IO,,,,False
+band,,Band,BAND,,,,False
+solayer,,Solayer,LAYER,,,,False
+lista-dao,,Lista DAO,LISTA,,,,False
+nano,,Nano,XNO,,,,False
+stbl,,STBL,STBL,,,,False
+uma,,UMA,UMA,,,,False
+rocket-pool,,Rocket Pool,RPL,,,,False
+request,,Request,REQ,,,,False
+undeads-games,,Undeads Games,UDS,,,,False
+status,,Status,SNT,,,,False
+kub-coin,,KUB Coin,KUB,,,,False
+victoria-vr,,Victoria VR,VR,,,,False
+nexpace,,NEXPACE,NXPC,,,,False
+solar,,Solar,SXP,,,,False
+clearpool,,Clearpool,CPOOL,,,,False
+yield-guild-games,,Yield Guild Games,YGG,,,,False
+paycoin,,Paycoin,PCI,,,,False
+gigachad,,Gigachad,GIGA,,,,False
+metamask-usd,,MetaMask USD,MUSD,,,,False
+gohome,,GOHOME,GOHOME,,,,False
+space-and-time,,Space and Time,SXT,,,,False
+wilder-world,,Wilder World,WILD,,,,False
+gravity-by-galxe,,Gravity (by Galxe),G,,,,False
+magic-eden,,Magic Eden,ME,,,,False
+ai16z,,ai16z,AI16Z,,,,False
+big-time,,Big Time,BIGTIME,,,,False
+venice-token,,Venice Token,VVV,,,,False
+storj,,Storj,STORJ,,,,False
+orderly,,Orderly,ORDER,,,,False
+terra,,Terra,LUNA,,,,False
+nillion,,Nillion,NIL,,,,False
+funtoken,,FUNToken,FUN,,,,False
+doodles,,Doodles,DOOD,,,,False
+illuvium,,Illuvium,ILV,,,,False
+iexec-rlc,,iExec RLC,RLC,,,,False
+destra-network,,Destra Network,DSYNC,,,,False
+blast,,Blast,BLAST,,,,False
+portal-to-bitcoin,,Portal To Bitcoin,PTB,,,,False
+harrypotterobamasonic10inu-erc-20,,HarryPotterObamaSonic10Inu (ERC-20),BITCOIN,,,,False
+sologenic,,Sologenic,SOLO,,,,False
+tornado-cash,,Tornado Cash,TORN,,,,False
+orbler,,Orbler,ORBR,,,,False
+multibank-group,,MultiBank Group,MBG,,,,False
+ika,,Ika,IKA,,,,False
+biconomy,,Biconomy,BICO,,,,False
+aixbt,,aixbt,AIXBT,,,,False
+hive,,Hive,HIVE,,,,False
+mira,,Mira,MIRA,,,,False
+tellor,,Tellor,TRB,,,,False
+aevo,,Aevo,AEVO,,,,False
+iost,,IOST,IOST,,,,False
+lisusd,,lisUSD,LISUSD,,,,False
+bora,,BORA,BORA,,,,False
+metis,,Metis,METIS,,,,False
+osaka-protocol,,Osaka Protocol,OSAK,,,,False
+nomina,,Nomina,NOM,,,,False
+giggle-fund,,Giggle Fund,GIGGLE,,,,False
+bitdca,,BitDCA,BDCA,,,,False
+spark,,Spark,SPK,,,,False
+open-campus,,Open Campus,EDU,,,,False
+hemi,,Hemi,HEMI,,,,False
+constitutiondao,,ConstitutionDAO,PEOPLE,,,,False
+sign,,Sign,SIGN,,,,False
+swftcoin,,SwftCoin,SWFTC,,,,False
+ark,,Ark,ARK,,,,False
+freysa,,Freysa,FAI,,,,False
+unibase,,Unibase,UB,,,,False
+stronghold-shx,,Stronghold SHx,SHX,,,,False
+xai,,Xai,XAI,,,,False
+goatseus-maximus,,Goatseus Maximus,GOAT,,,,False
+civic,,Civic,CVC,,,,False
+bim,,BIM,BIM,,,,False
+manta-network,,Manta Network,MANTA,,,,False
+ardor,,Ardor,ARDR,,,,False
+wiki-cat,,Wiki Cat,WKC,,,,False
+pixels,,Pixels,PIXEL,,,,False
+powerledger,,Powerledger,POWR,,,,False
+defi-app,,Defi App,HOME,,,,False
+phala-network,,Phala Network,PHA,,,,False
+cyber,,Cyber,CYBER,,,,False
+pundi-x-new,,Pundi X (New),PUNDIX,,,,False
+constellation,,Constellation,DAG,,,,False
+bless,,Bless,BLESS,,,,False
+bancor,,Bancor,BNT,,,,False
+bonfida,,Bonfida,FIDA,,,,False
+stratis-new,,Stratis [New],STRAX,,,,False
+wax,,WAX,WAXP,,,,False
+huma-finance,,Huma Finance,HUMA,,,,False
+sats-ordinals,,SATS (Ordinals),SATS,,,,False
+frax-usd,,Frax USD,FRXUSD,,,,False
+jelly-my-jelly,,Jelly-My-Jelly,JELLYJELLY,,,,False
+balancer,,Balancer,BAL,,,,False
+ecomi,,ECOMI,OMI,,,,False
+animecoin,,Animecoin,ANIME,,,,False
+bertram-the-pomeranian,,Bertram The Pomeranian,BERT,,,,False
+quantixai,,QuantixAI,QAI,,,,False
+aura,,Aura,AURA,,,,False
+caldera,,Caldera,ERA,,,,False
+audius,,Audius,AUDIO,,,,False
+spell-token,,Spell Token,SPELL,,,,False
+tutorial,,Tutorial,TUT,,,,False
+okzoo,,OKZOO,AIOT,,,,False
+chromia,,Chromia,CHR,,,,False
+mvl,,MVL,MVL,,,,False
+siren,,siren,SIREN,,,,False
+lagrange,,Lagrange,LA,,,,False
+iq,,IQ,IQ,,,,False
+cookie-dao,,Cookie DAO,COOKIE,,,,False
+og-fan-token,,OG Fan Token,OG,,,,False
+flux,,Flux,FLUX,,,,False
+chintai,,Chintai,CHEX,,,,False
+carv,,CARV,CARV,,,,False
+cross,,CROSS,CROSS,,,,False
+hivemapper,,Hivemapper,HONEY,,,,False
+keep-network,,Keep Network,KEEP,,,,False
+banana-gun,,Banana Gun,BANANA,,,,False
+mnee,,MNEE,MNEE,,,,False
+across-protocol,,Across Protocol,ACX,,,,False
+propy,,Propy,PRO,,,,False
+api3,,API3,API3,,,,False
+comedian,,Comedian,BAN,,,,False
+liquity,,Liquity,LQTY,,,,False
+tradoor,,Tradoor,TRADOOR,,,,False
+camp-network,,Camp Network,CAMP,,,,False
+chaingpt,,ChainGPT,CGPT,,,,False
+sonic-svm,,Sonic SVM,SONIC,,,,False
+holoworld-ai,,Holoworld AI,HOLO,,,,False
+spacen,,SpaceN,SN,,,,False
+eur-coinvertible,,EUR CoinVertible,EURCV,,,,False
+tokenlon-network-token,,Tokenlon Network Token,LON,,,,False
+renzo,,Renzo,REZ,,,,False
+uchain,,Uchain,UCN,,,,False
+ape-and-pepe,,Ape and Pepe,APEPE,,,,False
+taiko,,Taiko,TAIKO,,,,False
+mil-k,,MiL.k,MLK,,,,False
+pirate-chain,,Pirate Chain,ARRR,,,,False
+debridge,,deBridge,DBR,,,,False
+marlin,,Marlin,POND,,,,False
+celer-network,,Celer Network,CELR,,,,False
+collector-crypt,,Collector Crypt,CARDS,,,,False
+dymension,,Dymension,DYM,,,,False
+zentry,,Zentry,ZENT,,,,False
+delysium,,Delysium,AGI,,,,False
+orbs,,Orbs,ORBS,,,,False
+ontology-gas,,Ontology Gas,ONG,,,,False
+cartesi,,Cartesi,CTSI,,,,False
