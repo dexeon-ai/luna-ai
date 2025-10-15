@@ -1,18 +1,58 @@
-# Python
+# =========================================================
+# LUNA AI PROJECT — CLEAN & RENDER-SAFE GITIGNORE
+# =========================================================
+
+# --- PYTHON BASICS ---
 __pycache__/
 *.pyc
 .venv/
+*.pyo
 
-# Secrets and caches
+# --- SECRETS & TOKENS ---
 .env
 cg_tokens.json
 
-# Generated runtime assets
+# --- GENERATED AT RUNTIME (DON'T PUSH) ---
 voice/
 overlays/
+luna_cache/
+ffmpeg-8.0/
 *.wav
 *.mp3
+*.tmp
+*.log
+*.bak
+*.zip
 
-# Large local-only content
-ffmpeg-8.0/
-luna_assets.zip
+# --- LOCAL BUILD ARTIFACTS ---
+*.egg-info/
+dist/
+build/
+
+# --- MEDIA & VIDEO PROJECTS ---
+LUNA the CRYPTONAUT/
+*.mp4
+*.mov
+*.fcpxml
+*.prproj
+*.xml
+*.edl
+
+# --- KEEP STATIC DATA (these feed the charts) ---
+!crypto_500.csv
+!meme_1000.csv
+!assets_master.csv
+!assets_master.json
+!symbol_buckets.py
+
+# --- IGNORE OTHER LARGE OR DYNAMIC DATA ---
+data/
+datasets/
+*.json
+*.csv
+
+# --- FRONTEND / MISC ---
+node_modules/
+.env.local
+.DS_Store
+Thumbs.db
