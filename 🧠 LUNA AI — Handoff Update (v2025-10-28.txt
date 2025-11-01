@@ -1,0 +1,279 @@
+🧠 LUNA AI — Handoff Update (v2025-10-28)
+🌕 Core Summary
+
+Luna AI is Dexeon’s real-time crypto analysis engine and streaming character.
+She powers the Luna Cockpit Control Panel, a live Flask-based dashboard that merges technical indicators, sentiment signals, and AI narrative analysis for any token or contract.
+Her “voice” and logic are unified across the interactive cockpit, the animated streaming series, and the upcoming LUNA meme coin ecosystem.
+
+This build replaces the previous backend and front-end logic with real-time market integration, better data slicing, and full TF-aware chart control — without altering the established design or structure.
+
+🔧 Current System Version — v2.7 “Candlelight”
+
+Deployment Date: 2025-10-28
+Framework: Flask (Python 3.11)
+Frontend Stack: Plotly.js + vanilla JS + Tailwind CSS variables
+Data Cache: local parquet (per symbol)
+TTL Refresh: 15-minute adaptive
+Active APIs:
+
+CryptoCompare (primary minute/hour/day OHLCV)
+
+CoinGecko (fallback + contract hydration)
+
+Optional: Bitquery, Helius, Covalent (for future Whale metrics)
+
+OpenAI / ElevenLabs (AI narrative + voice)
+
+🧩 Folder Layout
+Luna AI/
+ ├── server.py                   # Flask app + all endpoints + data logic
+ ├── .env                        # API keys + refresh settings
+ ├── /templates/control_panel.html
+ ├── /static/css/control_panel.css
+ ├── /static/js/control_panel.js
+ ├── /luna_cache/
+ │     ├── /data/
+ │     │     ├── /derived/frames/*.parquet     # Per-symbol OHLCV cache
+ │     │     ├── /analysis/*.json              # Optional saved narratives
+ │     │     ├── /state/fetch_log.json         # TTL timestamps
+ │     │     └── /sessions/*.json              # Ask-Luna chat logs (21 Q limit)
+ │     └── /img/cockpit_bg.png
+ ├── lunahandoff.txt             # This document (project continuity)
+ └── requirements.txt            # pandas, plotly, flask, requests, python-dotenv
+
+🛰️ System Architecture
+Data Sources & Refresh Logic
+
+CryptoCompare is the live feed for minute/hour/day OHLCV.
+
+Pulls last 6 hours (minute), last 30 days (hour), and 6 months (daily).
+
+Combines + deduplicates + persists to /frames/SYMBOL.parquet.
+
+15-minute TTL: refreshes every quarter hour or by manual “Refresh 🔁”.
+
+CoinGecko used only when symbol not found or contract hydration required.
+
+/coins/{id}/market_chart via API key in .env.
+
+Handles free-tier rate limits with progressive fallbacks (365 → 30 days).
+
+Future integrations (not yet active but stubbed in):
+
+Whale data (Helius / Bitquery)
+
+On-chain liquidity signals
+
+Sentiment (Twitter / LunarCrush API)
+
+📊 Dashboard Functionality
+1️⃣ Default View
+
+Opens at /analyze?symbol=BTC&tf=4h (last 4 hours).
+
+11 timeframe chips at top (1h → all).
+
+Default slicing: _slice_tf(df, "4h") ensures main + tiles show the same window.
+
+2️⃣ Global Controls
+
+Height slider: CSS variable --tileH, affects only tile height visually.
+
+Search: Accepts symbols (BTC) or contract addresses (0x…).
+
+Contracts hydrate via CoinGecko → cache as <SYMBOL>.parquet.
+
+Refresh: manual API call /api/refresh/<symbol>.
+
+3️⃣ Timeframe Behavior
+
+Clicking a timeframe chip reloads the page with ?tf=<selected> so all charts update consistently.
+
+Modals sync to global TF via “Link TF” toggle.
+
+4️⃣ Data Tiles
+
+10 technical indicators:
+
+RSI, MACD, Liquidity, Sentiment (24h), Volume Trend, OBV, ADX, Market Cap, Bands, Bollinger Width.
+
+1 main candlestick chart with BB overlays.
+
+1 Trending (Top ±) tile.
+
+Investment Chips: show what a $1000 investment would have done for each TF.
+
+5️⃣ Modals
+
+Expand buttons open Plotly charts with full controls:
+
+TF toggle (1h → all)
+
+Copy JSON / Save PNG / Autoscale
+
+Side panel: blurb + key stats + interpretation bullets
+
+Modal charts dynamically reload from /expand_json.
+
+6️⃣ Ask Luna
+
+Local session (21-question limit).
+
+Responses generated from _compose_luna_paragraph() + the last user prompt.
+
+Personality: “Cute, witty, confident” — data-driven yet conversational.
+
+Persists session JSON in /luna_cache/data/sessions/.
+
+🧮 Luna’s Intelligence Layer
+Analysis Model
+
+Derived from technical indicators:
+
+RSI → momentum tone
+
+MACD → crossover signal & histogram bias
+
+ADX → trend strength (firm/strong/weak)
+
+BB width → volatility compression or expansion
+
+StochRSI → directional bias
+
+OBV → accumulation vs distribution
+
+Each metric contributes to a score system → TL;DR sentiment:
+
+≥ +2.0 → Bullish
+
+≥ +1.25 → Modestly Bullish
+
+0 ± 1 → Neutral / Sideways
+
+≤ −1.25 → Modestly Bearish
+
+≤ −2.0 → Bearish
+
+Personality overlay: “balanced but bouncy,” “if price pops, I’ll cheer; if it fizzles, I’ll side-eye it.”
+
+🌈 Visual Logic (unchanged)
+
+6x2 grid layout: 10 mini tiles + 1 central candlestick + 1 trending tile.
+
+Background: cockpit_bg.png (control deck aesthetic).
+
+Color codes:
+
+Green (#19e28c) → Uptrend
+
+Red (#ff6b7a) → Downtrend
+
+Purple (#7b62f0) → Bands
+
+Cyan (#00e5a8) → Liquidity
+
+🔌 API Endpoints Summary
+Endpoint	Purpose	Returns
+/analyze?symbol=BTC&tf=4h	Main view	Full HTML render
+/api/refresh/BTC	Force new data	{status:"refreshed"}
+/api/trending?tf=4h	Gainers/losers	JSON array
+/api/search?q=btc	Symbol/contract search	JSON list
+/expand_json?symbol=BTC&key=RSI&tf=4h	Modal chart data	Plotly JSON
+/api/luna	Ask-Luna AI	JSON reply / session info
+💾 Data Files
+
+BTC.parquet: combined OHLCV from CryptoCompare (minute+hour+day).
+
+fetch_log.json: timestamp of last TTL refresh per symbol.
+
+sessions/*.json: per-user 21-Q logs.
+
+analysis/*.json: future manual narratives.
+
+🪙 Ecosystem Integration
+Branch	Purpose
+LUNA Meme Coin	Session access token; later staking for premium analytics.
+Pump.fun Series	Animated shorts featuring Luna explaining market trends.
+NFT Collection	Ownership = priority API access + free session credits.
+Virtuals Protocol Clone	Dexeon’s Virtual Agent version for tokenized co-ownership.
+Voice Layer	ElevenLabs voice generation using Luna’s narrative output.
+🚀 Launch Readiness (Fed Drop Edition)
+
+✅ Minute + Hour integration (real intraday data)
+✅ Default 4h slice
+✅ Timeframe sync across all charts
+✅ Live trending recalculation
+✅ Luna’s personality narrative
+✅ Investment calculator accuracy
+✅ Front-end refresh flow (TF → URL reload)
+
+Remaining
+
+Market Cap smoothing — fallback to CoinGecko if CC data missing
+
+Sentiment data source — connect LunarCrush or X feed
+
+Whale metrics — integrate Helius / Bitquery
+
+Voice playback — ElevenLabs link
+
+Wallet + LUNA token gating — enable in /api/luna
+
+Public streaming mode — OBS/Restream integration for Luna’s video overlay
+
+🧭 Immediate Next Steps
+
+Test /analyze?symbol=BTC&tf=4h — verify chart time axis uses current day’s UTC timestamps.
+
+Run manual /api/refresh/BTC to pull minute data on-demand.
+
+Validate indicator overlays (RSI, MACD, BB, ADX) match Dexscreener data.
+
+Stress-test trending tile on top 10 coins.
+
+Voice synthesis of analysis["luna_paragraph"] via ElevenLabs.
+
+Prepare content sync for tomorrow’s Fed rate decision broadcast (OBS scene = cockpit background + Luna voice + charts).
+
+🧠 Dexeon Context
+
+Parent Entity: Dexeon.ai — AI product company building tokenized intelligence agents.
+Projects:
+
+Luna AI: Crypto cockpit + streaming personality.
+
+Bankroll AI: Sports betting intelligence / $BKRL token.
+
+Emerald Brook Forest: Animated IP for family audiences.
+
+Virtuals Integration: Dexeon deploying agents (Luna, Bankroll, etc.) as on-chain co-owned entities.
+
+🔒 Keys & Security Reminder
+
+Keep .env private.
+Each API batch should be rotated manually monthly to avoid 401s.
+Ensure Git excludes .env, /luna_cache/data/, and /sessions/.
+
+📦 Current Version Deliverables
+
+✅ Full server.py (merged minute/hour/day feeds)
+
+✅ Full control_panel.js (TF-aware reload + modal sync)
+
+✅ Updated .env (multi-key CC rotation + CG fallback)
+
+✅ Verified control_panel.css untouched layout
+
+✅ Handoff documentation (this file)
+
+🔚 Summary
+
+Luna AI’s cockpit is now production-grade for live use — real-time, TF-aware, and visually stable.
+She speaks in plain English, narrates with personality, and reacts to live intraday data.
+The next iteration will add wallet gating, NFTs, and Virtuals deployment — but this version can already broadcast the Fed reaction live with Luna narrating real charts.
+
+Version Tag: LUNA-Cockpit-v2.7-Candlelight
+Timestamp: 2025-10-28T23:59Z
+Maintainers: Dexeon AI Core / Jason Pate / Steve Taylor
+
+✅ End of handoff — ready for next-session import.

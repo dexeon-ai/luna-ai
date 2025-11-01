@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Luna AI — Market Overview</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/control_panel.css') }}">
+  <style>
+    .grid-ov { display:grid; grid-template-columns: 1.1fr 1fr; gap:14px; }
+    @media(max-width: 1024px){ .grid-ov{ grid-template-columns:1fr; } }
+    .gauge, .treemap, .bars { min-height: 380px; }
+    .table-wrap { overflow:auto; max-height: 420px; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { border-bottom:1px solid #22273a; padding:8px; font-size:13px; color:#e8ecff; }
+    th { color:#a8acc4; text-align:left; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="section header">
+      <h2>Luna AI — Market Overview <span class="muted">| Updated {{ updated }}</span></h2>
+    </section>
+
+    <section class="section grid-ov">
+      <div class="section">
+        <div class="section-title">Altseason Dial</div>
+        <div id="gauge" class="gauge"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">BTC Dominance & Total Market Cap</div>
+        <div id="bars" class="bars"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Retail Flow Heatmap</div>
+      <div id="treemap" class="treemap"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Top Retail Movers (24h)</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Coin</th><th>Sector</th><th>Retail Score</th><th>Vol Δ 24h</th><th>Price 24h</th></tr></thead>
+          <tbody>
+            {% for r in state.top_movers %}
+              <tr>
+                <td><a href="{{ url_for('analyze') }}?symbol={{ r.coin }}">{{ r.coin }}</a></td>
+                <td>{{ r.sector or '—' }}</td>
+                <td>{{ '%.1f' % r.rai }}</td>
+                <td>{{ '%.1f' % r.vol_delta }}%</td>
+                <td class="{{ 'up' if r.pct_24h>=0 else 'down' }}">{{ '%.2f' % r.pct_24h }}%</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    const state = {{ state | tojson | safe }};
+
+    // Gauge: Altseason
+    (function(){
+      const v = (state.altseason_index || 0);
+      const fig = {
+        data: [{
+          type: "indicator",
+          mode: "gauge+number",
+          value: v,
+          title: { text: "Altseason Index", font: {color:"#e8ecff"} },
+          gauge: {
+            axis: { range: [0,100], tickwidth:1, tickcolor:"#a8acc4" },
+            bar: { color: v>=60 ? "#00e686" : v>=35 ? "#f6c945" : "#ff6b6b" },
+            steps: [
+              { range: [0,35], color:"#2b2330" },
+              { range: [35,60], color:"#2e2b1a" },
+              { range: [60,100], color:"#103223" }
+            ]
+          }
+        }],
+        layout: { paper_bgcolor:"#131621", plot_bgcolor:"#131621", height: 340, margin:{l:30,r:30,t:20,b:10} }
+      };
+      Plotly.newPlot("gauge", fig.data, fig.layout, {displayModeBar:false});
+    })();
+
+    // Bars: BTC dominance & Total MCAP
+    (function(){
+      const dom = (state.btc_dominance || 0);
+      const mcap = (state.total_mcap || 0) / 1e12;
+      const data = [{
+        type:"bar",
+        x:["BTC Dominance (%)","Total MCAP (T$)"],
+        y:[dom, mcap],
+        marker:{color:["#f59e0b","#60a5fa"]}
+      }];
+      Plotly.newPlot("bars", data, {paper_bgcolor:"#131621", plot_bgcolor:"#131621",
+        height: 340, margin:{l:40,r:20,t:10,b:50}, yaxis:{tickformat:",.2f"}}, {displayModeBar:false});
+    })();
+
+    // Treemap: Retail Flow Heatmap
+    (function(){
+      const labels = (state.sectors || []).map(s => s.name);
+      const parents= labels.map(_ => "");
+      const values = (state.sectors || []).map(s => s.weight);
+      const colors = (state.sectors || []).map(s => s.rai_color || "#444");
+      const text = (state.sectors || []).map(s => `${s.name}<br>RAI Δ: ${s.rai_delta.toFixed(1)}%`);
+
+      const data = [{
+        type: "treemap",
+        labels, parents, values, text,
+        textinfo: "label+value+text",
+        marker:{ colors: colors }
+      }];
+
+      Plotly.newPlot("treemap", data, {paper_bgcolor:"#131621", plot_bgcolor:"#131621",
+        height: 420, margin:{l:10,r:10,t:10,b:10}}, {displayModeBar:false});
+    })();
+  </script>
+</body>
+</html>

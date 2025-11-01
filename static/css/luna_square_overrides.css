@@ -1,0 +1,121 @@
+/* =========================================================
+   LUNA — Square Tile Overrides (Safe Add‑On)
+   ---------------------------------------------------------
+   • No layout/HTML changes required.
+   • Enforces 6-column square grid for tiles.
+   • Only Performance / Investment remain wide bars.
+   • Prevents Plotly tick labels from getting clipped.
+   ========================================================= */
+
+:root{
+  /* Side length for one square tile — adjust if needed */
+  --sq: 240px;
+  --gap: 14px;
+  --tile-radius: 10px;
+  --tile-header-h: 32px;
+}
+
+/* --- Grid host selectors (cover common wrappers) --- */
+.tiles,
+.cp-grid,
+.dashboard-grid,
+main .tiles {
+  display: grid;
+  grid-template-columns: repeat(6, var(--sq));
+  grid-auto-rows: var(--sq);
+  gap: var(--gap);
+  justify-content: center;
+}
+
+/* Default single-square tile box (header + body) */
+.tile{
+  width: var(--sq);
+  height: var(--sq);
+  border-radius: var(--tile-radius);
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset;
+}
+.tile header{
+  height: var(--tile-header-h);
+  line-height: var(--tile-header-h);
+  padding: 0 10px;
+  font-weight: 600;
+  font-size: 12.5px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.tile .js-plotly-plot,
+.tile .plotly-graph-div{
+  /* Fill the box beneath the header – prevents clipping */
+  height: calc(100% - var(--tile-header-h)) !important;
+  width: 100% !important;
+}
+
+/* =========================================================
+   Tile placement by data-key  (NO HTML CHANGES NEEDED)
+   ========================================================= */
+
+/* Main OHLC: 4×2 block in the center */
+.tile[data-key="PRICE"]{
+  grid-column: 2 / span 4;
+  grid-row:    1 / span 2;
+  width:  calc(var(--sq) * 4 + var(--gap) * 3);
+  height: calc(var(--sq) * 2 + var(--gap));
+}
+
+/* Left column (two squares) */
+.tile[data-key="RSI"]  { grid-column: 1; grid-row: 1; }
+.tile[data-key="MACD"] { grid-column: 1; grid-row: 2; }
+
+/* Right column (two squares) */
+.tile[data-key="MCAP"] { grid-column: 6; grid-row: 1; }
+.tile[data-key="OBV"]  { grid-column: 6; grid-row: 2; }
+
+/* Row directly under the big chart (4 squares) */
+.tile[data-key="BANDS"]                                    { grid-column: 2; grid-row: 3; }
+.tile[data-key="VOL"]                                      { grid-column: 3; grid-row: 3; }
+.tile[data-key="LIQ"]                                      { grid-column: 4; grid-row: 3; }
+.tile[data-key="ADX"]                                      { grid-column: 5; grid-row: 3; }
+
+/* === FIXED POSITIONING FOR THE FINAL TWO SQUARES === */
+.tile[data-key="ALT_L"],
+.tile[data-key="SENT"],
+.tile[data-key="EXTRA_LEFT"] {
+  grid-column: 1;   /* leftmost column under MACD */
+  grid-row: 3;      /* same row as BANDS/VOL/LIQ/ADX */
+}
+
+.tile[data-key="ALT"],
+.tile[data-key="EXTRA_RIGHT"] {
+  grid-column: 6;   /* rightmost column under OBV */
+  grid-row: 3;      /* same row as BANDS/VOL/LIQ/ADX */
+}
+
+/* =========================================================
+   Panels that stay WIDE (the ONLY long components)
+   ========================================================= */
+.panel--perf, .panel--invest{
+  max-width: calc(var(--sq) * 6 + var(--gap) * 5);
+  margin: 8px auto 10px auto;
+  border-radius: var(--tile-radius);
+  background: rgba(255,255,255,0.03);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset;
+  padding: 10px 12px;
+}
+
+/* Pills inside those bars stay on one line and wrap gracefully if needed */
+.panel--perf .pills, .panel--invest .pills{
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+
+/* Minor quality-of-life: keep legends and toolbars readable in small squares */
+.js-plotly-plot .legend { font-size: 11px; }
+.js-plotly-plot .modebar { transform: scale(0.92); transform-origin: top right; }
+
+/* Make x-axis tick labels slightly smaller to prevent overlap in squares */
+.js-plotly-plot .xtick text { font-size: 10px !important; }
+
+/* If your page uses a compact viewport, scale the whole grid down slightly */
+@media (max-width: 1440px){
+  :root{ --sq: 220px; }
+}

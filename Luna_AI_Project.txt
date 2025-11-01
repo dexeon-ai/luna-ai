@@ -1,0 +1,1298 @@
+Here’s your complete save‑point for Luna AI — v11.0 (2025‑11‑01): what we built, why it works, where every file lives, exactly how the data flows, the APIs involved, the algorithms, the UI layout contract, the deployment recipe, and the canonical code you’re running now (server + HTML + JS + CSS). I’m also including an IP note at the end so you and counsel can decide what to protect.
+
+0) Snapshot
+
+Project codename: Luna AI (crypto cockpit + plain‑English companion)
+
+Architecture: Flask (Python 3.13), Plotly.js, vanilla JS, pandas, requests, python‑dotenv
+
+Frontend: HTML template + JS controller + CSS grid (no framework). Fixed 6×? grid with “mega” price chart (2×4), ten square tiles, and 2 long bars for Performance & Investment.
+
+Backend: Data hydration with CryptoCompare → CoinGecko fallback, 15‑minute TTL, per‑symbol parquet/CSV cache, indicators and rollups server‑side, “Ask Luna” plain‑English engine.
+
+Local cache layout: luna_cache/data/derived/frames/*.parquet|*.csv, plus luna_cache/data/state/fetch_log.json (TTL) and luna_cache/data/sessions/*.json (Q&A history). Optional seed history: luna_cache/data/coins/<SYMBOL>.csv.
+
+Start reference: 2025‑10‑28 (you referenced v2.7 “Candlelight” / handoff update)
+
+Save point (this build): 2025‑11‑01 (the day you landed the background + stable cockpit)
+
+Key things we fixed on the way here:
+
+Normalized .env CRYPTOCOMPARE_KEYS (one line, comma‑separated) to stop “InvalidHeader” & 402/429 flapping.
+
+Implemented key rotation + CG fallback.
+
+Added robust indicator pipeline (RSI, MACD, BB, ATR(14), ADX(14), OBV).
+
+Locked one‑screen cockpit (no scrolling) and square tiles.
+
+Inline Performance and Investment metrics to reclaim vertical space.
+
+Modal expand with per‑indicator plain‑English analysis (“What this shows”).
+
+Added search bar (symbol/contract) without breaking layout.
+
+Cosmic background bound to the page without affecting layout.
+
+1) Folder map
+Luna AI/
+├─ server.py                          # Flask app (all endpoints, data logic, indicators)
+├─ .env                               # API keys & config
+├─ requirements.txt                   # Python deps (local dev)
+├─ templates/
+│  └─ control_panel.html              # Single-page cockpit layout
+├─ static/
+│  ├─ js/
+│  │  └─ control_panel.js             # Expand modal, Ask Luna, search submit
+│  ├─ css/
+│  │  └─ control_panel.css            # Grid, tiles, glow, background, sizing
+│  └─ img/
+│     └─ space_center_bg.png          # Galaxy control-room background
+└─ luna_cache/
+   └─ data/
+      ├─ coins/                       # (optional) CSV seed history per symbol
+      ├─ derived/
+      │  └─ frames/                   # canonical cached frames (parquet or csv)
+      ├─ state/
+      │  └─ fetch_log.json            # TTL timestamps per symbol
+      └─ sessions/
+         └─ sess_*                    # 21-turn Q&A logs per IP/symbol
+
+2) Environment (.env)
+# Market data
+CRYPTOCOMPARE_KEYS=keyA,keyB,keyC          # one line, comma-separated
+COINGECKO_API_KEY=xxxxx                    # demo keys limited; still useful for fallback market_caps
+
+# AI / Voice (stubs, non-blocking)
+OPENAI_API_KEY=xxxxx
+ELEVENLABS_API_KEY=xxxxx
+ELEVENLABS_VOICE_ID=xxxxx
+
+3) Data flow (E2E)
+
+User opens /analyze?symbol=ETH&tf=12h.
+
+server.py → hydrate_symbol():
+
+If cache is fresh (< 15 min) → load frame from frames/ETH.parquet|csv.
+
+Else: CryptoCompare pulls (histominute, histohour, histoday) with key rotation; if throttle/empty, CoinGecko fallback for a 30d window + market_caps.
+
+Merge + compute indicators → save to cache → bump fetch_log.json.
+
+Indicators & rollups:
+
+RSI(14), MACD (12/26/9), Bollinger(20,2) (+ width), ATR(14), ADX(14), OBV.
+
+Rollups for 1h, 4h, 8h, 12h, 24h, 7d, 30d, 1y (if coverage exists).
+
+Investment ($1000 model) = 1000 * (1 + pct_change/100).
+
+Server renders template with:
+
+Main mega chart (candles + BB + MACD panel).
+
+Ten square tiles: RSI, MACD, MCAP, OBV, ATR(14), Bands width, Volume Trend, Liquidity, ADX, ALT (momentum proxy).
+
+Performance & Investment pills inline with headers.
+
+TL;DR string from latest indicators & rollups.
+
+Expand modal → /expand_json?symbol=ETH&key=RSI&tf=12h returns Plotly JSON + plain‑English “What this shows.”
+
+Ask Luna (/api/luna) returns a single paragraph in Luna’s voice (no financial advice) using the current slice + question context.
+
+Search bar submits to /analyze?symbol=<SYMBOL_OR_CONTRACT>&tf=<TF> (no layout change).
+
+4) UI: layout contract (do not break)
+
+Max width = .shell container; topbar is the same width.
+
+Rows
+
+Row A: Performance (chips inline)
+
+Row B: Investment (chips inline)
+
+Row C: Left (RSI), Center (Price 2×4), Right (Market Cap, OBV)
+
+Row D: Six squares: ATR(14), Bands, Volume Trend, Liquidity, ADX, ALT
+
+Row E: TL;DR (left) + Fear & Greed (right)
+
+Row F: Questions (left) + Luna’s answers (right) w/ input & Ask.
+
+Glow: every tile has subtle purple glow; brightness increases on hover.
+
+Background: /static/img/space_center_bg.png covers viewport; we render a semi‑transparent overlay to keep charts readable. It does not change page dimensions.
+
+5) Canonical code (save‑point)
+
+Note: These are the working files you have now with the latest fixes:
+
+inlined Performance/Investment chips
+
+square tiles (no “dead” gray bottom)
+
+ATR tile included + ALT momentum tile
+
+expand modal with “What this shows”
+
+search bar (does not break layout)
+
+cosmic background (centered, responsive)
+
+TTL + CC→CG fallback + seed CSV option
+
+Paste these over your current files as your golden copy if anything drifts.
+
+5.1 server.py
+# ============================================================
+# Luna AI — server.py  (Save point: 2025-11-01)
+# ============================================================
+
+from __future__ import annotations
+import os, re, json, time, random, logging
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+from typing import Dict, Any, Optional, Tuple, List
+
+import numpy as np
+import pandas as pd
+import requests
+from dotenv import load_dotenv
+from flask import Flask, jsonify, render_template, request, Response
+from flask.json.provider import DefaultJSONProvider
+
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import plotly.io as pio
+
+# ---------- logging ----------
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+LOG = logging.getLogger("luna")
+
+# ---------- paths ----------
+ROOT = Path(__file__).parent.resolve()
+TEMPLATES_DIR = ROOT / "templates"
+STATIC_DIR = ROOT / "static"
+
+DATA_DIR   = ROOT / "luna_cache" / "data"
+COINS_DIR  = DATA_DIR / "coins"                 # optional seed history
+DERIVED_DIR= DATA_DIR / "derived"
+FRAMES_DIR = DERIVED_DIR / "frames"             # *.parquet or *.csv cache
+STATE_DIR  = DATA_DIR / "state"                 # TTL stamps etc
+SESS_DIR   = DATA_DIR / "sessions"
+
+for d in (FRAMES_DIR, STATE_DIR, SESS_DIR):
+    d.mkdir(parents=True, exist_ok=True)
+
+FETCH_LOG   = STATE_DIR / "fetch_log.json"
+TTL_MINUTES = 15
+TTL_SECONDS = TTL_MINUTES * 60
+
+# ---------- env ----------
+load_dotenv(ROOT / ".env")
+
+def _parse_keys(raw: str) -> List[str]:
+    return [t.strip() for t in re.split(r"[\s,;]+", raw or "") if t.strip()]
+
+CC_KEYS = _parse_keys(os.getenv("CRYPTOCOMPARE_KEYS") or os.getenv("CRYPTOCOMPARE_KEY") or "")
+CG_KEY  = (os.getenv("COINGECKO_API_KEY") or os.getenv("CG_API_KEY") or "").strip()
+
+# ---------- Flask JSON ----------
+class PlotlyJSON(DefaultJSONProvider):
+    def dumps(self, obj, **kwargs):
+        from plotly.utils import PlotlyJSONEncoder
+        return json.dumps(obj, cls=PlotlyJSONEncoder, **kwargs)
+
+app = Flask(__name__, template_folder=str(TEMPLATES_DIR), static_folder=str(STATIC_DIR))
+app.json = PlotlyJSON(app)
+
+# ---------- tiny utils ----------
+def utcnow() -> datetime: return datetime.now(timezone.utc)
+def _to_iso(dt: datetime) -> str: return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+def _latest_ts(df: pd.DataFrame) -> Optional[datetime]:
+    if df is None or df.empty or "timestamp" not in df.columns: return None
+    s = pd.to_datetime(df["timestamp"], utc=True, errors="coerce").dropna()
+    return None if s.empty else s.iloc[-1].to_pydatetime()
+
+def _fetch_log() -> dict:
+    try: return json.loads(FETCH_LOG.read_text(encoding="utf-8"))
+    except Exception: return {}
+
+def _touch_fetch(symbol: str) -> None:
+    st = _fetch_log()
+    st[symbol.upper()] = _to_iso(utcnow())
+    FETCH_LOG.write_text(json.dumps(st, indent=2), encoding="utf-8")
+
+def _fresh_enough(symbol: str, ttl_min: int = TTL_MINUTES) -> bool:
+    st = _fetch_log(); ts = st.get(symbol.upper())
+    if not ts: return False
+    try: last = datetime.fromisoformat(ts.replace("Z","+00:00"))
+    except Exception: return False
+    return (utcnow() - last) < timedelta(minutes=ttl_min)
+
+def money(x: Optional[float]) -> str:
+    if x is None: return "—"
+    try: return f"${float(x):,.2f}"
+    except Exception: return "—"
+
+def f1(x):
+    try:
+        if x is None: return "—"
+        y = float(x)
+        if np.isnan(y) or np.isinf(y): return "—"
+        return f"{y:.1f}"
+    except Exception:
+        return "—"
+
+def to_float(x):
+    try: return float(x)
+    except Exception: return None
+
+# ---------- cache read/write ----------
+def _frame_path(symbol: str, ext: str) -> Path:
+    return FRAMES_DIR / f"{symbol.upper()}.{ext}"
+
+def save_frame(symbol: str, df: pd.DataFrame) -> None:
+    if df is None or df.empty: return
+    p_parq = _frame_path(symbol, "parquet")
+    p_csv  = _frame_path(symbol, "csv")
+    try:
+        df.to_parquet(p_parq, index=False)    # pyarrow or fastparquet
+        return
+    except Exception as e:
+        LOG.warning("[Cache] Parquet save failed (%s), falling back to CSV.", e)
+    try:
+        df.to_csv(p_csv, index=False)
+    except Exception as e:
+        LOG.warning("[Cache] CSV save failed: %s", e)
+
+def load_cached(symbol: str) -> pd.DataFrame:
+    p_parq = _frame_path(symbol, "parquet")
+    p_csv  = _frame_path(symbol, "csv")
+    if p_parq.exists():
+        try:
+            df = pd.read_parquet(p_parq)
+            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
+            return df.dropna(subset=["timestamp"]).sort_values("timestamp").reset_index(drop=True)
+        except Exception: pass
+    if p_csv.exists():
+        try:
+            df = pd.read_csv(p_csv)
+            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
+            return df.dropna(subset=["timestamp"]).sort_values("timestamp").reset_index(drop=True)
+        except Exception: pass
+    return pd.DataFrame()
+
+def seed_history(symbol: str) -> pd.DataFrame:
+    """Optional CSV seed from luna_cache/data/coins/<SYM>.csv with cols timestamp,open,high,low,close,volume"""
+    p = COINS_DIR / f"{symbol.upper()}.csv"
+    if not p.exists(): return pd.DataFrame()
+    try:
+        df = pd.read_csv(p)
+        if "timestamp" not in df.columns:
+            if "time" in df.columns:
+                df["timestamp"] = pd.to_datetime(df["time"], unit="s", utc=True, errors="coerce")
+        else:
+            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
+        for c in ["open","high","low","close","volume"]:
+            if c in df.columns: df[c] = pd.to_numeric(df[c], errors="coerce")
+        cols = ["timestamp","open","high","low","close","volume"]
+        return df[cols].dropna(subset=["timestamp"]).sort_values("timestamp")
+    except Exception as e:
+        LOG.warning("[Seed] failed for %s: %s", symbol, e)
+        return pd.DataFrame()
+
+# ---------- CryptoCompare ----------
+CC_BASE = "https://min-api.cryptocompare.com/data"
+
+class CCKeyPool:
+    def __init__(self, keys: List[str]): 
+        self.keys = keys or []
+        self.bans: Dict[str, float] = {}
+    def pick(self) -> Optional[str]:
+        if not self.keys: return None
+        now = time.time()
+        ok = [k for k in self.keys if self.bans.get(k,0) <= now]
+        return random.choice(ok) if ok else None
+    def ban(self, k: str, minutes: int = 30):
+        self.bans[k] = time.time() + minutes*60
+
+CC_POOL = CCKeyPool(CC_KEYS)
+
+def cc_get(path: str, params: Dict[str, Any]) -> Optional[dict]:
+    last_err = None
+    tries = max(1, len(CC_KEYS)) + 2
+    for _ in range(tries):
+        k = CC_POOL.pick()
+        headers = {"Apikey": k} if k else {}
+        try:
+            r = requests.get(f"{CC_BASE}/{path}", params=params, headers=headers, timeout=20)
+            if r.status_code == 200:
+                js = r.json()
+                if isinstance(js, dict) and (js.get("Response") in (None, "Success")):
+                    return js
+                last_err = f"bad CC payload {str(js)[:160]}"
+                if "rate" in str(js).lower() and k: CC_POOL.ban(k)
+            else:
+                txt = (r.text or "")[:200]
+                last_err = f"HTTP {r.status_code} {txt}"
+                if "rate" in txt.lower() and k: CC_POOL.ban(k)
+        except Exception as e:
+            last_err = str(e)
+    LOG.warning("[CC] %s", last_err or "unknown error")
+    return None
+
+def cc_hist(symbol: str, kind: str, limit: int, aggregate: int = 1) -> pd.DataFrame:
+    mp = {"minute":"v2/histominute","hour":"v2/histohour","day":"v2/histoday"}
+    q = dict(fsym=symbol.upper(), tsym="USD", limit=limit, aggregate=aggregate)
+    js = cc_get(mp[kind], q)
+    if not js: return pd.DataFrame()
+    raw = (js.get("Data") or {}).get("Data") or []
+    if not raw: return pd.DataFrame()
+    df = pd.DataFrame(raw)
+    if "time" in df.columns:
+        df["timestamp"] = pd.to_datetime(df["time"], unit="s", utc=True, errors="coerce")
+    for c in ["open","high","low","close","volumefrom","volumeto"]:
+        if c in df.columns: df[c] = pd.to_numeric(df[c], errors="coerce")
+    df["volume"] = df["volumeto"] if "volumeto" in df.columns else pd.NA
+    cols = ["timestamp","open","high","low","close","volume"]
+    return df[cols].dropna(subset=["timestamp"]).sort_values("timestamp")
+
+# ---------- CoinGecko ----------
+CG_BASE = "https://api.coingecko.com/api/v3"
+CG_IDS = {
+    "BTC":"bitcoin","ETH":"ethereum","SOL":"solana","BNB":"binancecoin","XRP":"ripple",
+    "ADA":"cardano","DOGE":"dogecoin","LINK":"chainlink","AVAX":"avalanche-2","TON":"the-open-network"
+}
+
+def cg_get(path: str, params: dict) -> Optional[dict]:
+    headers = {}
+    if CG_KEY: headers["x-cg-demo-api-key"] = CG_KEY
+    try:
+        r = requests.get(f"{CG_BASE}/{path}", params=params, headers=headers, timeout=30)
+        if r.status_code == 200:
+            return r.json()
+        LOG.warning("[CG] %s %s", r.status_code, r.text[:160])
+    except Exception as e:
+        LOG.warning("[CG] %s", e)
+    return None
+
+def cg_series(symbol: str, days: int = 30) -> pd.DataFrame:
+    cg_id = CG_IDS.get(symbol.upper())
+    if not cg_id: return pd.DataFrame()
+    js = cg_get(f"coins/{cg_id}/market_chart", {"vs_currency":"usd","days":days})
+    if not js: return pd.DataFrame()
+    px   = js.get("prices") or []
+    vols = js.get("total_volumes") or []
+    caps = js.get("market_caps") or []
+
+    if not px: return pd.DataFrame()
+    dp = pd.DataFrame(px, columns=["ts","close"])
+    dp["timestamp"] = pd.to_datetime(dp["ts"], unit="ms", utc=True, errors="coerce")
+    dp["close"] = pd.to_numeric(dp["close"], errors="coerce")
+
+    if vols:
+        dv = pd.DataFrame(vols, columns=["ts","v"])
+        dv["timestamp"] = pd.to_datetime(dv["ts"], unit="ms", utc=True, errors="coerce")
+        dv["volume"] = pd.to_numeric(dv["v"], errors="coerce")
+        dp = dp.merge(dv[["timestamp","volume"]], on="timestamp", how="left")
+
+    if caps:
+        dc = pd.DataFrame(caps, columns=["ts","mc"])
+        dc["timestamp"] = pd.to_datetime(dc["ts"], unit="ms", utc=True, errors="coerce")
+        dc["market_cap"] = pd.to_numeric(dc["mc"], errors="coerce")
+        dp = dp.merge(dc[["timestamp","market_cap"]], on="timestamp", how="left")
+
+    # synth OHLC for indicators
+    dp["open"] = dp["close"].shift(1)
+    dp["high"] = dp["close"].rolling(3, min_periods=1).max()
+    dp["low"]  = dp["close"].rolling(3, min_periods=1).min()
+    return dp[["timestamp","open","high","low","close","volume","market_cap"]].dropna(subset=["timestamp"]).sort_values("timestamp")
+
+# ---------- indicators ----------
+def ema(s, span): return s.ewm(span=span, adjust=False).mean()
+
+def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty: return df.copy()
+    out = df.copy()
+
+    # RSI(14)
+    d = out["close"].diff()
+    up = d.clip(lower=0.0)
+    dn = -d.clip(upper=0.0)
+    rs = up.ewm(span=14, adjust=False).mean() / dn.replace(0,1e-9).ewm(span=14, adjust=False).mean()
+    out["rsi"] = 100 - (100/(1+rs))
+
+    # MACD (12,26,9)
+    ema12 = ema(out["close"], 12); ema26 = ema(out["close"], 26)
+    out["macd_line"]   = ema12 - ema26
+    out["macd_signal"] = ema(out["macd_line"], 9)
+    out["macd_hist"]   = out["macd_line"] - out["macd_signal"]
+
+    # Bollinger (20,2)
+    ma20  = out["close"].rolling(20).mean()
+    std20 = out["close"].rolling(20).std()
+    out["bb_mid"]   = ma20
+    out["bb_upper"] = ma20 + 2*std20
+    out["bb_lower"] = ma20 - 2*std20
+    out["bb_width"] = ((out["bb_upper"] - out["bb_lower"]) / ma20.replace(0,np.nan) * 100).fillna(0)
+
+    # True Range / ATR(14)
+    hi, lo, cl = out["high"].fillna(out["close"]), out["low"].fillna(out["close"]), out["close"]
+    tr = pd.concat([(hi-lo),(hi-cl.shift()).abs(),(lo-cl.shift()).abs()], axis=1).max(axis=1)
+    out["atr14"] = tr.rolling(14).mean()
+
+    # ADX(14)
+    try:
+        plus_dm  = (hi.diff().where(hi.diff() > lo.diff(), 0.0)).clip(lower=0)
+        minus_dm = (lo.diff().where(lo.diff() > hi.diff(), 0.0)).clip(lower=0).abs()
+        atr = tr.rolling(14).mean()
+        plus_di  = 100 * (plus_dm.rolling(14).mean()  / atr.replace(0,np.nan))
+        minus_di = 100 * (minus_dm.rolling(14).mean() / atr.replace(0,np.nan))
+        dx  = (100 * (plus_di - minus_di).abs() / (plus_di+minus_di).replace(0,np.nan)).fillna(0)
+        out["adx14"] = dx.rolling(14).mean()
+    except Exception:
+        out["adx14"] = np.nan
+
+    # OBV
+    try:
+        vol = out["volume"].fillna(0)
+        direction = np.sign(out["close"].diff()).fillna(0)
+        out["obv"] = (direction * vol).cumsum()
+    except Exception:
+        out["obv"] = np.nan
+
+    # ALT (simple momentum proxy: 20‑period rate of change)
+    out["alt_mom"] = 100 * (out["close"] / out["close"].shift(20) - 1)
+
+    return out
+
+# ---------- hydrate ----------
+def hydrate_symbol(symbol: str, force: bool=False) -> pd.DataFrame:
+    s = symbol.upper()
+
+    if not force and _fresh_enough(s):
+        cached = load_cached(s)
+        if not cached.empty:
+            return cached
+
+    LOG.info("[Hydrate] %s (force=%s, ttl=%ss)", s, force, TTL_SECONDS)
+
+    # try existing cache or seed csv first
+    base = load_cached(s)
+    if base.empty:
+        seed = seed_history(s)
+        if not seed.empty:
+            base = seed
+
+    # CC pulls
+    m = cc_hist(s, "minute", limit=360)
+    h = cc_hist(s, "hour",   limit=24*30)
+    d = cc_hist(s, "day",    limit=365)
+
+    if (m is None or m.empty) and (h is None or h.empty) and (d is None or d.empty):
+        LOG.warning("[Hydrate] CC empty → CG fallback")
+        df = cg_series(s, days=30)
+    else:
+        parts = [x for x in (d,h,m,base) if x is not None and not x.empty]
+        df = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+        if not df.empty and "market_cap" not in df.columns:
+            caps = cg_series(s, days=30)
+            if not caps.empty and "market_cap" in caps.columns:
+                df = df.merge(caps[["timestamp","market_cap"]], on="timestamp", how="left")
+
+    if df is None or df.empty:
+        cached = load_cached(s)
+        if not cached.empty:
+            _touch_fetch(s); return cached
+        return pd.DataFrame()
+
+    df = df.dropna(subset=["timestamp"]).drop_duplicates(subset=["timestamp"], keep="last")\
+           .sort_values("timestamp").reset_index(drop=True)
+
+    df = compute_indicators(df)
+    save_frame(s, df)
+    _touch_fetch(s)
+    return df
+
+# ---------- slice & rollups ----------
+LOOKBACK = {
+    "1h": timedelta(hours=1), "4h": timedelta(hours=4), "8h": timedelta(hours=8),
+    "12h": timedelta(hours=12), "24h": timedelta(hours=24), "7d": timedelta(days=7),
+    "30d": timedelta(days=30), "1y": timedelta(days=365),
+}
+
+def slice_df(df: pd.DataFrame, tf: str) -> pd.DataFrame:
+    if df.empty: return df
+    win = LOOKBACK.get(tf, timedelta(hours=4))
+    anchor = _latest_ts(df) or utcnow()
+    cutoff = anchor - win
+    return df[df["timestamp"] >= cutoff].copy()
+
+def value_at_or_before(df: pd.DataFrame, hours: int, anchor: Optional[datetime]=None) -> Optional[float]:
+    if df.empty: return None
+    anchor = anchor or _latest_ts(df) or utcnow()
+    t = anchor - timedelta(hours=hours)
+    older = df[df["timestamp"] <= t]
+    if older.empty: return to_float(df["close"].iloc[0])
+    return to_float(older["close"].iloc[-1])
+
+def compute_rollups_full(df: pd.DataFrame) -> Tuple[Dict[str, Optional[float]], Dict[str, Optional[float]]]:
+    if df.empty: return {}, {}
+    ch = {}
+    anchor = _latest_ts(df) or utcnow()
+    last = to_float(df["close"].iloc[-1])
+    for k, hrs in [("1h",1),("4h",4),("8h",8),("12h",12),("24h",24),("7d",24*7),("30d",24*30),("1y",24*365)]:
+        base = value_at_or_before(df, hrs, anchor)
+        ch[k] = None if (base in (None,0) or last in (None,0)) else round((last/base-1)*100, 2)
+    inv = {k: (None if v is None else round(1000*(1+v/100.0),2)) for k,v in ch.items()}
+    return ch, inv
+
+# ---------- Luna analysis ----------
+def _band(rsi):
+    if rsi is None: return "n/a"
+    if rsi >= 70: return "overbought (hot)"
+    if rsi <= 30: return "oversold (cold)"
+    if 45 <= rsi <= 55: return "neutral"
+    return "tilted " + ("bullish" if rsi > 50 else "bearish")
+
+def _macd_word(m, s):
+    if m is None or s is None: return "n/a"
+    return "above signal (bullish bias)" if m > s else "below signal (bearish bias)" if m < s else "on signal (flat)"
+
+def _adx_word(a):
+    if a is None: return "n/a"
+    if a >= 40: return "strong trend"
+    if a >= 25: return "trend in play"
+    return "weak / range"
+
+def talk_indicator(key: str, df: pd.DataFrame) -> str:
+    if df.empty: return "No data in view. Try a wider timeframe."
+    last = df.iloc[-1]
+    if key == "RSI":
+        r = to_float(last.get("rsi"))
+        return f"RSI {f1(r)} — {_band(r)}. Above 70 overheated; below 30 washed-out."
+    if key == "MACD":
+        m = to_float(last.get("macd_line")); s = to_float(last.get("macd_signal")); h = to_float(last.get("macd_hist"))
+        side = "bullish" if (m is not None and s is not None and m > s) else "bearish" if (m is not None and s is not None and m < s) else "flat"
+        return f"MACD is {side} ({f1(m)} vs {f1(s)}; hist {f1(h)}). Crosses often preface swings."
+    if key == "ATR":
+        v = to_float(last.get("atr14"))
+        return f"ATR(14) {f1(v)} — recent average true range (volatility proxy). Higher ATR = wider daily moves."
+    if key == "BANDS":
+        w = to_float(last.get("bb_width"))
+        if w is None: return "Bollinger width unavailable."
+        return "Bands are tight — breakout risk ↑." if w <= 1.0 else "Bands normal."
+    if key == "VOL":
+        return "Volume trend — spikes without follow-through often fade; sustained volume under an advance is healthier."
+    if key == "LIQ":
+        return "Liquidity proxy (vol). Thin books increase slippage and fake-out risk."
+    if key == "ADX":
+        a = to_float(last.get("adx14"))
+        return f"ADX {f1(a)} — {_adx_word(a)}."
+    if key == "OBV":
+        ser = df["obv"].dropna()
+        if len(ser) < 5: return "OBV not informative here."
+        slope = np.sign(ser.iloc[-1] - ser.iloc[-5])
+        txt = "accumulation (rising)" if slope>0 else "distribution (falling)" if slope<0 else "flat"
+        return f"OBV shows {txt}."
+    if key == "MCAP":
+        mc = to_float(last.get("market_cap"))
+        return "Market cap trend — proxy for broad participation." if mc is not None else "Market cap not available for this slice."
+    if key == "ALT":
+        v = to_float(last.get("alt_mom"))
+        return f"ALT momentum proxy {f1(v)} — quick read on 20‑period price impulse."
+    return "No commentary for this panel."
+
+def luna_paragraph(symbol: str, df: pd.DataFrame, tf: str, question: str) -> str:
+    if df.empty: return f"{symbol}: I don’t have enough fresh data yet."
+    view = slice_df(df, tf)
+    if view.empty: view = df.tail(200)
+    ch, _ = compute_rollups_full(view)
+    last = view.iloc[-1]
+    price = money(last.get("close"))
+    rsi = to_float(last.get("rsi"))
+    macdl = to_float(last.get("macd_line")); macds = to_float(last.get("macd_signal")); mach = to_float(last.get("macd_hist"))
+    adx = to_float(last.get("adx14"))
+    bbw = to_float(last.get("bb_width"))
+
+    perf_bits = [f"{k} {v:+.2f}%" for k,v in ch.items() if v is not None and k in ("1h","4h","12h","24h")]
+    perf = ", ".join(perf_bits) if perf_bits else "flat"
+
+    tone = "bullish" if (macdl is not None and macds is not None and macdl > macds) else "bearish" if (macdl is not None and macds is not None and macdl < macds) else "neutral"
+
+    short = ""
+    if question:
+        short = "Short answer: "
+        if tone == "bullish": short += "bulls have a slight edge."
+        elif tone == "bearish": short += "bears have the edge."
+        else: short += "this looks range-bound."
+
+    line1 = f"{symbol} around {price}. Over this window: {perf}."
+    line2 = (f" Momentum: RSI {f1(rsi)} ({_band(rsi)}). MACD { _macd_word(macdl, macds) }; hist {f1(mach)}. "
+             f"ADX {f1(adx)} → {_adx_word(adx)}. Bands width {f1(bbw)}%.")
+    plan  = " If price breaks and closes beyond the recent band with rising volume, I favor follow‑through; if the move fizzles and OBV diverges, I fade the breakout."
+    return f"{line1}{line2} {short}{plan}"
+
+# ---------- plotly builders ----------
+def fig_price(df: pd.DataFrame, symbol: str) -> go.Figure:
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.74, 0.26], vertical_spacing=0.04)
+    if not df.empty:
+        fig.add_trace(go.Candlestick(
+            x=df["timestamp"], open=df["open"], high=df["high"], low=df["low"], close=df["close"],
+            name=f"{symbol} OHLC", increasing_line_color="#36d399", decreasing_line_color="#f87272", opacity=0.95
+        ), row=1, col=1)
+        for name,col,color in [("BB upper","bb_upper","#a78bfa"),("BB mid","bb_mid","#60a5fa"),("BB lower","bb_lower","#a78bfa")]:
+            if col in df.columns:
+                fig.add_trace(go.Scatter(x=df["timestamp"], y=df[col], name=name, line=dict(width=1, color=color)), row=1, col=1)
+        if "macd_line" in df.columns and "macd_signal" in df.columns:
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_line"], name="MACD", line=dict(width=1.1)), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_signal"], name="Signal", line=dict(width=1, dash="dot")), row=2, col=1)
+        if "macd_hist" in df.columns:
+            fig.add_trace(go.Bar(x=df["timestamp"], y=df["macd_hist"], name="MACD Hist"), row=2, col=1)
+    fig.update_layout(
+        template="plotly_dark", height=360, margin=dict(l=12,r=12,t=24,b=10),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        xaxis_rangeslider_visible=False
+    )
+    return fig
+
+def fig_line(df: pd.DataFrame, y: str, name: str, h: int=155) -> go.Figure:
+    fig = go.Figure()
+    if (not df.empty) and (y in df.columns) and (not pd.isna(df[y]).all()):
+        fig.add_trace(go.Scatter(x=df["timestamp"], y=df[y], name=name, line=dict(width=1.6)))
+    else:
+        fig.add_annotation(text="No data for this timeframe.", showarrow=False, xref="paper", yref="paper", x=0.5, y=0.5)
+    # keep axis labels tight; avoid big blank bottom
+    fig.update_xaxes(tickformat="%m-%d")
+    fig.update_layout(template="plotly_dark", height=h, margin=dict(l=10,r=10,t=18,b=8), showlegend=False)
+    return fig
+
+# ---------- routes ----------
+@app.get("/")
+def home():
+    return ('<meta http-equiv="refresh" content="0; url=/analyze?symbol=ETH&tf=12h">', 302)
+
+@app.get("/analyze")
+def analyze():
+    symbol = (request.args.get("symbol") or "ETH").upper()
+    tf     = (request.args.get("tf") or "12h")
+    # hydrate
+    df_full = hydrate_symbol(symbol, force=False)
+    if df_full.empty: return Response("No data.", 500)
+
+    # this slice drives the visuals
+    df_view = slice_df(df_full, tf)
+    perf, invest = compute_rollups_full(df_full)  # rollups from full history for better accuracy
+
+    # tiles
+    tiles = {
+        "PRICE":  pio.to_html(fig_price(df_view if not df_view.empty else df_full, symbol), include_plotlyjs=False, full_html=False),
+        "RSI":    pio.to_html(fig_line(df_view, "rsi", "RSI"), include_plotlyjs=False, full_html=False),
+        "MCAP":   (pio.to_html(fig_line(df_view if "market_cap" in df_view.columns else df_full, "market_cap", "Market Cap"), include_plotlyjs=False, full_html=False)
+                   if ("market_cap" in df_full.columns or "market_cap" in df_view.columns) else "<div class='chart-missing'>No market cap.</div>"),
+        "MACD":   pio.to_html(fig_line(df_view, "macd_line", "MACD"), include_plotlyjs=False, full_html=False),
+        "OBV":    pio.to_html(fig_line(df_view, "obv", "OBV"), include_plotlyjs=False, full_html=False),
+        "ATR":    pio.to_html(fig_line(df_view, "atr14", "ATR 14"), include_plotlyjs=False, full_html=False),
+        "BANDS":  pio.to_html(fig_line(df_view, "bb_width", "Bands Width"), include_plotlyjs=False, full_html=False),
+        "VOL":    pio.to_html(fig_line(df_view, "volume", "Volume Trend"), include_plotlyjs=False, full_html=False),
+        "LIQ":    pio.to_html(fig_line(df_view, "volume", "Liquidity"), include_plotlyjs=False, full_html=False),
+        "ADX":    pio.to_html(fig_line(df_view, "adx14", "ADX 14"), include_plotlyjs=False, full_html=False),
+        "ALT":    pio.to_html(fig_line(df_view, "alt_mom", "ALT (Momentum)"), include_plotlyjs=False, full_html=False),
+    }
+
+    updated = (_latest_ts(df_full) or utcnow()).strftime("UTC %Y-%m-%d %H:%M")
+
+    # TL;DR
+    tldr_line = f"{symbol}: " + ", ".join([f"{k} {('%+.2f%%'%v) if v is not None else 'n/a'}"
+                                           for k in ["1h","4h","12h","24h"] for v in [perf.get(k)] ])
+
+    return render_template(
+        "control_panel.html",
+        symbol=symbol, tf=tf, updated=updated,
+        tiles=tiles, performance=perf, investment=invest, tldr_line=tldr_line
+    )
+
+@app.get("/expand_json")
+def expand_json():
+    symbol = (request.args.get("symbol") or "ETH").upper()
+    tf     = (request.args.get("tf") or "12h")
+    key    = (request.args.get("key") or "RSI").upper()
+
+    df = load_cached(symbol)
+    if df.empty: df = hydrate_symbol(symbol, force=False)
+    dfv = slice_df(df, tf)
+
+    # choose figure
+    if   key == "PRICE":  fig = fig_price(dfv if not dfv.empty else df, symbol)
+    elif key == "RSI":    fig = fig_line(dfv, "rsi", "RSI", h=360)
+    elif key == "MACD":   fig = fig_line(dfv, "macd_line", "MACD", h=360)
+    elif key == "MCAP":   fig = fig_line(dfv, "market_cap", "Market Cap", h=360)
+    elif key == "BANDS":  fig = fig_line(dfv, "bb_width", "Bollinger Width", h=360)
+    elif key == "VOL":    fig = fig_line(dfv, "volume", "Volume Trend", h=360)
+    elif key == "LIQ":    fig = fig_line(dfv, "volume", "Liquidity", h=360)
+    elif key == "OBV":    fig = fig_line(dfv, "obv", "OBV", h=360)
+    elif key == "ADX":    fig = fig_line(dfv, "adx14", "ADX 14", h=360)
+    elif key == "ATR":    fig = fig_line(dfv, "atr14", "ATR 14", h=360)
+    elif key == "ALT":    fig = fig_line(dfv, "alt_mom", "ALT momentum", h=360)
+    else:                 fig = fig_line(dfv, "close", key, h=360)
+
+    talk = talk_indicator(key, dfv if not dfv.empty else df)
+
+    return jsonify({"fig": fig.to_plotly_json(), "talk": talk, "tf": tf, "key": key})
+
+@app.get("/api/refresh/<symbol>")
+def api_refresh(symbol: str):
+    df = hydrate_symbol((symbol or "ETH").upper(), force=True)
+    return jsonify({"ok": (not df.empty), "rows": 0 if df is None else len(df)})
+
+@app.post("/api/luna")
+def api_luna():
+    data    = request.get_json(silent=True) or {}
+    symbol  = (data.get("symbol") or "ETH").upper()
+    tf      = data.get("tf") or "12h"
+    text    = (data.get("text") or data.get("question") or "").strip()
+
+    df = load_cached(symbol)
+    if df.empty:
+        df = hydrate_symbol(symbol, force=False)
+
+    reply = luna_paragraph(symbol, df, tf, text) if not df.empty else f"{symbol}: I don’t have enough fresh data yet."
+    # (optional) persist question/answer for 21 messages:
+    sid = f"sess_{request.remote_addr or 'local'}_{symbol}".replace(":","_")
+    p = SESS_DIR / f"{sid}.json"
+    try:
+        obj = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        obj = {"id": sid, "q": [], "a": []}
+    if text: obj["q"].append(text)
+    obj["a"].append(reply)
+    obj["q"] = obj["q"][-21:]; obj["a"] = obj["a"][-21:]
+    p.write_text(json.dumps(obj, indent=2), encoding="utf-8")
+
+    return jsonify({"symbol": symbol, "reply": reply})
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=5000, debug=True)
+
+5.2 templates/control_panel.html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Luna AI — Control Panel</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/control_panel.css') }}">
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+</head>
+
+<body data-symbol="{{ symbol }}" data-tf-default="{{ tf }}">
+  <div class="shell">
+
+    <!-- Topbar (fixed width = shell width) -->
+    <header class="topbar">
+      <strong>Luna AI — Control Panel</strong>
+      <form class="go-line" method="get" action="/analyze">
+        <select name="symbol" id="symbol">
+          {% for s in ['BTC','ETH','SOL','BNB','XRP','ADA','DOGE','LINK','AVAX','TON'] %}
+            <option value="{{s}}" {% if s==symbol %}selected{% endif %}>{{s}}</option>
+          {% endfor %}
+        </select>
+        <select name="tf" id="tf">
+          {% for t in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
+            <option value="{{t}}" {% if t==tf %}selected{% endif %}>{{t}}</option>
+          {% endfor %}
+        </select>
+        <button type="submit">Apply</button>
+        <button type="button" id="refreshBtn">Refresh</button>
+        <input id="searchBox" name="symbol" placeholder="Search coin or contract..." />
+        <button type="submit" id="goBtn">Go</button>
+      </form>
+      <div class="updated">Updated {{ updated }}</div>
+    </header>
+
+    <!-- Performance -->
+    <section class="panel row-compact">
+      <header><strong>Performance</strong></header>
+      <div class="chips">
+        {% for k in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
+          <span class="chip">{{ k }}: {{ 'n/a' if performance.get(k) is none else ('%+.2f%%'|format(performance.get(k))) }}</span>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Investment -->
+    <section class="panel row-compact">
+      <header><strong>Investment ($1000 model)</strong></header>
+      <div class="chips">
+        {% for k in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
+          <span class="chip">{{ k }}: {{ '$—' if investment.get(k) is none else ('$%0.2f'|format(investment.get(k))) }}</span>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Main grid 2×? layout -->
+    <section class="grid">
+      <!-- left column -->
+      <article class="tile" data-key="RSI">
+        <header>RSI <button class="expand" data-key="RSI">Expand</button></header>
+        <div class="tile__body">{{ tiles['RSI']|safe }}</div>
+      </article>
+
+      <!-- mega price (2 high × 4 wide) -->
+      <article class="tile tile--price" data-key="PRICE">
+        <header>{{ symbol }} — Charts <button class="expand" data-key="PRICE">Expand</button></header>
+        <div class="tile__body">{{ tiles['PRICE']|safe }}</div>
+      </article>
+
+      <!-- right column (2 squares) -->
+      <article class="tile" data-key="MCAP">
+        <header>Market Cap <button class="expand" data-key="MCAP">Expand</button></header>
+        <div class="tile__body">{{ tiles['MCAP']|safe }}</div>
+      </article>
+
+      <article class="tile" data-key="MACD">
+        <header>MACD <button class="expand" data-key="MACD">Expand</button></header>
+        <div class="tile__body">{{ tiles['MACD']|safe }}</div>
+      </article>
+
+      <article class="tile" data-key="OBV">
+        <header>OBV <button class="expand" data-key="OBV">Expand</button></header>
+        <div class="tile__body">{{ tiles['OBV']|safe }}</div>
+      </article>
+
+      <!-- six squares under mega -->
+      <article class="tile" data-key="ATR">
+        <header>Volatility (ATR 14) <button class="expand" data-key="ATR">Expand</button></header>
+        <div class="tile__body">{{ tiles['ATR']|safe }}</div>
+      </article>
+
+      <article class="tile" data-key="BANDS">
+        <header>Bands <button class="expand" data-key="BANDS">Expand</button></header>
+        <div class="tile__body">{{ tiles['BANDS']|safe }}</div>
+      </article>
+
+      <article class="tile" data-key="VOL">
+        <header>Volume Trend <button class="expand" data-key="VOL">Expand</button></header>
+        <div class="tile__body">{{ tiles['VOL']|safe }}</div>
+      </article>
+
+      <article class="tile" data-key="LIQ">
+        <header>Liquidity <button class="expand" data-key="LIQ">Expand</button></header>
+        <div class="tile__body">{{ tiles['LIQ']|safe }}</div>
+      </article>
+
+      <article class="tile" data-key="ADX">
+        <header>ADX <button class="expand" data-key="ADX">Expand</button></header>
+        <div class="tile__body">{{ tiles['ADX']|safe }}</div>
+      </article>
+
+      <article class="tile" data-key="ALT">
+        <header>ALT (Momentum) <button class="expand" data-key="ALT">Expand</button></header>
+        <div class="tile__body">{{ tiles['ALT']|safe }}</div>
+      </article>
+    </section>
+
+    <!-- TL;DR + F&G -->
+    <section class="row">
+      <article class="panel">
+        <header><strong>TL;DR</strong></header>
+        <div>{{ tldr_line }}</div>
+      </article>
+      <article class="panel fg">
+        <header><strong>Fear & Greed</strong></header>
+        <div class="bar"><div class="fill" style="width:50%"></div></div>
+        <div>50 / 100</div>
+      </article>
+    </section>
+
+    <!-- Q&A -->
+    <section class="row">
+      <article class="panel qa">
+        <header><strong>Questions</strong></header>
+        <div id="qaQ"></div>
+      </article>
+      <article class="panel qa">
+        <header><strong>Luna’s answers</strong></header>
+        <div id="qaA"></div>
+        <div class="ask-line">
+          <input id="askBox" placeholder="Ask Luna about {{symbol}}…">
+          <button id="askSend">Ask</button>
+        </div>
+      </article>
+    </section>
+
+  </div><!-- /shell -->
+
+  <!-- Expand modal -->
+  <div id="modal" class="hidden">
+    <div class="m-box">
+      <div class="m-head">
+        <div><strong id="m-title">Expand</strong>
+          <select id="m-tf">
+            {% for t in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
+              <option value="{{t}}" {% if t==tf %}selected{% endif %}>{{t}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button id="m-close">Close</button>
+      </div>
+      <div class="m-body">
+        <div class="m-chart" id="m-chart"></div>
+        <aside class="m-aside">
+          <h4>What this shows</h4>
+          <div id="m-talk"></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.__SYMBOL__ = "{{ symbol }}";
+    window.__TF__     = "{{ tf }}";
+  </script>
+  <script src="{{ url_for('static', filename='js/control_panel.js') }}"></script>
+</body>
+</html>
+
+5.3 static/js/control_panel.js
+// Luna AI — control_panel.js (Save point 2025-11-01)
+
+(function () {
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  // --- Expand modal ---
+  const modal = $("#modal");
+  const mClose = $("#m-close");
+  const mChart = $("#m-chart");
+  const mTalk  = $("#m-talk");
+  const mTf    = $("#m-tf");
+  let currentKey = null;
+
+  function openModal(key) {
+    currentKey = key;
+    modal.classList.remove("hidden");
+    fetch(`/expand_json?symbol=${encodeURIComponent(window.__SYMBOL__)}&key=${encodeURIComponent(key)}&tf=${encodeURIComponent(mTf.value)}`)
+      .then(r => r.json())
+      .then(j => {
+        mChart.innerHTML = "";
+        Plotly.newPlot(mChart, j.fig.data, j.fig.layout || {}, {responsive: true});
+        mTalk.textContent = j.talk || "";
+      })
+      .catch(err => { mTalk.textContent = "Error loading chart."; console.error(err); });
+  }
+
+  function closeModal() { modal.classList.add("hidden"); }
+
+  mClose.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+  mTf.addEventListener("change", () => { if (currentKey) openModal(currentKey); });
+
+  $$(".expand").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.key || btn.closest(".tile")?.dataset?.key;
+      if (key) openModal(key);
+    });
+  });
+
+  // --- Ask Luna ---
+  const askBox  = $("#askBox");
+  const askSend = $("#askSend");
+  const qaQ = $("#qaQ"), qaA = $("#qaA");
+
+  function pushQA(q, a) {
+    if (q) {
+      const li = document.createElement("div");
+      li.className = "bubble q";
+      li.textContent = "• " + q;
+      qaQ.appendChild(li);
+      qaQ.scrollTop = qaQ.scrollHeight;
+    }
+    if (a) {
+      const li = document.createElement("div");
+      li.className = "bubble a";
+      li.textContent = a;
+      qaA.appendChild(li);
+      qaA.scrollTop = qaA.scrollHeight;
+    }
+  }
+
+  askSend.addEventListener("click", () => {
+    const q = (askBox.value || "").trim();
+    if (!q) return;
+    pushQA(q, null);
+    askBox.value = "";
+    fetch("/api/luna", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({symbol: window.__SYMBOL__, tf: $("#tf")?.value || window.__TF__, text: q})
+    })
+    .then(r => r.json())
+    .then(j => pushQA(null, j.reply))
+    .catch(err => pushQA(null, "Error: " + String(err)));
+  });
+
+  // --- Refresh button (TTL aware server side) ---
+  $("#refreshBtn")?.addEventListener("click", () => {
+    fetch(`/api/refresh/${encodeURIComponent(window.__SYMBOL__)}`)
+      .then(() => window.location.reload());
+  });
+
+  // --- Search: already handled by topbar form submitting to /analyze ---
+  // nothing else needed; we keep it simple and non-breaking
+
+})();
+
+5.4 static/css/control_panel.css
+/* Luna AI — control_panel.css (Save point 2025-11-01) */
+
+/* --- cosmic background (non-destructive) --- */
+body {
+  background: #000 url("/static/img/space_center_bg.png") center center no-repeat fixed;
+  background-size: cover;
+  color: #cfe3ff;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+}
+
+/* dark overlay for readability */
+.shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: -1;
+}
+
+/* --- shell / widths --- */
+.shell { 
+  --gap: 14px;
+  --tile: 220px;             /* base square size */
+  --price-h: 360px;
+  max-width: calc(6 * var(--tile) + 7 * var(--gap)); /* 6 tiles + gaps */
+  margin: 22px auto 48px auto;
+  padding: 0 6px;
+}
+
+/* topbar fixed width like shell */
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.topbar strong { white-space: nowrap; }
+.topbar .updated { opacity:.8; font-size:12px; }
+
+/* go-line (symbol/tf/apply/refresh/search) */
+.go-line { display:flex; gap:8px; align-items:center; }
+.go-line input#searchBox {
+  width: 260px; padding:6px 10px; border-radius:10px; border:1px solid #2a3d56;
+  background:#0b1726; color:#cfe3ff;
+}
+
+/* --- panels --- */
+.panel {
+  background: rgba(11,23,38,.7);
+  border: 1px solid #22354d;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 0 0 0 rgba(164,120,250,.3);
+}
+.panel:hover { box-shadow: 0 0 16px 0 rgba(164,120,250,.35); }
+
+.panel.row-compact {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+
+/* chips inline with header */
+.chips { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.chip { padding:6px 10px; border-radius:14px; background:#0f2338; border:1px solid #1f2f46; font-size:12px; }
+
+.fg .bar { height:10px;background:#1a2b3e;border-radius:6px;overflow:hidden; }
+.fg .bar .fill { height:10px;background:#2ec27e;}
+
+/* --- grid --- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, var(--tile));
+  grid-auto-rows: var(--tile);
+  gap: var(--gap);
+  margin: 10px 0 8px 0;
+}
+
+/* mega price tile occupies 4×wide and 2×tall */
+.tile--price { grid-column: span 4; grid-row: span 2; }
+
+/* left & right columns + six below are single squares by default */
+
+/* --- tiles --- */
+.tile {
+  background: rgba(11,23,38,.72);
+  border: 1px solid #22354d;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 0 0 rgba(164,120,250,.2);
+  transition: box-shadow .15s ease, transform .15s ease;
+}
+.tile:hover { box-shadow: 0 0 16px 0 rgba(164,120,250,.35); }
+
+.tile header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 6px 10px; background:#0b1726; border-bottom:1px solid #22354d; font-size:12px;
+}
+.tile .expand {
+  font-size:12px; padding:4px 8px; background:#0b2237; border:1px solid #2a3d56; color:#cfe3ff; border-radius: 6px;
+}
+.tile__body { padding: 8px; }
+
+/* Plotly container fill without tall bottom gray */
+.js-plotly-plot, .plotly, .plot-container { width:100% !important; height:100% !important; }
+.svg-container { height: calc(100% - 0px) !important; }
+
+/* --- Q&A --- */
+.panel.qa { height: 220px; display:flex; flex-direction:column; }
+#qaQ, #qaA { flex:1; overflow:auto; background:rgba(3,10,18,.35); border:1px solid #24364f; border-radius:8px; padding:8px; }
+.bubble { padding:5px 4px; font-size:13px; }
+.bubble.q { color:#cfe3ff; }
+.bubble.a { color:#a7e9c9; }
+.ask-line { display:flex; gap:8px; margin-top:8px; }
+.ask-line input { flex:1; padding:8px 10px; border-radius:10px; border:1px solid #29405d; background:#0a1a2b; color:#cfe3ff; }
+.ask-line button { padding:6px 12px; border-radius:8px; border:1px solid #2a3d56; background:#0b2237; color:#cfe3ff; }
+
+/* --- modal --- */
+#modal.hidden { display:none; }
+#modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:9999; }
+.m-box { width:min(1200px, 92vw); height:min(640px, 88vh); background:#0c1726; border:1px solid #203044; border-radius:10px; display:flex; flex-direction:column; }
+.m-head { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid #203044; }
+.m-body { display:flex; gap:12px; padding:12px; height:100%; }
+.m-chart { flex: 1 1 auto; min-width:0; }
+.m-aside { width:320px; max-width:40%; border-left:1px solid #203044; padding-left:12px; overflow:auto; }
+.m-aside h4 { margin:0 0 6px 0; }
+
+6) Requirements & run
+
+requirements.txt
+
+Flask>=3.0
+python-dotenv>=1.0
+pandas>=2.1
+numpy>=1.26
+requests>=2.32
+plotly>=5.22
+pyarrow>=16.0 ; extra (for parquet; else falls back to csv)
+
+
+Run
+
+# Windows venv assumed
+pip install -r requirements.txt
+python server.py
+# open http://127.0.0.1:5000/analyze?symbol=ETH&tf=12h
+
+7) APIs & rate-limit handling
+
+CryptoCompare — primary OHLCV (minute/hour/day).
+
+Multiple keys in .env — rotated per request.
+
+On 402/429/403: ban key for 30 minutes.
+
+CoinGecko — fallback series + market_caps for visuals when CC throttles or for additional coverage.
+
+15‑minute TTL per symbol: we don’t refetch while fresh. Manual “Refresh” respects TTL server‑side.
+
+Seed history CSV: if present in luna_cache/data/coins/SYM.csv, it’s merged to avoid empty frames at first run.
+
+8) Algorithms (indicator notes)
+
+RSI(14), MACD(12/26/9) (+ signal, hist), Bollinger(20,2) (+ bb_width %), ATR(14), ADX(14), OBV, ALT momentum (20‑period ROC).
+
+Rollups computed off full frame (not slice) to produce stable 1h…1y Performance & $1000 model figures.
+
+9) Known good behaviors
+
+All tiles are true squares and align; Price is 2 high × 4 wide; no tile truncation bottoms.
+
+Performance / Investment chips inline with labels, block height minimized.
+
+Expand modal shows real figure and plain‑English notes per indicator (“What this shows”).
+
+Search works (symbol or contract string) without changing layout.
+
+Background scales and centers; no scroll design is respected.
+
+10) “Ask Luna” style guide (what you’re hearing)
+
+Straight answer first; short, factual bias (“small edge to bulls/bears” or “range‑bound”).
+
+Why: RSI band, MACD relation, ADX strength, band width, OBV note.
+
+Action idea (not advice): breakout + volume vs fade on divergence.
+
+Always framed as educational sentiment, not financial advice.
+
+11) What’s IP here (talk to counsel)
+
+I am not a lawyer, but here are items counsel may consider for trade secret or utility/design patent analysis:
+
+Hybrid data pipeline that:
+
+Rotates multiple API keys with temporary ban windows,
+
+Gracefully degrades to a different provider and merges a local seed history to avoid blank frames,
+
+Applies TTL gating by symbol while still allowing forced refresh.
+Comment: Many apps cache and rotate keys; what’s novel here is the specific fallback + seed‑merge pattern and how it preserves user‑perceived continuity. Likely trade secret, not patentable on its own, but counsel can advise.
+
+Single‑screen cockpit layout contract:
+
+Rigid 2×4 mega + ten squares grid, with inline performance/investment and expand with natural‑language teaching per indicator.
+
+The hover glow aesthetic and fixed max‑width/topbar width lock give a distinct look.
+Comment: UI look‑and‑feel may be more trademark/branding or design patent territory if you want to protect a very specific, non‑functional ornamental layout.
+
+Plain‑English explanatory layer:
+
+Deterministic indicator‑to‑explanation mapping (“What this shows”) kept client‑visible and cached for reuse.
+
+The copy is yours; consistent tone + logic mapping might be copyright and trade secret (if you keep the heuristics private).
+
+Narrative engine (“Ask Luna”) that conditions short answers using immediate market structure plus an if/then practitioner heuristic (bands/volume/OBV).
+Comment: The text logic is original writing; protect as copyright. If you extend with a novel decision methodology you may discuss patentability with counsel.
+
+Operational recipe for no‑scroll, single‑screen crypto cockpit with timeframe‑aligned tiles and modal pedagogy (the whole bundle).
+Comment: The bundled approach can be trade secret (document it internally, lock access to repo).
+
+Bottom line: I’d focus on trade secret + copyright (explanations, tone, and the exact UI composition). If you later implement a novel quant decision rule or optimization method, revisit utility patent with counsel.
+
+12) Next steps (tiny list)
+
+Data sanity: verify rollups against a second source for 1y (if history present in seed CSVs).
+
+Market cap coverage: if CG is missing for small caps, wire a fallback (Dexscreener or CMC community API) for MCAP tile only.
+
+News tile: connect 3–5 RSS feeds per symbol; render headlines.
+
+Voice: ElevenLabs TTS call (already stub‑ready) after api/luna.
+
+Token gating: simple balance check/gate per 21‑Q session.
+
+13) How to recover if anything drifts
+
+If tiles misalign: check --tile and --gap in control_panel.css.
+
+If expand blanks: inspect /expand_json logs; often empty slice (increase TF) or missing column.
+
+If all Performance values look identical (like +0.09%): make sure seed history exists and CC/CG frames merged; also ensure rollups computed from df_full, not the view.

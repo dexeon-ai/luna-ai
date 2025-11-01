@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Luna AI — Control Panel</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/control_panel.css') }}">
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+</head>
+
+<body>
+  <div id="page">
+
+    <!-- ===== Top bar (now with search; width locked to page/grid) ===== -->
+    <header class="topbar">
+      <div class="tb-left">
+        <strong>Luna AI — Control Panel</strong>
+
+        <form id="nav-form" method="get" action="/analyze" class="inline">
+          <select name="symbol" id="symbolSelect">
+            {% for s in ['BTC','ETH','SOL','BNB','XRP','ADA','DOGE','LINK','AVAX','TON'] %}
+              <option value="{{s}}" {% if s==symbol %}selected{% endif %}>{{s}}</option>
+            {% endfor %}
+          </select>
+
+          <select name="tf" id="tfSelect">
+            {% for t in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
+              <option value="{{t}}" {% if t==tf %}selected{% endif %}>{{t}}</option>
+            {% endfor %}
+          </select>
+
+          <button type="submit">Apply</button>
+          <button type="button" id="refreshBtn">Refresh</button>
+        </form>
+      </div>
+
+      <!-- new centered search (does not expand the page width) -->
+      <div class="tb-center">
+        <div class="searchbox">
+          <input id="coinSearch" type="search" placeholder="Search coin or contract…"
+                 autocomplete="off" list="coinsList" />
+          <datalist id="coinsList"></datalist>
+          <button id="coinGo" title="Analyze">Go</button>
+        </div>
+      </div>
+
+      <div class="tb-right">
+        <span>Updated UTC {{ updated }}</span>
+      </div>
+    </header>
+
+    <!-- ===== Performance & Investment (metrics inline with headers) ===== -->
+    <section class="panel panel-tight">
+      <header class="panel-head">
+        <strong>Performance</strong>
+        <div class="chips">
+          {% for k in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
+            <span class="chip">{{ k }}: {{ 'n/a' if performance.get(k) is none else ('%+.2f%%'|format(performance.get(k))) }}</span>
+          {% endfor %}
+        </div>
+      </header>
+    </section>
+
+    <section class="panel panel-tight">
+      <header class="panel-head">
+        <strong>Investment ($1000 model)</strong>
+        <div class="chips">
+          {% for k in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
+            <span class="chip">{{ k }}: {{ '$—' if investment.get(k) is none else ('$%0.2f'|format(investment.get(k))) }}</span>
+          {% endfor %}
+        </div>
+      </header>
+    </section>
+
+    <!-- ===== Main 10-square grid (unchanged positions) ===== -->
+    <section class="grid">
+      <!-- Left column (2 squares) -->
+      <article class="tile glow" data-key="RSI">
+        <header>RSI <button class="expand" data-key="RSI">Expand</button></header>
+        <div class="tile__body">{{ tiles['RSI']|safe }}</div>
+      </article>
+
+      <!-- Main price (2x high, 4x wide) -->
+      <article class="tile tile--price glow" data-key="PRICE">
+        <header>{{ symbol }} — Charts <button class="expand" data-key="PRICE">Expand</button></header>
+        <div class="tile__body">{{ tiles['PRICE']|safe }}</div>
+      </article>
+
+      <!-- Right column (2 squares) -->
+      <article class="tile glow" data-key="MCAP">
+        <header>Market Cap <button class="expand" data-key="MCAP">Expand</button></header>
+        <div class="tile__body">{{ tiles['MCAP']|safe }}</div>
+      </article>
+
+      <article class="tile glow" data-key="MACD">
+        <header>MACD <button class="expand" data-key="MACD">Expand</button></header>
+        <div class="tile__body">{{ tiles['MACD']|safe }}</div>
+      </article>
+
+      <article class="tile glow" data-key="OBV">
+        <header>OBV <button class="expand" data-key="OBV">Expand</button></header>
+        <div class="tile__body">{{ tiles['OBV']|safe }}</div>
+      </article>
+
+      <!-- Bottom row — six squares -->
+      <article class="tile glow" data-key="ATR">
+        <header>Volatility (ATR 14) <button class="expand" data-key="ATR">Expand</button></header>
+        <div class="tile__body">{{ tiles['ATR']|safe }}</div>
+      </article>
+
+      <article class="tile glow" data-key="BANDS">
+        <header>Bands <button class="expand" data-key="BANDS">Expand</button></header>
+        <div class="tile__body">{{ tiles['BANDS']|safe }}</div>
+      </article>
+
+      <article class="tile glow" data-key="VOL">
+        <header>Volume Trend <button class="expand" data-key="VOL">Expand</button></header>
+        <div class="tile__body">{{ tiles['VOL']|safe }}</div>
+      </article>
+
+      <article class="tile glow" data-key="LIQ">
+        <header>Liquidity <button class="expand" data-key="LIQ">Expand</button></header>
+        <div class="tile__body">{{ tiles['LIQ']|safe }}</div>
+      </article>
+
+      <article class="tile glow" data-key="ADX">
+        <header>ADX <button class="expand" data-key="ADX">Expand</button></header>
+        <div class="tile__body">{{ tiles['ADX']|safe }}</div>
+      </article>
+
+      <article class="tile glow" data-key="ALT">
+        <header>ALT (Momentum) <button class="expand" data-key="ALT">Expand</button></header>
+        <div class="tile__body">{{ tiles['ALT']|safe }}</div>
+      </article>
+    </section>
+
+    <!-- ===== TL;DR + Fear & Greed ===== -->
+    <section class="row">
+      <article class="panel">
+        <header><strong>TL;DR</strong></header>
+        <div>{{ tldr_line }}</div>
+      </article>
+      <article class="panel">
+        <header><strong>Fear & Greed</strong></header>
+        <div class="fg-bar"><div class="fg-fill" style="width:50%"></div></div>
+        <div>50 / 100</div>
+      </article>
+    </section>
+
+    <!-- ===== Q&A (smaller height as requested) ===== -->
+    <section class="row">
+      <article class="panel">
+        <header><strong>Questions</strong></header>
+        <ul id="qaQ" class="qa-list"></ul>
+      </article>
+      <article class="panel">
+        <header><strong>Luna’s answers</strong></header>
+        <div id="qaA" class="qa-list"></div>
+        <div class="askbar">
+          <input id="askBox" placeholder="Ask Luna about {{symbol}}…" />
+          <button id="askSend">Ask</button>
+        </div>
+      </article>
+    </section>
+
+  </div><!-- /#page -->
+
+  <!-- ===== Modal (expand) ===== -->
+  <div id="modal" class="hidden">
+    <div class="m-box">
+      <div class="m-head">
+        <div class="m-title">
+          <strong id="m-title">Expand</strong>
+          <select id="m-tf">
+            {% for t in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
+              <option value="{{t}}" {% if t==tf %}selected{% endif %}>{{t}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button id="m-close">Close</button>
+      </div>
+      <div class="m-body">
+        <div class="m-chart" id="m-chart"></div>
+        <aside class="m-aside">
+          <h4>What this shows</h4>
+          <div id="m-talk" class="m-talk"></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.__SYMBOL__ = "{{ symbol }}";
+    window.__TF__     = "{{ tf }}";
+  </script>
+  <script src="{{ url_for('static', filename='js/control_panel.js') }}"></script>
+</body>
+</html>

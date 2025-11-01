@@ -1,120 +1,218 @@
-🧵 Luna AI — Handoff Package (Local → Cloud Migration)
-1. 🌌 Core Vision
+🧵 Luna AI — Full Handoff Package (Local ↔ Cloud Integration v3.0 — October 2025)
+1️⃣ 🌌 Core Vision
 
-Luna AI = crypto analysis AI companion + character for streams.
+Luna AI is both:
 
-Modes:
+a crypto-analysis AI companion (interactive token analyst + voice assistant), and
 
-Streaming Mode → OBS overlays + Pump.fun live episodes.
+an animated character for live meme-coin streams on Pump.fun.
 
-Companion Mode → interactive chat/voice assistant on website.
+Two operating modes:
 
-Tokenomics tie-in: “Luna AI — 21 Questions” game loop → finite sessions that can be expanded for token holders.
+Mode	Description
+🎥 Streaming Mode	OBS + Luna avatar overlays for Pump.fun episodes and token launch tie-ins
+💬 Companion Mode	Interactive chat + voice assistant hosted on Flask backend
 
-2. 🧠 What Works Locally Right Now
-
-Folder: C:\Users\jmpat\Desktop\Luna AI\
-
-Virtual Environment: .venv
-
-Core Files:
-
-server.py → Flask API with /analyze, /risk, /macro, /qa.
-
-client_demo.py → test BONK/PEPE analysis pipeline.
-
-snapshot.py → builds token snapshot from Dexscreener/Coingecko.
-
-voice_adapter.py → ElevenLabs MP3 + JSON lipsync generator.
-
-lipsync.py → turns MP3 → viseme JSON (rest/mid/open).
-
-avatar_overlay.html → OBS overlay for Luna avatar + mood emoji.
-
-make_luna_assets.py → placeholder PNGs (avatar_base, mouth_rest, mouth_mid, mouth_open).
-
-tasks.bat → helper commands for demo + run.
-
-Status:
-
-BONK + PEPE analysis runs cleanly.
-
-Voice + lipsync JSON works.
-
-OBS overlay displays avatar with mouth sync + mood emoji.
-
-3. 🟢 New Features To Add
-
-21 Questions Mode
+Game / Tokenomics Loop – “Luna AI — 21 Questions”
 
 Each session = 21 questions per asset.
+Token holders can extend sessions or unlock advanced analytics.
+Session data + voice replies are ephemeral (cleared after use).
+“Copy All” transcript button at end of session.
 
-Counter decrements with each /qa.
+Ecosystem
 
-At Q21, session closes + Luna prompts user to “Copy All” responses.
+Element	Utility
+$LUNA	primary utility / staking token
+$LUNAME	meme-token driver for community engagement
+Luna NFTs	animated collectibles linked to Luna’s persona
+Parent: Dexeon AI	umbrella for Luna AI, Bankroll AI, and other tokenized agents
+2️⃣ 🧠 System Overview — Two Integrated Halves
+Layer	Purpose	Current Status
+Local Data Engine	Builds and maintains cached OHLCV history for ≈ 3,900 active coins	✅ Fully operational
+Cloud Web App	Flask + Matplotlib + ElevenLabs interface for analysis & voice	✅ Live @ https://luna-ai-j4dn.onrender.com
 
-“Copy All” = one-click clipboard dump of entire transcript.
+These are now merged under one roadmap leading to the Luna Cockpit Control Panel (data service + UI).
 
-Ephemerality
+3️⃣ 🖥 Local Data Engine (“Brain”)
 
-Sessions + MP3s cleared at end.
+Root: C:\Users\jmpat\Desktop\Luna AI\
 
-No persistent storage.
+.env
+data_historical_pull_full.py          # full-history puller (rotating CryptoCompare keys)
+logs\
+  historical_pull.log
+  rejected_symbols.txt
+luna_cache\data\
+  coin_map.json
+  coin_map_clean.json
+  coin_map_active.json
+  historical\*.json                   # per-symbol OHLCV caches
+scripts\
+  filter_valid_coins.py
+  filter_active_coins.py
+  clean_coinmap.py
 
-Mass Copy UX
+Workflow
+Step	Script	Output
+1	filter_valid_coins.py	coin_map_clean.json (17 676 valid)
+2	filter_active_coins.py	coin_map_active.json (3 886 active)
+3	data_historical_pull_full.py	historical\SYMBOL.json (one per coin)
+Puller Features
 
-Copy option appears when session ends.
+Rotates multiple CryptoCompare API keys automatically
 
-No PDFs/CSVs, just clipboard copy.
+Exponential backoff + safe resume (--start SYMBOL)
 
-4.☁️ Migration Plan (Local → Cloud)
+Detects duplicate pages (“🌀 Duplicate earliest timestamp detected twice — stopping.”)
 
-Phase 1 — Deploy Current Flask App to Cloud (Render/Railway for Dev)
+Skips existing files for safe reruns
 
-Create free Render account.
+Logs all runs → logs/historical_pull.log
 
-Push server.py + requirements.txt to GitHub.
+Example Record
+{
+  "coin_id": "aart",
+  "symbol": "AART",
+  "records": 22010,
+  "source": "cryptocompare_histoday_full",
+  "last_updated": "2025-10-23 21:05:22 UTC",
+  "data": [
+    { "time":1588377600,"open":0.009,"high":0.01,"low":0.008,"close":0.0095,"volumefrom":1000.0,"volumeto":9.3 }
+  ]
+}
 
-Connect GitHub → Render → auto-deploy.
+.env Sample
+# Market Data
+CRYPTOCOMPARE_KEYS=key1,key2,key3,key4,key5
+COINMARKETCAP_KEY=your_key
+# Chain/Resolver
+ETHERSCAN_API_KEY=your_key
+BSCSCAN_API_KEY=your_key
+HELIUS_API_KEY=your_key
+COVALENT_API_KEY=your_key
+BITQUERY_API_KEY=your_key
+# Luna AI
+OPENAI_API_KEY=your_key
+ELEVENLABS_API_KEY=your_key
+ELEVENLABS_VOICE_NAME=Jessica
+ELEVENLABS_VOICE_ID=EXAVITQu4vr4xnSDxMaL
 
-Verify endpoints (/analyze, /qa, /voice).
+Run Book
+cd "C:\Users\jmpat\Desktop\Luna AI\scripts"
+python filter_valid_coins.py
+python filter_active_coins.py
+cd ..
+python -u data_historical_pull_full.py          # full run
+python -u data_historical_pull_full.py --start ONDO   # resume mid-alphabet
 
-Phase 2 — Add 21 Questions Session Manager
 
-Add session_manager.py: tracks remaining_questions=21.
+Monitor progress:
 
-Update /qa endpoint in server.py to decrement + return counter.
+Get-Content logs\historical_pull.log -Wait
 
-Return {answer, remaining_questions} in JSON.
+4️⃣ ☁️ Cloud Web App (“Personality”)
 
-Phase 3 — Frontend Integration
+Environment: Render + GitHub Auto-Deploy
+Backend: Flask v3.0.3
+Frontend: Jinja / HTML + OBS Overlay + ElevenLabs Voice
 
-WordPress Elementor page with Custom HTML + Vanilla JS widget.
+Component	Status	Notes
+Flask backend	✅ Live	/qa, /analyze, /risk, /macro, /voice, /overlay
+Auto-deploy GitHub → Render	✅	Clean repo (no large MP4s)
+Chart engine (Matplotlib)	✅	8-around-1 grid renders fine
+Voice system (ElevenLabs)	✅	Fallback TTS ready
+Session persistence (shelve)	✅	Cross-thread stable
+CoinGecko API	⚠️ Rate-limited	Replace with free hybrid stack
+CoinPaprika / CryptoRank	🔴 Pending	Integration next step
+Hourly data refresh	🔴 Missing	Build data_refresh.py + cron
+5️⃣ ⚙️ Background Services (on Render)
+Service	Purpose	Status
+gunicorn	keeps Flask alive	✅
+/tmp/overlays	chart storage	✅
+shelve DB	session tokens	✅
+data_refresh.py	hourly API → cache update	🔴 todo
+Multi-API connectors	CoinPaprika + CryptoRank + Binance	🔴 todo
+6️⃣ 🧩 Recent Changes
 
-Widget = floating Luna avatar → opens chat panel.
+GitHub cleanup (>300 MB assets removed)
 
-Chat panel connects to cloud API → plays voice + shows answers.
+Flask 3.0.3 → Render-compatible
 
-At end of session, shows “Copy All” button.
+Shelve sessions fixed (403 resolved)
 
-Phase 4 — Scale Before Launch
+New HTML/CSS grid layout based on Illustrator template
 
-Migrate to AWS Cloud Run / ECS / GCP Cloud Run for autoscaling.
+Plot Engine v10 (8-around-1 matrix)
 
-Add Cloudflare in front for DDoS + caching.
+API migration plan drafted
 
-Ensure Luna can handle 1,000+ concurrent users on token launch day.
+7️⃣ 🔄 Immediate Next Steps
+Priority	Task	Details
+🟢	Integrate CoinPaprika + CryptoRank	replace CoinGecko Pro
+🟢	Build data_refresh.py + Render cron	hourly updates
+🟡	Fix response template	layout + timestamps
+🟣	Secure API keys	Render env vars
+🟢	Add Binance/Bybit feeds	live top 500 tickers
+🔵	Migrate to multi-API cache	hybrid data model
+🟠	Launch $LUNA + NFTs	tie-in with Pump.fun
+🟡	Streaming integration	Luna live analytics episodes
+8️⃣ 🧠 Hybrid API Model Plan
+API	Role	Limit	Keys	Cost
+CoinPaprika	Main market data	∞	1	Free
+CryptoRank.io	FDV / liquidity / rankings	≈4 M/mo	1	Free
+Binance	Live tickers	∞	0	Free
+CoinGecko (Free)	Fallback for long tail	≈43 k/mo	1–2	Free
 
-5. 🔮 Future Enhancements (Cloud-Only)
+➡ ≈1 500 coins updated hourly for $0/month
 
-Replace ElevenLabs with native Luna voice model (Coqui TTS / VITS).
+9️⃣ 🧱 Known Issues
 
-Add tickers (stocks, indices, crypto, DeFi/NFT) + side news panels for OBS mode.
+429 rate-limits (CoinGecko) → pending API swap
 
-Add optional mic input (speech-to-text → Luna Q&A).
+Chart grid misalignments → minor HTML tweak
 
-Tokenomics:
+Timestamps index-based → convert to datetime
 
-Free = 21 questions.
+Hourly refresh cron → not yet implemented
 
-Holders = extra questions or premium features.
+🔟 🪄 Long-Term Roadmap
+Phase	Focus
+🎥	Full Pump.fun streaming integration
+💰	$LUNA + NFT launch
+🧩	Native AI Voice engine (Coqui TTS / VITS)
+🧠	Smart Insight Mode – Luna learns signals
+📈	Public metrics API
+⚙️	Autoscaling Render → AWS ECS / GCP Run
+11️⃣ 🛰 Upcoming Integrations → “Luna Cockpit”
+Module	Function
+Contract Resolver	Map chain+contract → symbol (via Etherscan/BSCSCan/Helius/Covalent/Bitquery)
+Nightly Delta Updater	Append daily bars only
+Data Store Conversion	JSON → Parquet or SQLite for speed
+Cockpit UI	Streamlit or FastAPI + React dashboard
+Metrics Library	Rolling returns, vol / Sharpe, drawdown, BTC corr, breakout flags
+Portfolio View	Wallet P&L tracking for Steve
+Watchlists / Alerts	Volume spikes, ATH/ATL, breakouts
+12️⃣ 🔐 Security / Ops Notes
+
+Rotate any keys shared in chat.
+
+Keep .env out of version control.
+
+Nightly zip luna_cache\data\historical\ (back up 3-7 days).
+
+Limit parallelism ≤ # API keys to avoid 429s.
+
+✅ Project Status Summary
+
+GitHub + Render: Stable and deployable
+
+Local Data Engine: Complete and resumable
+
+Voice / Charts / Sessions: Operational
+
+Remaining Critical Builds: API migration + hourly refresh
+
+Next Phase: Luna Cockpit integration → full autonomous loop
+
+Once those final systems are online, Luna AI v3.0 will be a self-sustaining, cloud-native, tokenized AI analyst capable of powering live streams, meme-coin analysis, and data-driven storytelling across the Dexeon ecosystem.

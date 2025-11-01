@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Luna AI — Welcome</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="/static/css/control_panel.css"/>
+</head>
+<body class="luna">
+  <header class="topbar">
+    <div class="brand">🌕 Luna AI — Crypto Companion</div>
+    <div class="spacer"></div>
+    <a class="btn" href="/analyze?symbol=BTC&tf=4h">Open Cockpit</a>
+  </header>
+
+  <main class="container narrow">
+    <section class="panel">
+      <h2>Ask Luna about crypto</h2>
+      <form class="ask" onsubmit="return goAnalyze(event)">
+        <input id="symbolInput" placeholder="Try BTC, ETH, or paste a token symbol…" required/>
+        <select id="tfInput">
+          <option value="15m">15m</option>
+          <option value="1h">1h</option>
+          <option value="4h" selected>4h</option>
+          <option value="8h">8h</option>
+          <option value="12h">12h</option>
+          <option value="24h">24h</option>
+          <option value="7d">7d</option>
+          <option value="30d">30d</option>
+          <option value="3mo">3mo</option>
+          <option value="6mo">6mo</option>
+          <option value="12mo">12mo</option>
+          <option value="24mo">24mo</option>
+          <option value="60mo">60mo</option>
+          <option value="120mo">120mo</option>
+          <option value="all">All-Time</option>
+        </select>
+        <button class="btn" type="submit">Analyze →</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h3>Market snapshot (24h)</h3>
+      {% if global_data %}
+      <div class="grid-3">
+        <div>
+          <div class="stat">Global Market Cap</div>
+          <div class="val">${{ '%.0f'|format(global_data.market_cap|default(0)) }}</div>
+          <div class="sub">{{ '%.2f'|format(global_data.market_cap_change_24h|default(0)) }}%</div>
+        </div>
+        <div>
+          <div class="stat">24h Volume</div>
+          <div class="val">${{ '%.0f'|format(global_data.volume_24h|default(0)) }}</div>
+        </div>
+        <div>
+          <div class="stat">Active Cryptos</div>
+          <div class="val">{{ global_data.active_cryptos|default('—') }}</div>
+        </div>
+      </div>
+      {% else %}
+      <p class="muted">Global data unavailable right now.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h3>Top 10 by Market Cap</h3>
+      {% if top_coins %}
+      <div class="table">
+        <div class="thead">
+          <div>Symbol</div><div>Name</div><div>Price</div><div>24h</div>
+        </div>
+        {% for c in top_coins %}
+        <div class="trow">
+          <div><a href="/analyze?symbol={{c.symbol|upper}}&tf=4h">{{ c.symbol|upper }}</a></div>
+          <div>{{ c.name }}</div>
+          <div>${{ '%.2f'|format(c.current_price|default(0)) }}</div>
+          <div class="{{ 'green' if c.price_change_percentage_24h and c.price_change_percentage_24h >= 0 else 'red' }}">
+            {{ '%.2f'|format(c.price_change_percentage_24h|default(0)) }}%
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="muted">No top coins to show.</p>
+      {% endif %}
+    </section>
+  </main>
+
+  <script>
+    function goAnalyze(e){
+      e.preventDefault();
+      const s = document.getElementById('symbolInput').value.trim().toUpperCase();
+      const tf = document.getElementById('tfInput').value;
+      if(!s) return false;
+      window.location.href = `/analyze?symbol=${encodeURIComponent(s)}&tf=${encodeURIComponent(tf)}`;
+      return false;
+    }
+  </script>
+</body>
+</html>

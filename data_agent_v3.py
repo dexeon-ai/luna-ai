@@ -1,190 +1,305 @@
-# data_agent_v3.py — staggered hourly raw data collector for core + meme assets
-import os, json, time, csv, random, requests, argparse
+# ============================================================
+# data_agent_v3.py — Luna Hybrid Data Engine (v4: symbol-cache)
+# ============================================================
+# - Resolves proper trading symbols for coin IDs (e.g., "akash-network" -> "AKT")
+# - Caches those mappings in luna_cache/data/symbols.json
+# - Pulls ~7d hourly data from CryptoCompare (verify=False for Windows SSL)
+# - Skips junk CSVs and throttles requests to avoid rate limits
+# - Fetches Fear & Greed Index into luna_cache/data/fear_greed.csv
+# ============================================================
+
+from __future__ import annotations
+import os, csv, math, time, json, logging, requests, urllib3, re
 from datetime import datetime, timezone
-from symbol_buckets import BUCKETS   # auto-generated bucket file
+from typing import Dict, List, Optional
 
-# === Inputs ===
-CONTRACTS_JSON = "luna_cache/contracts.json"          # output of contract_resolver.py
-SEED_JSON      = "luna_cache/contracts_seed.json"     # fallback if not yet resolved
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# === Outputs ===
-CACHE_DIR  = "luna_cache"
-BRAIN_JSON = os.path.join(CACHE_DIR, "luna_brain.json")
-DATA_DIR   = os.path.join(CACHE_DIR, "data", "coins")   # core cryptos
-MEME_DIR   = os.path.join(CACHE_DIR, "data", "memes")   # meme coins
-
+# ---------- Paths ----------
+BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
+CACHE_DIR = os.path.join(BASE_DIR, "luna_cache")
+DATA_DIR  = os.path.join(CACHE_DIR, "data")
+COIN_DIR  = os.path.join(DATA_DIR, "coins")
+SYMBOLS_JSON = os.path.join(DATA_DIR, "symbols.json")
+os.makedirs(COIN_DIR, exist_ok=True)
 os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(MEME_DIR, exist_ok=True)
 
-CG_BASE   = "https://api.coingecko.com/api/v3"
-DX_SEARCH = "https://api.dexscreener.io/latest/dex/search/?q="
+# ---------- Keys ----------
+CC_KEY  = os.getenv("CRYPTOCOMPARE_KEY") or ""
 
-# Revised schedule: alternating CORE and MEME buckets to prevent overlap
-SCHEDULE_MINUTES = {
-     0: "CORE_1",
-     3: "MEME_1",
-     7: "CORE_2",
-    10: "MEME_2",
-    14: "CORE_3",
-    17: "MEME_3",
-    21: "CORE_4",
-    24: "MEME_4",
-    28: "CORE_5",
-    31: "MEME_5",
-    35: "CORE_6",
-    38: "MEME_6",
-    42: "CORE_7",
-    45: "MEME_7",
-    49: "CORE_8",
-    52: "MEME_8"
-}
+# ---------- Logger ----------
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+logger = logging.getLogger("LunaDataAgent")
 
-def now_utc_hour_str():
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:00 UTC")
+UTC = timezone.utc
 
-def load_contracts():
-    path = CONTRACTS_JSON if os.path.exists(CONTRACTS_JSON) else SEED_JSON
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+# ---------- Config ----------
+PER_REQUEST_SLEEP = 1.5      # seconds between API calls to be polite
+MAX_HOURS = 168              # ~7 days
+KEEP_POINTS = 240            # keep ~10 days hourly
+# Optional: cap coins per run for faster iteration (None = all)
+MAX_COINS_PER_RUN = None     # e.g., set to 200 to test faster
 
-# ---- Fetchers ---------------------------------------------------------------
-def fetch_cg_by_id(cg_id):
-    if not cg_id:
+# ============================================================
+# Utilities
+# ============================================================
+def _ts(dtobj: datetime) -> str:
+    return dtobj.replace(tzinfo=UTC).strftime("%Y-%m-%d %H:%M UTC")
+
+def _safe_float(x):
+    try:
+        f = float(x)
+        if math.isnan(f) or math.isinf(f):
+            return None
+        return f
+    except Exception:
         return None
-    url = f"{CG_BASE}/coins/{cg_id}?localization=false&tickers=false&market_data=true"
-    for attempt in range(6):
+
+def _read_csv(path: str) -> List[Dict[str, str]]:
+    if not os.path.exists(path): return []
+    with open(path, "r", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+def _write_csv(path: str, rows: List[Dict[str, str]]):
+    hdr = ["timestamp","price","volume_24h","market_cap",
+           "price_dex","liquidity_usd","fdv","volume_dex_24h"]
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=hdr)
+        w.writeheader()
+        for r in rows:
+            w.writerow({k: str(r.get(k, "")) for k in hdr})
+
+def _merge_dedupe(old_rows, new_rows):
+    seen = {r["timestamp"]: r for r in old_rows}
+    for r in new_rows:
+        seen[r["timestamp"]] = r
+    merged = sorted(seen.values(), key=lambda r: r["timestamp"])
+    return merged[-KEEP_POINTS:]
+
+def _wait():
+    time.sleep(PER_REQUEST_SLEEP)
+
+# ============================================================
+# Symbol cache + resolution
+# ============================================================
+def _load_symbols_cache() -> Dict[str, str]:
+    if os.path.exists(SYMBOLS_JSON):
         try:
-            r = requests.get(url, timeout=10)
-            if r.status_code == 429 or not r.text.strip():
-                wait = 5 * (attempt + 1)
-                print(f"[CG 429] Rate limit, sleeping {wait}s…")
-                time.sleep(wait)
-                continue
-            data = r.json()
-            m = data.get("market_data") or {}
-            return {
-                "price": (m.get("current_price") or {}).get("usd"),
-                "volume_24h": (m.get("total_volume") or {}).get("usd"),
-                "market_cap": (m.get("market_cap") or {}).get("usd"),
-            }
-        except Exception as e:
-            wait = 5 * (attempt + 1)
-            print(f"[CG RETRY {attempt+1}] {e} → wait {wait}s")
-            time.sleep(wait + random.uniform(0, 2))
+            return json.load(open(SYMBOLS_JSON, "r", encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
+def _save_symbols_cache(cache: Dict[str, str]):
+    try:
+        with open(SYMBOLS_JSON, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+SYMBOLS_CACHE = _load_symbols_cache()
+
+def gecko_symbol_for(coin_id: str) -> Optional[str]:
+    """Resolve trading symbol using CoinGecko (verify=False to avoid SSL issues)."""
+    try:
+        url = f"https://api.coingecko.com/api/v3/coins/{coin_id.lower()}"
+        r = requests.get(url, timeout=10, verify=False)
+        if r.status_code != 200:
+            return None
+        sym = r.json().get("symbol", "").upper()
+        return sym or None
+    except Exception:
+        return None
+
+_SUFFIX_RE = re.compile(r"-(network|protocol|finance|token|dao|ai|coin|org|ecosystem)$", re.IGNORECASE)
+
+def _smart_guess_symbol(coin_id: str) -> str:
+    """Heuristic: strip common suffixes, remove dashes -> uppercase."""
+    cid = coin_id.lower()
+    cid = _SUFFIX_RE.sub("", cid)
+    cid = cid.replace("-", "")
+    # Keep only letters/numbers; truncate a reasonable length
+    cid = re.sub(r"[^a-z0-9]", "", cid).upper()
+    if len(cid) == 0:
+        cid = coin_id.upper()[:5]
+    return cid[:10]
+
+def resolve_symbol(coin_id: str, csv_exists: bool) -> Optional[str]:
+    """Resolve symbol for a coin_id using cache -> gecko -> smart guess + verify with CC."""
+    # 1) cache
+    cached = SYMBOLS_CACHE.get(coin_id.lower())
+    if cached:
+        return cached
+
+    # 2) gecko for new or if no CSV yet (fastest coverage)
+    sym = None
+    if not csv_exists:
+        sym = gecko_symbol_for(coin_id)
+        if sym:
+            SYMBOLS_CACHE[coin_id.lower()] = sym
+            _save_symbols_cache(SYMBOLS_CACHE)
+            return sym
+
+    # 3) smart guess, then probe CC quickly (limit=3 points to validate)
+    guess = _smart_guess_symbol(coin_id)
+    if _cc_has_data(guess):
+        SYMBOLS_CACHE[coin_id.lower()] = guess
+        _save_symbols_cache(SYMBOLS_CACHE)
+        return guess
+
+    # 4) if gecko not used yet (csv exists but we still failed), try it now
+    if csv_exists and not sym:
+        sym = gecko_symbol_for(coin_id)
+        if sym and _cc_has_data(sym):
+            SYMBOLS_CACHE[coin_id.lower()] = sym
+            _save_symbols_cache(SYMBOLS_CACHE)
+            return sym
+
     return None
 
-def fetch_dx(query):
-    try:
-        r = requests.get(f"{DX_SEARCH}{query}", timeout=10)
-        pairs = r.json().get("pairs") or []
-        if not pairs:
-            return None
-        p = pairs[0]
-        return {
-            "price_dex": float(p.get("priceUsd") or 0) if p.get("priceUsd") else None,
-            "liquidity_usd": (p.get("liquidity") or {}).get("usd"),
-            "fdv": p.get("fdv"),
-            "volume_dex_24h": (p.get("volume") or {}).get("h24"),
-        }
-    except Exception as e:
-        print("[DX ERR]", e)
-        return None
+# ============================================================
+# CryptoCompare connector (with verify=False)
+# ============================================================
+CC_BASE = "https://min-api.cryptocompare.com/data/v2"
 
-# ---- Core brain updater -----------------------------------------------------
-def update_brain(bucket_key):
-    contracts_blob = load_contracts()
-    token_map = contracts_blob["tokens"]
-    bucket = BUCKETS.get(bucket_key, [])
-    timestamp = now_utc_hour_str()
-
-    # decide which output folder to use
-    out_dir = MEME_DIR if "meme" in bucket_key.lower() else DATA_DIR
-
-    # load existing brain
-    brain = {}
-    if os.path.exists(BRAIN_JSON):
-        try:
-            with open(BRAIN_JSON, "r", encoding="utf-8") as f:
-                brain = json.load(f)
-        except Exception:
-            brain = {}
-    if timestamp not in brain:
-        brain[timestamp] = {}
-
-    print(f"\n🧠 Updating bucket {bucket_key} @ {timestamp} — {len(bucket)} assets")
-
-    for entry in bucket:
-        key = entry["key"]
-        tok = token_map.get(key) or {}
-        cg_id = tok.get("id")
-        contract = tok.get("contract")
-        name = tok.get("name") or entry["name"]
-        symbol = tok.get("symbol") or entry["symbol"]
-
-        cg = fetch_cg_by_id(cg_id) if cg_id else None
-        dx = None
-        if contract:
-            dx = fetch_dx(contract)
-            if dx is None:
-                dx = fetch_dx(f"{name} {symbol}")
-        else:
-            dx = fetch_dx(f"{name} {symbol}")
-
-        merged = {}
-        if cg: merged.update(cg)
-        if dx: merged.update(dx)
-
-        brain[timestamp][key] = {
-            "name": name,
-            "symbol": symbol,
-            "id": cg_id,
-            "contract": contract,
-            **merged
-        }
-
-        # write per-asset CSV
-        path = os.path.join(out_dir, f"{symbol.lower()}.csv")
-        new = not os.path.exists(path)
-        with open(path, "a", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            if new:
-                w.writerow(["timestamp","price","volume_24h","market_cap",
-                            "price_dex","liquidity_usd","fdv","volume_dex_24h"])
-            w.writerow([
-                timestamp,
-                merged.get("price"),
-                merged.get("volume_24h"),
-                merged.get("market_cap"),
-                merged.get("price_dex"),
-                merged.get("liquidity_usd"),
-                merged.get("fdv"),
-                merged.get("volume_dex_24h"),
-            ])
-        time.sleep(1.0 + random.uniform(0.2, 0.8))  # polite delay
-
-    with open(BRAIN_JSON, "w", encoding="utf-8") as f:
-        json.dump(brain, f, indent=2)
-    print(f"✅ Saved {BRAIN_JSON} for {bucket_key}")
-
-# ---- Main scheduler ---------------------------------------------------------
-def main_loop():
-    print("⏱️ data_agent_v3 started. Buckets will run at minutes:", sorted(SCHEDULE_MINUTES.keys()))
-    while True:
-        now = datetime.now(timezone.utc)
-        minute = now.minute
-        if minute in SCHEDULE_MINUTES:
-            bucket_key = SCHEDULE_MINUTES[minute]
-            update_brain(bucket_key)
-            time.sleep(60)  # avoid double-run
-        else:
+def _cc_get(url: str, params: dict) -> Optional[dict]:
+    headers = {"authorization": f"Apikey {CC_KEY}"} if CC_KEY else {}
+    for attempt in range(3):
+        r = requests.get(url, headers=headers, params=params, timeout=20, verify=False)
+        if r.status_code == 200:
+            return r.json()
+        if r.status_code == 429:
+            logger.warning("CryptoCompare rate limit hit; waiting...")
             time.sleep(5)
+            continue
+        logger.warning(f"[CryptoCompare] HTTP {r.status_code} at {url}")
+        time.sleep(1)
+    return None
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--bucket", help="Run one specific bucket (e.g. CORE_1 or MEME_1)", default=None)
-    args = parser.parse_args()
+def _cc_has_data(symbol: str) -> bool:
+    """Quick probe: ask for a tiny history (3 points)."""
+    js = _cc_get(f"{CC_BASE}/histohour", {"fsym": symbol.upper(), "tsym": "USD", "limit": 3})
+    if not js: return False
+    arr = js.get("Data", {}).get("Data", [])
+    return bool(arr)
 
-    if args.bucket:
-        update_brain(args.bucket)
-    else:
-        main_loop()
+def cc_hist_hour(symbol: str, hours: int = MAX_HOURS) -> List[Dict]:
+    js = _cc_get(f"{CC_BASE}/histohour", {"fsym": symbol.upper(), "tsym": "USD", "limit": hours})
+    out: List[Dict] = []
+    if js:
+        arr = js.get("Data", {}).get("Data", [])
+        for d in arr:
+            t = datetime.fromtimestamp(int(d["time"]), tz=UTC)
+            out.append({
+                "t": t,
+                "price": _safe_float(d.get("close")),
+                "vol": _safe_float(d.get("volumeto")),
+            })
+    return out
+
+# ============================================================
+# Main fetch logic
+# ============================================================
+def fetch_hourly_7d(coin_id: str) -> List[Dict[str, str]]:
+    """Return normalized hourly rows for ~7 days using CC; resolve symbol robustly."""
+    csv_path = os.path.join(COIN_DIR, f"{coin_id.lower()}.csv")
+    csv_exists = os.path.exists(csv_path)
+
+    # Resolve the trading symbol for this coin_id
+    sym = resolve_symbol(coin_id, csv_exists)
+    if not sym:
+        logger.warning(f"[Luna] {coin_id}: cannot resolve a trading symbol; skipping")
+        return []
+
+    _wait()
+    cc = cc_hist_hour(sym, hours=MAX_HOURS)
+    if not cc:
+        logger.warning(f"[Luna] {coin_id}: symbol {sym} returned no hourly data on CC; skipping")
+        return []
+
+    rows: List[Dict[str, str]] = []
+    for c in cc:
+        rows.append({
+            "timestamp": _ts(c["t"]),
+            "price": c.get("price"),
+            "volume_24h": c.get("vol"),
+            "market_cap": "",
+            "price_dex": "",
+            "liquidity_usd": "",
+            "fdv": "",
+            "volume_dex_24h": "",
+        })
+    logger.info(f"[Luna] {coin_id}: CC OK ({len(cc)} pts) sym={sym}")
+    return rows
+
+# ============================================================
+# Cache updater
+# ============================================================
+def update_coin_csv(coin_id: str) -> str:
+    """Fetch+merge+write CSV for a coin ID."""
+    path = os.path.join(COIN_DIR, f"{coin_id.lower()}.csv")
+    new_rows = fetch_hourly_7d(coin_id)
+    if not new_rows:
+        logger.warning(f"[Luna] No data for {coin_id}")
+        return path
+    old_rows = _read_csv(path)
+    merged = _merge_dedupe(old_rows, new_rows)
+    _write_csv(path, merged)
+    return path
+
+# ============================================================
+# Fear & Greed Index
+# ============================================================
+def fetch_fear_greed(limit: int = 30) -> List[Dict[str, str]]:
+    try:
+        url = f"https://api.alternative.me/fng/?limit={limit}&format=json"
+        r = requests.get(url, timeout=15, verify=False)
+        if r.status_code != 200:
+            logger.warning(f"[FNG] HTTP {r.status_code}")
+            return []
+        arr = r.json().get("data", [])
+        arr.reverse()
+        rows = []
+        for d in arr:
+            t = datetime.fromtimestamp(int(d["timestamp"]), tz=UTC)
+            rows.append({
+                "timestamp": _ts(t),
+                "value": d["value"],
+                "label": d["value_classification"]
+            })
+        out = os.path.join(DATA_DIR, "fear_greed.csv")
+        with open(out, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=["timestamp", "value", "label"])
+            w.writeheader()
+            for r_ in rows:
+                w.writerow(r_)
+        logger.info("[Luna] Fear & Greed updated.")
+        return rows
+    except Exception as e:
+        logger.warning(f"[FNG] Failed: {e}")
+        return []
+
+# ============================================================
+# Discover coin IDs
+# ============================================================
+def discover_coins() -> List[str]:
+    """
+    Discover coin IDs from cache folder.
+    Skip junk filenames (e.g., '4.csv', '.csv', one-char names).
+    """
+    files = [f for f in os.listdir(COIN_DIR) if f.endswith(".csv") and not f.startswith(".")]
+    ids: List[str] = []
+    for f in files:
+        name = os.path.splitext(f)[0]
+        if len(name.strip()) <= 1:
+            continue
+        # keep alnum/dash IDs only
+        if not re.match(r"^[a-z0-9-]+$", name):
+            continue
+        ids.append(name)
+    ids = sorted(list(set(ids)))
+    # Optional: limit per run for speed
+    if MAX_COINS_PER_RUN and len(ids) > MAX_COINS_PER_RUN:
+        ids = ids[:MAX_COINS_PER_RUN]
+    logger.info(f"[Luna] Discovered {len(ids)} coin files.")
+    return ids if ids else ["bitcoin", "ethereum", "solana", "dogecoin"]

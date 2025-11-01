@@ -1,0 +1,133 @@
+:root{
+  --page-max: 1180px;
+  --bg: #0b1624;
+  --panel: #0f1e33;
+  --panel-2: #0d1a2b;
+  --edge: #203047;
+  --chip: #0f2338;
+  --text: #dfe8f4;
+  --muted:#8ea7c5;
+  --glow: 225, 160, 255; /* purple glow */
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; color:var(--text); background:radial-gradient(1200px 600px at 50% -100px, #13243c 0%, #0b1624 60%, #0b1624 100%);
+  font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+}
+
+#page{max-width:var(--page-max); margin:16px auto 40px; padding:0 10px}
+
+/* topbar */
+.topbar{
+  display:grid; grid-template-columns: 1fr 1.2fr auto; gap:10px;
+  align-items:center; margin-bottom:12px;
+}
+.topbar .tb-left .inline{display:inline-flex; gap:6px; margin-left:8px}
+.topbar select, .topbar button{background:#0d1c2f; color:var(--text); border:1px solid var(--edge); border-radius:6px; padding:4px 8px}
+.topbar .tb-right{font-size:12px; color:var(--muted)}
+
+/* search in center */
+.searchbox{display:flex; gap:6px; align-items:center}
+.searchbox input{
+  flex:1 1 auto; min-width:120px; height:30px; padding:0 10px;
+  background:#0d1c2f; color:var(--text); border:1px solid var(--edge); border-radius:8px;
+}
+.searchbox button{
+  height:30px; padding:0 10px; background:#132a49; border:1px solid var(--edge); color:var(--text); border-radius:8px;
+}
+
+/* panels */
+.panel{
+  background:var(--panel); border:1px solid var(--edge); border-radius:10px; padding:10px; margin:8px 0;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.02) inset;
+}
+.panel-tight{padding:6px 10px;}
+.panel-head{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.panel-head > strong{white-space:nowrap}
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{background:var(--chip); border:1px solid var(--edge); border-radius:999px; padding:6px 10px; font-size:12px}
+
+/* grid (10 squares + main) */
+.grid{
+  display:grid;
+  grid-template-columns: 190px 1fr 230px;
+  grid-template-rows: 170px 170px 160px;
+  grid-gap:12px;
+  align-items:stretch;
+}
+.tile{
+  background:var(--panel); border:1px solid var(--edge); border-radius:10px; overflow:hidden; position:relative;
+  transition:box-shadow .15s ease, border-color .15s ease;
+}
+.tile header{
+  height:28px; padding:4px 8px; font-weight:600; font-size:12px; background:var(--panel-2); border-bottom:1px solid var(--edge);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.tile .expand{font-size:12px; padding:2px 8px; border-radius:6px; background:#0f2239; border:1px solid var(--edge); color:var(--text)}
+.tile__body{height:calc(100% - 28px); padding:6px}
+
+/* main price tile spans 4x wide, 2x tall in center column */
+.tile--price{ grid-column: 2 / 3; grid-row: 1 / span 2; }
+
+/* small purple glow */
+.glow{ box-shadow: 0 0 0 rgba(var(--glow), 0); }
+.glow:hover{ box-shadow: 0 0 0 2px rgba(var(--glow), .20), 0 0 16px rgba(var(--glow), .15); border-color: rgba(var(--glow), .25); }
+
+/* bottom row six squares (place after main) */
+.grid > .tile[data-key="ATR"]{ grid-column: 1 / 2; grid-row: 3; }
+.grid > .tile[data-key="BANDS"]{ grid-column: 2 / 3; grid-row: 3; width:190px; justify-self:start }
+.grid > .tile[data-key="VOL"]{ grid-column: 2 / 3; grid-row: 3; justify-self:center; width:190px }
+.grid > .tile[data-key="LIQ"]{ grid-column: 2 / 3; grid-row: 3; justify-self:end; width:190px }
+.grid > .tile[data-key="ADX"]{ grid-column: 3 / 4; grid-row: 3; justify-self:start; width:220px }
+.grid > .tile[data-key="ALT"]{ grid-column: 3 / 4; grid-row: 3; justify-self:end; width:220px }
+
+/* left stack */
+.grid > .tile[data-key="RSI"]{ grid-column:1; grid-row:1 }
+.grid > .tile[data-key="MACD"]{ grid-column:1; grid-row:2 }
+
+/* right stack */
+.grid > .tile[data-key="MCAP"]{ grid-column:3; grid-row:1 }
+.grid > .tile[data-key="OBV"]{ grid-column:3; grid-row:2 }
+
+/* TL;DR + F&G row */
+.row{display:grid; grid-template-columns: 1fr 320px; gap:12px; margin-top:8px}
+.fg-bar{height:10px; background:#132542; border:1px solid var(--edge); border-radius:6px; overflow:hidden}
+.fg-fill{height:100%; background:linear-gradient(90deg, #e36dfd, #6ef7de)}
+
+/* Q&A boxes (reduced height) */
+.qa-list{height:150px; overflow:auto; margin:6px 0 0; padding:0; list-style:disc inside; color:#cfe1ff}
+.askbar{display:flex; gap:8px; margin-top:8px}
+.askbar input{flex:1; background:#0d1c2f; color:var(--text); border:1px solid var(--edge); border-radius:8px; padding:8px}
+.askbar button{padding:8px 12px; background:#132a49; border:1px solid var(--edge); color:var(--text); border-radius:8px}
+
+/* modal */
+#modal.hidden{display:none}
+#modal{position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:9999}
+.m-box{width:min(1200px, 92vw); height:min(640px, 88vh); background:#0c1726; border:1px solid var(--edge); border-radius:10px; display:flex; flex-direction:column}
+.m-head{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--edge)}
+.m-body{display:flex; gap:12px; padding:12px; height:100%}
+.m-chart{flex: 1 1 auto; min-width:0}
+.m-aside{width:320px; max-width:40%; border-left:1px solid var(--edge); padding-left:12px; overflow:auto}
+.m-talk{font-size:14px; line-height:1.45; color:#cfe1ff}
+
+/* keep Plotly within tiles (prevent bottom gray bands) */
+.js-plotly-plot, .plotly, .main-svg{width:100% !important; height:100% !important}
+
+/* ===== Dynamic cosmic background (Luna AI Control Room) ===== */
+body {
+  background: #000 url("/static/img/space_center_bg.png") center center no-repeat fixed;
+  background-size: cover;          /* Scales dynamically without changing layout */
+  background-attachment: fixed;    /* Keeps the image still during any minor scroll */
+  background-color: #000;          /* Fallback if image fails */
+}
+
+/* Optional: subtle overlay to keep charts readable */
+.shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35); /* tweak opacity if you want more or less contrast */
+  z-index: -1;
+}

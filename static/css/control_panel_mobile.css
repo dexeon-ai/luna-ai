@@ -1,0 +1,155 @@
+/* control_panel_mobile.css — mobile shell + tabs, preserves desktop */
+:root {
+  --gap: 10px;
+  --tile: 180px;          /* baseline tile width on mobile */
+  --round: 10px;
+  --bg: #0d0f16;
+  --panel: #111522;
+  --border: #222b46;
+  --text: #e8ecff;
+  --muted: #9aa3c3;
+}
+
+/* Hide mobile shell on desktop by default */
+.mobile-only { display: none; }
+.desktop-only { display: block; }
+
+/* Plotly modebar clutters tiny screens */
+@media (max-width: 900px) {
+  .modebar { display: none !important; }
+}
+
+/* MOBILE LAYOUT */
+@media (max-width: 900px) {
+
+  /* Swap: show mobile shell, hide desktop grid */
+  .mobile-only { display: block; }
+  .desktop-only { display: none; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+
+  .m-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #0b0e19;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 12px;
+  }
+  .m-topbar h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .m-topbar small { color: var(--muted); }
+
+  /* Tabs */
+  .m-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--gap);
+    margin: 10px 12px;
+  }
+  .m-tab {
+    text-align: center;
+    padding: 10px 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--round);
+    color: var(--text);
+    opacity: .85;
+  }
+  .m-tab.active { opacity: 1; border-color: #2e3b66; }
+
+  /* Panels */
+  .m-panel { display: none; padding: 6px 10px 70px; } /* bottom space for chat */
+  .m-panel.active { display: block; }
+
+  /* Chips row */
+  .m-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 6px 14px 6px;
+  }
+  .chip {
+    padding: 6px 8px;
+    background: #151b2c;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .chip.up { border-color: #18b26b; color: #aef0cb; }
+  .chip.down { border-color: #cc4b5f; color: #ffc2cf; }
+
+  /* Card panels */
+  .m-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--round);
+    padding: 10px;
+    margin: 10px 6px 14px 6px;
+  }
+  .m-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+  }
+  .m-card p, .m-card small { color: var(--muted); }
+
+  /* Horiz scroll carousels (mini charts) */
+  .hscroll {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc(min(80vw, var(--tile)));
+    gap: var(--gap);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 6px;
+    margin: 6px 0 8px 0;
+  }
+  .hscroll::-webkit-scrollbar { height: 6px; }
+  .hscroll::-webkit-scrollbar-thumb { background: #202947; border-radius: 8px; }
+
+  .chart-tile {
+    scroll-snap-align: start;
+    position: relative;
+    width: calc(min(80vw, var(--tile)));
+    height: calc(min(80vw, var(--tile)));
+    background: #0f1423;
+    border: 1px solid var(--border);
+    border-radius: var(--round);
+    padding: 6px;
+  }
+  .tile-title {
+    position: absolute;
+    top: 6px; left: 8px;
+    font-size: 12px; color: var(--muted);
+    z-index: 2;
+    background: rgba(13,15,22,.6);
+    padding: 2px 6px; border-radius: 6px;
+    border: 1px solid #1f2740;
+  }
+  .expand-btn {
+    position: absolute; top: 6px; right: 6px;
+    background:#1f2740; border:1px solid #2e3b66; color:#e8ecff;
+    font-size: 12px; padding: 3px 6px; border-radius: 6px; opacity: .9;
+  }
+  .tile-blurb { margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+  /* Main chart in mobile */
+  .m-main {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--round);
+    margin: 8px 6px;
+    padding: 6px;
+  }
+
+  /* Bottom spacer for future chat bar */
+  .m-bottom-pad { height: 68px; }
+}
