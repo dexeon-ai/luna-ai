@@ -3,9 +3,24 @@ services:
     name: luna-ai
     env: python
     plan: starter
-    buildCommand: pip install -r requirements.txt
+
+    # Force Render to use Python 3.12.5 (Render ignores runtime.txt on new images)
+    buildCommand: |
+      echo "Python version being set to 3.12.5"
+      pyenv install -s 3.12.5
+      pyenv global 3.12.5
+      python --version
+      pip install --upgrade pip
+      pip install -r requirements.txt
+
     startCommand: gunicorn server:app --workers=1 --threads=4 --timeout=120 --preload
+
     envVars:
+      # --- Hard pin Python version ---
+      - key: PYTHON_VERSION
+        value: 3.12.5
+
+      # --- Existing app variables ---
       - key: ELEVENLABS_API_KEY
         sync: false
       - key: ELEVENLABS_VOICE_ID
