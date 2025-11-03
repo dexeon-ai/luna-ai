@@ -586,24 +586,54 @@ def _apply_time_axis(fig: go.Figure) -> None:
     )
 
 def fig_price(df: pd.DataFrame, symbol: str) -> go.Figure:
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.74, 0.26], vertical_spacing=0.4/10)
+    # Three rows inside the same tile: Price, MACD, Volume (mini)
+    fig = make_subplots(
+        rows=3, cols=1, shared_xaxes=True,
+        row_heights=[0.64, 0.22, 0.14], vertical_spacing=0.03
+    )
     if not df.empty:
+        # Row 1: OHLC + Bollinger
         fig.add_trace(go.Candlestick(
             x=df["timestamp"], open=df["open"], high=df["high"], low=df["low"], close=df["close"],
             name=f"{symbol} OHLC", increasing_line_color="#36d399", decreasing_line_color="#f87272", opacity=0.95
         ), row=1, col=1)
-        for name,col,color in [("BB upper","bb_upper","#a78bfa"),("BB mid","bb_mid","#90a4ec"),("BB lower","bb_lower","#a78bfa")]:
+        for name, col, color in [
+            ("BB upper", "bb_upper", "#a78bfa"),
+            ("BB mid",   "bb_mid",   "#90a4ec"),
+            ("BB lower", "bb_lower", "#a78bfa"),
+        ]:
             if col in df.columns:
-                fig.add_trace(go.Scatter(x=df["timestamp"], y=df[col], name=name, line=dict(width=1, color=color)), row=1, col=1)
+                fig.add_trace(
+                    go.Scatter(x=df["timestamp"], y=df[col], name=name, line=dict(width=1, color=color)),
+                    row=1, col=1
+                )
+
+        # Row 2: MACD lines + hist
         if "macd_line" in df.columns and "macd_signal" in df.columns:
-            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_line"], name="MACD", line=dict(width=1.1)), row=2, col=1)
-            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_signal"], name="Signal", line=dict(width=1, dash="dot")), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_line"],   name="MACD",  line=dict(width=1.1)),
+                          row=2, col=1)
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_signal"], name="Signal", line=dict(width=1, dash="dot")),
+                          row=2, col=1)
         if "macd_hist" in df.columns:
             fig.add_trace(go.Bar(x=df["timestamp"], y=df["macd_hist"], name="MACD Hist"), row=2, col=1)
+
+        # Row 3: Volume (mini) — color by candle direction
+        if "volume" in df.columns:
+            # green if close >= previous close else red
+            diff = df["close"].diff().fillna(0)
+            colors = ['#36d399' if d >= 0 else '#f87272' for d in diff.tolist()]
+            fig.add_trace(
+                go.Bar(x=df["timestamp"], y=df["volume"].fillna(0), name="Volume",
+                       marker=dict(color=colors), opacity=0.8),
+                row=3, col=1
+            )
+
     fig.update_layout(
-        template="plotly_dark", height=360, margin=dict(l=12,r=12,t=24,b=10),
+        template="plotly_dark", height=420,  # a touch taller to fit the mini pane
+        margin=dict(l=12, r=12, t=24, b=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        xaxis_rangeslider_visible=False
+        xaxis_rangeslider_visible=False,
+        barmode="relative",
     )
     _apply_time_axis(fig)
     return fig
@@ -711,53 +741,45 @@ def api_refresh(symbol: str):
 
 # ----- Ask-Luna (keeps same response box; smarter content) -----
 def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "") -> str:
-    if df.empty:
-        return f"{symbol}: I don’t have enough fresh data yet."
-    view = slice_df(df, tf)
-    if view.empty:
-        view = df.tail(200)
+    try:
+        return answer_question(symbol, df, tf, question)
+    except Exception as e:
+        LOG.warning("answer_question fallback: %s", e)
+        # Fallback to your legacy summary if anything goes wrong
+        view = slice_df(df, tf)
+        if view.empty:
+            return f"{symbol}: I don’t have enough fresh candles for {tf} yet."
+        ch, _ = compute_rollups(view)
+        last  = view.iloc[-1]
+        price = money(last.get("close"))
+        rsi   = to_float(last.get("rsi"))
+        macdl = to_float(last.get("macd_line"))
+        macds = to_float(last.get("macd_signal"))
+        hist  = to_float(last.get("macd_hist"))
+        adx   = to_float(last.get("adx14"))
+        bbw   = to_float(last.get("bb_width"))
+        ser_obv = view["obv"] if "obv" in view.columns else None
 
-    perf, _ = compute_rollups(df)  # use longer history for context
+        perf_bits = [f"{k} {v:+.2f}%" for k,v in ch.items() if v is not None and k in ("1h","4h","12h","24h")]
+        perf_txt  = ", ".join(perf_bits) if perf_bits else "mostly flat"
 
-    # Use new scoring brain if available
-    if HAVE_SCORING and generate_analysis is not None:
-        try:
-            return generate_analysis(symbol, df, view, perf, question or "")
-        except Exception as e:
-            LOG.warning("[Luna] analysis fallback: %s", e)
+        side = "bulls" if (macdl is not None and macds is not None and macdl > macds) \
+               else "bears" if (macdl is not None and macds is not None and macdl < macds) else "neither side"
 
-    # Fallback to older analyzer if present
-    if _legacy_analyze_indicators is not None:
-        last = view.iloc[-1]
-        ch_view, _ = compute_rollups(view)
-        trend, reasoning = _legacy_analyze_indicators(last, ch_view)
-        plan = ("Upside momentum should persist if volume expands and resistance breaks."
-                if trend == "bullish" else
-                "Further downside risk unless buyers reclaim lost ground."
-                if trend == "bearish" else
-                "Expect consolidation until a new catalyst drives direction.")
-        return f"{symbol}: {reasoning} {plan}"
+        obv_note = "accumulation" if (ser_obv is not None and len(ser_obv.dropna())>5 and (ser_obv.iloc[-1]-ser_obv.iloc[-5])>0) \
+                   else "distribution" if (ser_obv is not None and len(ser_obv.dropna())>5 and (ser_obv.iloc[-1]-ser_obv.iloc[-5])<0) \
+                   else "neutral flow"
 
-    # Final fallback (simple)
-    last  = view.iloc[-1]
-    price = money(last.get("close"))
-    rsi   = to_float(last.get("rsi"))
-    macdl = to_float(last.get("macd_line"))
-    macds = to_float(last.get("macd_signal"))
-    hist  = to_float(last.get("macd_hist"))
-    adx   = to_float(last.get("adx14"))
-    bbw   = to_float(last.get("bb_width"))
-    ch_view, _ = compute_rollups(view)
-    perf_bits = [f"{k} {v:+.2f}%" for k,v in ch_view.items() if v is not None and k in ("1h","4h","12h","24h")]
-    perf_txt  = ", ".join(perf_bits) if perf_bits else "mostly flat"
-    side = "bulls" if (macdl is not None and macds is not None and macdl > macds) \
-           else "bears" if (macdl is not None and macds is not None and macdl < macds) else "neither side"
-    return (
-        f"{symbol} around {price}. Over this window: {perf_txt}. "
-        f"RSI {f1(rsi)}; MACD {('>' if (macdl and macds and macdl>macds) else '<' if (macdl and macds and macdl<macds) else '=')} signal "
-        f"(hist {f1(hist)}). ADX {f1(adx)} (trend). Bands width {f1(bbw)}%. "
-        f"Short answer: {('bulls have a small edge' if side=='bulls' else 'bears have the edge' if side=='bears' else 'range-bound')}."
-    )
+        plan  = "If price breaks and closes beyond the recent band with rising volume, I favor follow‑through; "
+        plan += "if the move fizzles and OBV diverges, I fade the breakout."
+
+        return (
+            f"{symbol} around {price}. Over this window: {perf_txt}. "
+            f"RSI {f1(rsi)}; MACD {('>' if (macdl and macds and macdl>macds) else '<' if (macdl and macds and macdl<macds) else '=')} signal "
+            f"(hist {f1(hist)}). ADX {f1(adx)} (trend). Bands width {f1(bbw)}%. OBV shows {obv_note}. "
+            f"Short answer: {('bulls have a small edge' if side=='bulls' else 'bears have the edge' if side=='bears' else 'range‑bound')}. "
+            f"{plan}"
+        )
 
 @app.post("/api/luna")
 def api_luna():
