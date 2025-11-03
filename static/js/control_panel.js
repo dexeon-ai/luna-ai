@@ -1,3 +1,4 @@
+// static/js/control_panel.js
 (function () {
   const SYMBOL = window.__SYMBOL__ || 'ETH';
   const TF     = window.__TF__ || '4h';
@@ -21,8 +22,8 @@
     mChart.innerHTML = '';
     mTalk.textContent = '';
   }
-  mClose.addEventListener('click', closeModal);
-  mTF.addEventListener('change', () => loadExpand(mTitle.textContent, mTF.value));
+  if (mClose) mClose.addEventListener('click', closeModal);
+  if (mTF) mTF.addEventListener('change', () => loadExpand(mTitle.textContent, mTF.value));
 
   function loadExpand(key, tf) {
     const url = `/expand_json?symbol=${encodeURIComponent(SYMBOL)}&key=${encodeURIComponent(key)}&tf=${encodeURIComponent(tf)}`;
@@ -30,7 +31,10 @@
       mChart.innerHTML = '';
       Plotly.newPlot(mChart, data.fig.data, data.fig.layout, {responsive:true, displaylogo:false});
       mTalk.textContent = data.talk || '';
-    }).catch(console.error);
+    }).catch(err => {
+      console.error(err);
+      mTalk.textContent = 'Error loading chart.';
+    });
   }
 
   document.querySelectorAll('.expand').forEach(btn => {
@@ -41,9 +45,8 @@
   const refreshBtn = document.getElementById('refreshBtn');
   if (refreshBtn) {
     refreshBtn.addEventListener('click', () => {
-      const sym = document.getElementById('symbolSelect').value || SYMBOL;
-      fetch(`/api/refresh/${encodeURIComponent(sym)}`)
-        .then(() => window.location.reload());
+      const sym = (document.getElementById('symbolSelect') && document.getElementById('symbolSelect').value) || SYMBOL;
+      fetch(`/api/refresh/${encodeURIComponent(sym)}`).then(() => window.location.reload());
     });
   }
 
@@ -54,34 +57,56 @@
   const qaA     = document.getElementById('qaA');
 
   function appendQA(q, a) {
-    const li = document.createElement('li');
-    li.textContent = q;
-    qaQ.appendChild(li);
-
-    const p = document.createElement('p');
-    p.textContent = a;
-    qaA.appendChild(p);
-    qaA.scrollTop = qaA.scrollHeight;
+    if (qaQ && q) {
+      const li = document.createElement('li');
+      li.textContent = q;
+      qaQ.appendChild(li);
+    }
+    let pEl = null;
+    if (qaA && (a !== undefined && a !== null)) {
+      pEl = document.createElement('p');
+      pEl.textContent = a;
+      qaA.appendChild(pEl);
+      qaA.scrollTop = qaA.scrollHeight;
+    }
+    return pEl;
   }
 
-  if (askSend && askBox) {
-    askSend.addEventListener('click', () => {
-      const text = (askBox.value || '').trim();
-      if (!text) return;
-      fetch('/api/luna', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ symbol: SYMBOL, tf: TF, text })
-      })
-      .then(r => r.json())
-      .then(j => { appendQA(text, j.reply); askBox.value=''; })
-      .catch(console.error);
-    });
-
-    askBox.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') askSend.click();
-    });
+  // Append question + temp "analyzing…" and return the <p> we will update
+  function pushQuestionAndSpinner(qText) {
+    appendQA(qText, null);
+    return appendQA(null, 'Luna is analyzing…');
   }
+
+  let sending = false;
+  function sendQuestion() {
+    if (sending) return; // simple throttle
+    const text = (askBox && askBox.value || '').trim();
+    if (!text) return;
+    sending = true;
+
+    const bubble = pushQuestionAndSpinner(text);
+    const payload = { symbol: SYMBOL, tf: TF, text };
+
+    fetch('/api/luna', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(j => {
+      if (bubble) bubble.textContent = j.reply || 'No reply.';
+      if (askBox) askBox.value = '';
+    })
+    .catch(err => {
+      console.error(err);
+      if (bubble) bubble.textContent = 'Error: ' + String(err);
+    })
+    .finally(() => { sending = false; });
+  }
+
+  if (askSend) askSend.addEventListener('click', sendQuestion);
+  if (askBox)  askBox.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendQuestion(); });
 
   // ========== Coin search (suggest + resolve) ==========
   const searchInput = document.getElementById('coinSearch');
@@ -90,6 +115,7 @@
   const tfSelect    = document.getElementById('tfSelect');
 
   function setDatalist(items){
+    if (!coinsList) return;
     coinsList.innerHTML = '';
     (items || []).forEach(s => {
       const o = document.createElement('option');
@@ -98,7 +124,7 @@
   }
 
   // initial suggestions
-  fetch('/api/suggest').then(r => r.json()).then(j => setDatalist(j.symbols || []));
+  fetch('/api/suggest').then(r => r.json()).then(j => setDatalist(j.symbols || [])).catch(()=>{});
 
   // live suggest (debounced)
   let tmr = null;
@@ -116,21 +142,21 @@
   }
 
   function goSearch(){
-    const q = (searchInput.value || '').trim();
+    const q = (searchInput && searchInput.value || '').trim();
     if (!q) return;
+    const tfSel  = (tfSelect && tfSelect.value) ? tfSelect.value : TF;
+
     fetch(`/api/resolve?query=${encodeURIComponent(q)}`)
       .then(r => r.json())
       .then(j => {
         const sym = j.symbol || q.toUpperCase();
-        const tf  = (tfSelect && tfSelect.value) ? tfSelect.value : TF;
-        window.location.href = `/analyze?symbol=${encodeURIComponent(sym)}&tf=${encodeURIComponent(tf)}`;
+        window.location.href = `/analyze?symbol=${encodeURIComponent(sym)}&tf=${encodeURIComponent(tfSel)}`;
       })
-      .catch(()=>{ /* last resort: try as-is */ 
-        const tf  = (tfSelect && tfSelect.value) ? tfSelect.value : TF;
-        window.location.href = `/analyze?symbol=${encodeURIComponent(q)}&tf=${encodeURIComponent(tf)}`;
+      .catch(()=>{ 
+        window.location.href = `/analyze?symbol=${encodeURIComponent(q)}&tf=${encodeURIComponent(tfSel)}`;
       });
   }
-  if (searchGo) searchGo.addEventListener('click', goSearch);
+  if (searchGo)    searchGo.addEventListener('click', goSearch);
   if (searchInput) searchInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') goSearch(); });
 
 })();

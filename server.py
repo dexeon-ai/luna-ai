@@ -1,5 +1,6 @@
 # ============================================================
 # server.py — Luna Cockpit (stable grid + richer expand + CSV merge)
+# Brain upgrade: free/offline metrics + conversational analysis
 # ============================================================
 
 from __future__ import annotations
@@ -18,6 +19,27 @@ from flask.json.provider import DefaultJSONProvider
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
+
+# ====== NEW brain modules (safe fallbacks if missing) ======
+try:
+    from luna_agent.metrics import enrich_with_metrics
+    HAVE_METRICS = True
+except Exception:
+    enrich_with_metrics = None
+    HAVE_METRICS = False
+
+try:
+    from luna_agent.scoring import generate_analysis
+    HAVE_SCORING = True
+except Exception:
+    generate_analysis = None
+    HAVE_SCORING = False
+
+# (Optional legacy import; we don't rely on it)
+try:
+    from luna_agent import analyze_indicators as _legacy_analyze_indicators
+except Exception:
+    _legacy_analyze_indicators = None
 
 # ---------- logging ----------
 logging.basicConfig(
@@ -70,6 +92,9 @@ app.json = PlotlyJSON(app)
 def utcnow() -> datetime: 
     return datetime.now(timezone.utc)
 
+def _to_iso(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+
 def _latest_ts(df: pd.DataFrame) -> Optional[datetime]:
     if df is None or df.empty or "timestamp" not in df.columns: 
         return None
@@ -84,7 +109,7 @@ def _fetch_log() -> dict:
 
 def _touch_fetch(symbol: str) -> None:
     st = _fetch_log()
-    st[symbol.upper()] = utcnow().replace(microsecond=0).isoformat()
+    st[symbol.upper()] = _to_iso(utcnow())
     FETCH_LOG.write_text(json.dumps(st, indent=2), encoding="utf-8")
 
 def _fresh_enough(symbol: str, ttl: int = TTL_MINUTES) -> bool:
@@ -259,7 +284,7 @@ def cg_series(symbol: str, days: int = 30) -> pd.DataFrame:
         dc = pd.DataFrame(caps, columns=["ts","mc"])
         dc["timestamp"] = pd.to_datetime(dc["ts"], unit="ms", utc=True, errors="coerce")
         dc["market_cap"] = pd.to_numeric(dc["mc"], errors="coerce")
-        dp = dp.merge(dc[["timestamp","market_cap"]], on="timestamp", how="left")
+        dp = dp.merge(dc[["timestamp","market_cap"]], on="timestamp", how="left"])
 
     # synth OHLC for indicators
     dp["open"] = dp["close"].shift(1)
@@ -360,12 +385,10 @@ def hydrate_symbol(symbol: str, force: bool=False) -> pd.DataFrame:
                 df_arch["timestamp"] = pd.to_datetime(df_arch["timestamp"], utc=True, errors="coerce")
             elif "time" in df_arch.columns:
                 df_arch["timestamp"] = pd.to_datetime(df_arch["time"], unit="s", utc=True, errors="coerce")
-            # normalize names we rely on
             rename = {}
             for a,b in [("volumeto","volume"),("volumefrom","volume"),("Vol","volume")]:
                 if a in df_arch.columns: rename[a]=b
             df_arch = df_arch.rename(columns=rename)
-            # ensure cols
             for c in ["open","high","low","close","volume"]:
                 if c not in df_arch.columns:
                     df_arch[c] = np.nan
@@ -391,7 +414,7 @@ def hydrate_symbol(symbol: str, force: bool=False) -> pd.DataFrame:
         if not caps.empty and "market_cap" in caps.columns:
             df = df.merge(caps[["timestamp","market_cap"]], on="timestamp", how="left")
 
-    # 3) stitch archives + live, compute indicators
+    # 3) stitch archives + live, compute indicators + enrich
     if df is None or df.empty:
         cached = load_cached_frame(s)
         if not cached.empty:
@@ -404,7 +427,16 @@ def hydrate_symbol(symbol: str, force: bool=False) -> pd.DataFrame:
 
     df = df.dropna(subset=["timestamp"]).drop_duplicates(subset=["timestamp"], keep="last")\
            .sort_values("timestamp").reset_index(drop=True)
+
     df = compute_indicators(df)
+
+    # ====== NEW: extra metrics (free/offline) ======
+    if HAVE_METRICS and enrich_with_metrics is not None:
+        try:
+            df = enrich_with_metrics(df)
+        except Exception as e:
+            LOG.warning("[Metrics] enrich failed: %s", e)
+
     save_frame(s, df)
     _touch_fetch(s)
     return df
@@ -443,6 +475,54 @@ def compute_rollups(df: pd.DataFrame) -> Tuple[Dict[str, Optional[float]], Dict[
         ch[k] = None if (base in (None,0) or last in (None,0)) else round((last/base-1)*100, 2)
     inv = {k: (None if v is None else round(1000*(1+v/100.0),2)) for k,v in ch.items()}
     return ch, inv
+
+# ---------- improved paragraph (keeps same output location) ----------
+def luna_paragraph(symbol: str, df: pd.DataFrame, tf: str, question: str) -> str:
+    if df.empty:
+        return f"{symbol}: I don’t have enough fresh data yet."
+    view = slice_df(df, tf)
+    if view.empty:
+        view = df.tail(200)
+    perf, _ = compute_rollups(df)   # use full history for performance context
+
+    # New brain (if present)
+    if HAVE_SCORING and generate_analysis is not None:
+        try:
+            return generate_analysis(symbol, df, view, perf, question or "")
+        except Exception as e:
+            LOG.warning("[Luna] generate_analysis failed: %s", e)
+
+    # Legacy fallback, if you keep your old analyzer around
+    if _legacy_analyze_indicators is not None:
+        last = view.iloc[-1]
+        ch_view, _ = compute_rollups(view)
+        trend, reasoning = _legacy_analyze_indicators(last, ch_view)
+        if trend == "bullish":
+            plan = "Upside momentum should persist if volume expands and resistance breaks."
+        elif trend == "bearish":
+            plan = "Further downside risk unless buyers reclaim lost ground."
+        else:
+            plan = "Expect consolidation until a new catalyst drives direction."
+        return f"{symbol}: {reasoning} {plan}"
+
+    # Simple final fallback (never breaks)
+    last = view.iloc[-1]
+    price = money(last.get("close"))
+    rsi   = to_float(last.get("rsi"))
+    macdl = to_float(last.get("macd_line"))
+    macds = to_float(last.get("macd_signal"))
+    hist  = to_float(last.get("macd_hist"))
+    adx   = to_float(last.get("adx14"))
+    bbw   = to_float(last.get("bb_width"))
+    perf_bits = [f"{k} {v:+.2f}%" for k,v in perf.items() if v is not None and k in ("1h","4h","12h","24h")]
+    perf_txt  = ", ".join(perf_bits) if perf_bits else "flat"
+    side = "bulls" if (macdl is not None and macds is not None and macdl > macds) else "bears" if (macdl is not None and macds is not None and macdl < macds) else "neither side"
+    return (
+        f"{symbol} around {price}. Over this window: {perf_txt}. "
+        f"RSI {f1(rsi)}; MACD {('>' if (macdl and macds and macdl>macds) else '<' if (macdl and macds and macdl<macds) else '=')} signal "
+        f"(hist {f1(hist)}). ADX {f1(adx)} (trend). Bands width {f1(bbw)}%. Short answer: "
+        f"{('bulls have a small edge' if side=='bulls' else 'bears have the edge' if side=='bears' else 'range-bound')}."
+    )
 
 # ---------- modal talk ----------
 def talk_indicator(key: str, df: pd.DataFrame) -> str:
@@ -497,7 +577,6 @@ def talk_indicator(key: str, df: pd.DataFrame) -> str:
 
 # ---------- Plotly helpers ----------
 def _apply_time_axis(fig: go.Figure) -> None:
-    # Hours on intraday; m-d on longer
     fig.update_xaxes(
         tickformatstops=[
             dict(dtickrange=[None, 1000*60*60*24], value="%H:%M"),
@@ -506,7 +585,7 @@ def _apply_time_axis(fig: go.Figure) -> None:
     )
 
 def fig_price(df: pd.DataFrame, symbol: str) -> go.Figure:
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.74, 0.26], vertical_spacing=0.04)
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.74, 0.26], vertical_spacing=0.4/10)
     if not df.empty:
         fig.add_trace(go.Candlestick(
             x=df["timestamp"], open=df["open"], high=df["high"], low=df["low"], close=df["close"],
@@ -576,14 +655,14 @@ def analyze():
         "ALT":   pio.to_html(fig_line(df_view, "alt_momentum", "ALT (Momentum)"), include_plotlyjs=False, full_html=False),
     }
 
-    # tldr line — short, compact
-    ch, _ = compute_rollups(df_view if not df_view.empty else df_full)
+    # tldr line — compact, unchanged placement
+    ch_view, _ = compute_rollups(df_view if not df_view.empty else df_full)
     def pct(k):
-        v = ch.get(k)
+        v = ch_view.get(k)
         return ("n/a" if v is None else f"{v:+.2f}%")
     tldr_line = (
         f"{symbol}: 1h {pct('1h')}, 4h {pct('4h')}, 12h {pct('12h')}, 24h {pct('24h')}. "
-        f"Momentum neutral; MACD below/above signal varies by tf; bands look normal."
+        f"Momentum/Trend vary by timeframe; bands and volume provide context."
     )
 
     updated = (_latest_ts(df_full) or utcnow()).strftime("UTC %Y-%m-%d %H:%M")
@@ -629,13 +708,36 @@ def api_refresh(symbol: str):
     df = hydrate_symbol((symbol or "ETH").upper(), force=True)
     return jsonify({"ok": (not df.empty), "rows": 0 if df is None else len(df)})
 
-# ----- simple Ask-Luna (plain-English) -----
+# ----- Ask-Luna (keeps same response box; smarter content) -----
 def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "") -> str:
+    if df.empty:
+        return f"{symbol}: I don’t have enough fresh data yet."
     view = slice_df(df, tf)
     if view.empty:
-        return f"{symbol}: I don’t have enough fresh candles for {tf} yet."
+        view = df.tail(200)
 
-    ch, _ = compute_rollups(view)
+    perf, _ = compute_rollups(df)  # use longer history for context
+
+    # Use new scoring brain if available
+    if HAVE_SCORING and generate_analysis is not None:
+        try:
+            return generate_analysis(symbol, df, view, perf, question or "")
+        except Exception as e:
+            LOG.warning("[Luna] analysis fallback: %s", e)
+
+    # Fallback to older analyzer if present
+    if _legacy_analyze_indicators is not None:
+        last = view.iloc[-1]
+        ch_view, _ = compute_rollups(view)
+        trend, reasoning = _legacy_analyze_indicators(last, ch_view)
+        plan = ("Upside momentum should persist if volume expands and resistance breaks."
+                if trend == "bullish" else
+                "Further downside risk unless buyers reclaim lost ground."
+                if trend == "bearish" else
+                "Expect consolidation until a new catalyst drives direction.")
+        return f"{symbol}: {reasoning} {plan}"
+
+    # Final fallback (simple)
     last  = view.iloc[-1]
     price = money(last.get("close"))
     rsi   = to_float(last.get("rsi"))
@@ -644,31 +746,17 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "") -> s
     hist  = to_float(last.get("macd_hist"))
     adx   = to_float(last.get("adx14"))
     bbw   = to_float(last.get("bb_width"))
-    ser_obv = view["obv"] if "obv" in view.columns else None
-
-    perf_bits = [f"{k} {v:+.2f}%" for k,v in ch.items() if v is not None and k in ("1h","4h","12h","24h")]
+    ch_view, _ = compute_rollups(view)
+    perf_bits = [f"{k} {v:+.2f}%" for k,v in ch_view.items() if v is not None and k in ("1h","4h","12h","24h")]
     perf_txt  = ", ".join(perf_bits) if perf_bits else "mostly flat"
-
     side = "bulls" if (macdl is not None and macds is not None and macdl > macds) \
            else "bears" if (macdl is not None and macds is not None and macdl < macds) else "neither side"
-
-    obv_note = "accumulation" if (ser_obv is not None and len(ser_obv.dropna())>5 and (ser_obv.iloc[-1]-ser_obv.iloc[-5])>0) \
-               else "distribution" if (ser_obv is not None and len(ser_obv.dropna())>5 and (ser_obv.iloc[-1]-ser_obv.iloc[-5])<0) \
-               else "neutral flow"
-
-    plan  = "If price breaks and closes beyond the recent band with rising volume, I favor follow‑through; "
-    plan += "if the move fizzles and OBV diverges, I fade the breakout."
-
-    answer = (
+    return (
         f"{symbol} around {price}. Over this window: {perf_txt}. "
         f"RSI {f1(rsi)}; MACD {('>' if (macdl and macds and macdl>macds) else '<' if (macdl and macds and macdl<macds) else '=')} signal "
-        f"(hist {f1(hist)}). ADX {f1(adx)} (trend). Bands width {f1(bbw)}%. OBV shows {obv_note}. "
-        f"Short answer: {('bulls have a small edge' if side=='bulls' else 'bears have the edge' if side=='bears' else 'range-bound')}. "
-        f"{plan}"
+        f"(hist {f1(hist)}). ADX {f1(adx)} (trend). Bands width {f1(bbw)}%. "
+        f"Short answer: {('bulls have a small edge' if side=='bulls' else 'bears have the edge' if side=='bears' else 'range-bound')}."
     )
-    if question:
-        answer = answer  # (we keep the analysis; we don’t re-echo the question)
-    return answer
 
 @app.post("/api/luna")
 def api_luna():
@@ -685,8 +773,6 @@ def api_luna():
     return jsonify({"symbol": symbol, "reply": reply})
 
 # --- helpers: enumerate cached symbols + map queries -------------------------
-from pathlib import Path
-
 def _list_cached_symbols(maxn=500) -> list[str]:
     """Symbols we already have locally (csv/parquet) plus known CG_IDS keys."""
     out = set()
@@ -694,7 +780,6 @@ def _list_cached_symbols(maxn=500) -> list[str]:
         out.add(p.stem.upper())
     for p in (FRAMES_DIR.glob("*.parquet")):
         out.add(p.stem.upper())
-    # include a few built-ins you already support
     try:
         for k in (CG_IDS.keys() if 'CG_IDS' in globals() else []):
             out.add(k.upper())
@@ -709,28 +794,20 @@ def _resolve_symbol(query: str) -> str | None:
         return None
     q = query.strip()
 
-    # direct symbol hit
     syms = _list_cached_symbols()
     if q.upper() in syms:
         return q.upper()
 
-    # try Coingecko ID -> symbol (if your CG_IDS is present)
     try:
-        rev = {v.upper(): k for k, v in CG_IDS.items()}
-        if q.lower() in (v.lower() for v in CG_IDS.values()):
-            # map 'ethereum' -> 'ETH'
+        if 'CG_IDS' in globals():
             for sym, cid in CG_IDS.items():
                 if cid.lower() == q.lower():
                     return sym.upper()
-        if q.upper() in rev:
-            return rev[q.upper()].upper()
     except Exception:
         pass
 
-    # simple 0x… contract string -> leave for front-end to try
     if q.startswith("0x") and len(q) >= 6:
-        return q  # return as-is; your hydrate/fallback may handle it later
-
+        return q
     return None
 
 # --- API: suggestions --------------------------------------------------------
