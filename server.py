@@ -284,7 +284,7 @@ def cg_series(symbol: str, days: int = 30) -> pd.DataFrame:
         dc = pd.DataFrame(caps, columns=["ts","mc"])
         dc["timestamp"] = pd.to_datetime(dc["ts"], unit="ms", utc=True, errors="coerce")
         dc["market_cap"] = pd.to_numeric(dc["mc"], errors="coerce")
-        dp = dp.merge(dc[["timestamp","market_cap"]], on="timestamp", how="left"])
+        dp = dp.merge(dc[["timestamp","market_cap"]], on="timestamp", how="left")
 
     # synth OHLC for indicators
     dp["open"] = dp["close"].shift(1)
