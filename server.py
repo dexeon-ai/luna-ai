@@ -484,6 +484,7 @@ def luna_paragraph(symbol: str, df: pd.DataFrame, tf: str, question: str) -> str
     if view.empty:
         view = df.tail(200)
     perf, _ = compute_rollups(df)   # use full history for performance context
+    ch, _ = compute_rollups(view)
 
     # New brain (if present)
     if HAVE_SCORING and generate_analysis is not None:

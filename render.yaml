@@ -1,12 +1,15 @@
 services:
   - type: web
     name: luna-ai
-    env: docker
+    env: python
     plan: starter
-
-    dockerfilePath: ./Dockerfile
-
+    buildCommand: |
+      pip install --upgrade pip
+      pip install --no-cache-dir -r requirements.txt
+    startCommand: gunicorn server:app --workers=1 --threads=4 --timeout=120
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.5"
       - key: ELEVENLABS_API_KEY
         sync: false
       - key: ELEVENLABS_VOICE_ID
