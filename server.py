@@ -430,12 +430,13 @@ DS_TO_GT = {
     "fantom": "fantom",
     "linea": "linea",
     "zk_sync_era": "zk_sync_era",
-    "zksync": "zk_sync_era",   # alias
-    "polygon_pos": "polygon",  # alias sometimes seen
+    "zksync": "zk_sync_era",
+    "polygon_pos": "polygon",
     "solana": "solana",
     "sui": "sui",
     "ton": "ton",
     "blast": "blast",
+    "pulsechain": "pulsechain",        # ✅ add this line
 }
 
 PREFERRED_QUOTES = {"USDC","USDT","SOL","ETH","WETH","USD"}
