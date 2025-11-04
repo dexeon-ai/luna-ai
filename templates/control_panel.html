@@ -1,143 +1,226 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Luna AI — Control Panel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/static/css/control_panel.css">
-  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <link rel="stylesheet" href="/static/css/control_panel.css"/>
+  <!-- Plotly (server sends include_plotlyjs=False) -->
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+  <style>
+    .bar {display:flex; gap:.75rem; align-items:center; margin:10px 8px;}
+    .muted {opacity:.7}
+    .tiles {display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; padding:8px;}
+    .tile {background:#0f1220; border:1px solid #1c2240; border-radius:8px; padding:8px; position:relative;}
+    .tile-title {display:flex; justify-content:space-between; align-items:center; margin:0 0 6px 0; font-size:14px;}
+    .tile .expand {position:absolute; right:8px; top:8px;}
+    .row {display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding:8px;}
+    .tldr {background:#0f1220; border:1px solid #1c2240; border-radius:8px; padding:10px; margin:8px;}
+    #answer {white-space:pre-wrap; min-height:120px}
+    .btn {background:#273363; color:#e5eeff; border:1px solid #334285; border-radius:6px; padding:6px 10px; cursor:pointer}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+    input, select, textarea {background:#0b0e1a; color:#e5eeff; border:1px solid #273363; border-radius:6px; padding:6px 8px;}
+    textarea {width:100%; min-height:100px;}
+  </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">Luna AI — Control Panel</div>
-    <div class="right">
-      <form action="/analyze" method="get" id="navform">
-        <input type="text" name="symbol" id="symbol" value="{{ request.args.get('symbol', '') or '' }}" placeholder="{{ ui_name or symbol }}" class="search" autocomplete="off">
-        <select name="tf" id="tf">
-          {% for k in ["1h","4h","8h","12h","24h","7d","30d","1y","all"] %}
-            <option value="{{k}}" {% if tf==k %}selected{% endif %}>{{k}}</option>
-          {% endfor %}
-        </select>
-        <button type="submit" class="btn">Go</button>
-      </form>
-      <div class="updated">Updated {{ updated }}</div>
-    </div>
+
+  <!-- Header bar -->
+  <div class="bar">
+    <div><strong>Luna AI — Control Panel</strong></div>
+    <div class="muted">Updated UTC {{ updated }}</div>
   </div>
 
-  <!-- pills -->
-  <div class="pills">
+  <!-- Symbol entry + timeframe -->
+  <div class="bar">
+    <form id="navForm" action="/analyze" method="get" style="display:flex; gap:.5rem;">
+      <input type="text" name="symbol" id="symbolInput" value="{{ symbol_raw }}" placeholder="Search coin or contract…" style="min-width:360px"/>
+      <select name="tf" id="tfSelect">
+        {% for t in ["1h","4h","8h","12h","24h","7d","30d","1y"] %}
+          <option value="{{t}}" {% if tf==t %}selected{% endif %}>{{t}}</option>
+        {% endfor %}
+      </select>
+      <button class="btn" type="submit">Go</button>
+    </form>
+    {% if token_label %}
+      <div class="muted">Viewing: <strong>{{ token_label }}</strong>{% if contract %} <span class="muted">• {{ contract }}</span>{% endif %}</div>
+    {% else %}
+      <div class="muted">Viewing: <strong>{{ symbol }}</strong></div>
+    {% endif %}
+  </div>
+
+  <!-- Performance pills (simple text line; your JS/CSS can keep the same look) -->
+  <div class="bar muted" id="pills">
     {% for k,v in performance.items() %}
-      <div class="pill"><span class="k">{{k}}</span> <span class="v">{% if v is none %}n/a{% else %}{{'%+.2f'|format(v)}}%{% endif %}</span></div>
+      <span>{{k}}: {% if v is not none %}{{ '%.2f'|format(v) }}%{% else %}—{% endif %}</span>
     {% endfor %}
   </div>
 
-  <!-- grid -->
-  <div class="grid">
-    <!-- PRICE (main) -->
-    <div class="tile big">
-      <div class="tile-head">
-        <div class="title">{{ ui_name or symbol }} — Charts</div>
-        <button class="btn-expand" data-key="PRICE">Expand</button>
+  <!-- Grid of tiles: big PRICE left + RSI + MCAP to the right; beneath: the small tiles -->
+  <div class="tiles">
+    <!-- Big composite chart -->
+    <div class="tile" style="grid-column: 1 / span 2;">
+      <div class="tile-title">
+        <span>{{ token_label or symbol }} — Charts</span>
+        <button class="btn expand" data-key="PRICE">Expand</button>
       </div>
-      <div class="tile-body">{{ tiles["PRICE"]|safe }}</div>
+      <div id="tile-PRICE">{{ tiles["PRICE"]|safe }}</div>
     </div>
 
-    <!-- RSI -->
     <div class="tile">
-      <div class="tile-head"><div class="title">RSI</div><button class="btn-expand" data-key="RSI">Expand</button></div>
-      <div class="tile-body">{{ tiles["RSI"]|safe }}</div>
+      <div class="tile-title">
+        <span>RSI</span>
+        <button class="btn expand" data-key="RSI">Expand</button>
+      </div>
+      <div id="tile-RSI">{{ tiles["RSI"]|safe }}</div>
     </div>
 
-    <!-- MCAP -->
     <div class="tile">
-      <div class="tile-head"><div class="title">Market Cap</div><button class="btn-expand" data-key="MCAP">Expand</button></div>
-      <div class="tile-body">{{ tiles["MCAP"]|safe }}</div>
+      <div class="tile-title">
+        <span>Market Cap</span>
+        <button class="btn expand" data-key="MCAP">Expand</button>
+      </div>
+      <div id="tile-MCAP">{{ tiles["MCAP"]|safe }}</div>
     </div>
 
-    <!-- MACD -->
+    <!-- row 2 -->
     <div class="tile">
-      <div class="tile-head"><div class="title">MACD</div><button class="btn-expand" data-key="MACD">Expand</button></div>
-      <div class="tile-body">{{ tiles["MACD"]|safe }}</div>
+      <div class="tile-title">
+        <span>MACD</span>
+        <button class="btn expand" data-key="MACD">Expand</button>
+      </div>
+      <div id="tile-MACD">{{ tiles["MACD"]|safe }}</div>
     </div>
 
-    <!-- OBV -->
     <div class="tile">
-      <div class="tile-head"><div class="title">OBV</div><button class="btn-expand" data-key="OBV">Expand</button></div>
-      <div class="tile-body">{{ tiles["OBV"]|safe }}</div>
+      <div class="tile-title">
+        <span>OBV</span>
+        <button class="btn expand" data-key="OBV">Expand</button>
+      </div>
+      <div id="tile-OBV">{{ tiles["OBV"]|safe }}</div>
     </div>
 
-    <!-- BANDS -->
     <div class="tile">
-      <div class="tile-head"><div class="title">Bands</div><button class="btn-expand" data-key="BANDS">Expand</button></div>
-      <div class="tile-body">{{ tiles["BANDS"]|safe }}</div>
+      <div class="tile-title">
+        <span>Bands</span>
+        <button class="btn expand" data-key="BANDS">Expand</button>
+      </div>
+      <div id="tile-BANDS">{{ tiles["BANDS"]|safe }}</div>
     </div>
 
-    <!-- VOL -->
     <div class="tile">
-      <div class="tile-head"><div class="title">Volume Trend</div><button class="btn-expand" data-key="VOL">Expand</button></div>
-      <div class="tile-body">{{ tiles["VOL"]|safe }}</div>
+      <div class="tile-title">
+        <span>Volume Trend</span>
+        <button class="btn expand" data-key="VOL">Expand</button>
+      </div>
+      <div id="tile-VOL">{{ tiles["VOL"]|safe }}</div>
     </div>
 
-    <!-- LIQ -->
     <div class="tile">
-      <div class="tile-head"><div class="title">Liquidity</div><button class="btn-expand" data-key="LIQ">Expand</button></div>
-      <div class="tile-body">{{ tiles["LIQ"]|safe }}</div>
+      <div class="tile-title">
+        <span>Liquidity</span>
+        <button class="btn expand" data-key="LIQ">Expand</button>
+      </div>
+      <div id="tile-LIQ">{{ tiles["LIQ"]|safe }}</div>
     </div>
 
-    <!-- ADX -->
     <div class="tile">
-      <div class="tile-head"><div class="title">ADX</div><button class="btn-expand" data-key="ADX">Expand</button></div>
-      <div class="tile-body">{{ tiles["ADX"]|safe }}</div>
+      <div class="tile-title">
+        <span>ADX</span>
+        <button class="btn expand" data-key="ADX">Expand</button>
+      </div>
+      <div id="tile-ADX">{{ tiles["ADX"]|safe }}</div>
     </div>
 
-    <!-- ATR -->
     <div class="tile">
-      <div class="tile-head"><div class="title">ATR</div><button class="btn-expand" data-key="ATR">Expand</button></div>
-      <div class="tile-body">{{ tiles["ATR"]|safe }}</div>
+      <div class="tile-title">
+        <span>ATR</span>
+        <button class="btn expand" data-key="ATR">Expand</button>
+      </div>
+      <div id="tile-ATR">{{ tiles["ATR"]|safe }}</div>
     </div>
 
-    <!-- ALT -->
     <div class="tile">
-      <div class="tile-head"><div class="title">ALT (Momentum)</div><button class="btn-expand" data-key="ALT">Expand</button></div>
-      <div class="tile-body">{{ tiles["ALT"]|safe }}</div>
+      <div class="tile-title">
+        <span>ALT (Momentum)</span>
+        <button class="btn expand" data-key="ALT">Expand</button>
+      </div>
+      <div id="tile-ALT">{{ tiles["ALT"]|safe }}</div>
     </div>
   </div>
 
-  <!-- TLDR -->
-  <div class="tldr">{{ tldr_line }}</div>
+  <!-- TL;DR -->
+  <div class="tldr">
+    {{ tldr_line }}
+  </div>
 
-  <!-- QA split -->
-  <div class="qa">
-    <div class="answer">
-      <div class="head">Luna’s answer</div>
-      <div id="answerText">Ask something on the right — I’ll keep it simple but detailed.</div>
+  <!-- Q&A row -->
+  <div class="row">
+    <div class="tile">
+      <div class="tile-title"><span>Luna’s answer</span></div>
+      <div id="answer" class="muted">Ask something on the right — I’ll keep it simple but detailed.</div>
     </div>
-    <div class="ask">
-      <div class="head">Ask Luna</div>
-      <textarea id="askBox" placeholder="e.g., Is this bearish for the next 24h? Is this a rug? What coin is this?"></textarea>
-      <div class="ask-row">
+    <div class="tile">
+      <div class="tile-title"><span>Ask Luna</span></div>
+      <textarea id="question" placeholder="e.g., Is this bearish for the next 24h? Is this a rug? What coin is this?"></textarea>
+      <div style="display:flex; justify-content:space-between; margin-top:8px;">
+        <small class="muted">Symbol: {{ symbol_raw }} • TF: {{ tf }}</small>
         <button id="askBtn" class="btn">Ask</button>
-        <div class="small">Symbol: {{ ui_name or symbol }} • TF: {{ tf }}</div>
       </div>
-    </div>
-  </div>
-
-  <!-- expand modal -->
-  <div id="modal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-head">
-        <div class="modal-title">Detail</div>
-        <button id="modalClose" class="btn">Close</button>
-      </div>
-      <div id="modalChart" class="modal-chart"></div>
-      <div id="modalTalk" class="modal-talk"></div>
     </div>
   </div>
 
   <script>
-    const SYMBOL = (new URLSearchParams(window.location.search)).get('symbol') || '{{symbol}}';
-    const TF     = (new URLSearchParams(window.location.search)).get('tf') || '{{tf}}';
+    const SYMBOL_RAW = {{ symbol_raw|tojson }};
+    const TF        = {{ tf|tojson }};
+
+    // Expand buttons -> /expand_json
+    document.querySelectorAll('.expand').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const key = btn.dataset.key;
+        try {
+          btn.disabled = true;
+          const url = `/expand_json?symbol=${encodeURIComponent(SYMBOL_RAW)}&tf=${encodeURIComponent(TF)}&key=${encodeURIComponent(key)}`;
+          const r = await fetch(url);
+          const js = await r.json();
+          const el = document.getElementById(`tile-${key}`);
+          if (js && js.fig && el) {
+            // Replace the tile content with a fresh plot
+            const host = document.createElement('div');
+            el.innerHTML = "";
+            el.appendChild(host);
+            Plotly.newPlot(host, js.fig.data, js.fig.layout || {}, {displayModeBar: true, responsive: true});
+          }
+        } catch(err) {
+          console.error(err);
+          alert('Expand failed.');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // Ask Luna -> /api/luna
+    const askBtn = document.getElementById('askBtn');
+    askBtn.addEventListener('click', async () => {
+      const q = (document.getElementById('question').value || "").trim();
+      if (!q) return;
+      askBtn.disabled = true;
+      try {
+        const r = await fetch('/api/luna', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({symbol: SYMBOL_RAW, tf: TF, text: q})
+        });
+        const js = await r.json();
+        document.getElementById('answer').textContent = js.reply || '—';
+      } catch(e) {
+        console.error(e);
+        document.getElementById('answer').textContent = 'Error. Try again.';
+      } finally {
+        askBtn.disabled = false;
+      }
+    });
   </script>
-  <script src="/static/js/control_panel.js"></script>
 </body>
 </html>
