@@ -1,42 +1,36 @@
 (function () {
-  const $ = (sel) => document.querySelector(sel);
+  function qs(sel){return document.querySelector(sel)}
+  function qsa(sel){return Array.from(document.querySelectorAll(sel))}
 
-  const askBtn    = $("#ask-btn");
-  const askInput  = $("#ask-input");
-  const answerBox = $("#luna-answer-text");
-  const symEl     = $("#ask-symbol");
-  const tfEl      = $("#ask-tf");
+  // Expand handlers
+  qsa('.btn-expand').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const key = btn.dataset.key || 'PRICE';
+      const params = new URLSearchParams({symbol: SYMBOL, tf: TF, key});
+      const r = await fetch(`/expand_json?${params.toString()}`);
+      const js = await r.json();
+      const el = qs('#modalChart');
+      el.innerHTML = '';
+      Plotly.newPlot(el, js.fig.data, js.fig.layout, {responsive:true});
+      qs('#modalTalk').textContent = js.talk;
+      qs('#modal').classList.remove('hidden');
+    });
+  });
+  qs('#modalClose').addEventListener('click', ()=> qs('#modal').classList.add('hidden'));
+  qs('#modal').addEventListener('click', (e)=>{ if(e.target.id==='modal') qs('#modal').classList.add('hidden'); });
 
-  async function askLuna() {
-    const symbol = symEl ? symEl.textContent.trim() : "ETH";
-    const tf     = tfEl ? tfEl.textContent.trim() : "12h";
-    const text   = (askInput && askInput.value || "").trim();
-
-    if (!text) {
-      answerBox.textContent = "Ask me something specific (e.g., ‘bearish next 24h?’, ‘what coin is this?’, ‘is this a rug?’).";
-      return;
-    }
-
-    answerBox.textContent = "Thinking…";
-
-    try {
-      const resp = await fetch("/api/luna", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ symbol, tf, text })
-      });
-      const js = await resp.json();
-      if (js && js.reply) {
-        answerBox.textContent = js.reply;
-      } else {
-        answerBox.textContent = "No answer right now.";
-      }
-    } catch (e) {
-      answerBox.textContent = "Network error asking Luna.";
-    }
-  }
-
-  if (askBtn) {
-    askBtn.addEventListener("click", askLuna);
-  }
+  // Ask Luna
+  qs('#askBtn').addEventListener('click', async ()=>{
+    const text = (qs('#askBox').value||'').trim();
+    const r = await fetch('/expand_json?'+new URLSearchParams({symbol:SYMBOL, tf:TF, key:'PRICE'}).toString());
+    const js = await r.json();
+    // quick reuse of the same answer engine with question
+    const res = await fetch('/api/luna', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({symbol: SYMBOL, tf: TF, text})
+    });
+    const ans = await res.json();
+    qs('#answerText').textContent = ans.reply || js.talk || '—';
+  });
 })();

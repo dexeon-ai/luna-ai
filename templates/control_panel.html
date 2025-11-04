@@ -3,75 +3,141 @@
 <head>
   <meta charset="utf-8">
   <title>Luna AI — Control Panel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="/static/css/control_panel.css" rel="stylesheet" />
-  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/control_panel.css">
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 </head>
-<body class="luna-bg">
-  <header class="topbar">
+<body>
+  <div class="topbar">
     <div class="brand">Luna AI — Control Panel</div>
-    <div class="controls">
-      <form id="navform" action="/analyze" method="get">
-        <input type="text" id="symbol" name="symbol" value="{{ symbol }}" class="symbol-input" placeholder="Search coin or contract…" />
-        <select id="tf" name="tf">
-          <option value="1h"  {% if tf=='1h'  %}selected{% endif %}>1h</option>
-          <option value="4h"  {% if tf=='4h'  %}selected{% endif %}>4h</option>
-          <option value="8h"  {% if tf=='8h'  %}selected{% endif %}>8h</option>
-          <option value="12h" {% if tf=='12h' %}selected{% endif %}>12h</option>
-          <option value="24h" {% if tf=='24h' %}selected{% endif %}>24h</option>
-          <option value="7d"  {% if tf=='7d'  %}selected{% endif %}>7d</option>
-          <option value="30d" {% if tf=='30d' %}selected{% endif %}>30d</option>
-          <option value="1y"  {% if tf=='1y'  %}selected{% endif %}>1y</option>
-          <option value="all" {% if tf=='all' %}selected{% endif %}>all</option>
+    <div class="right">
+      <form action="/analyze" method="get" id="navform">
+        <input type="text" name="symbol" id="symbol" value="{{ request.args.get('symbol', '') or '' }}" placeholder="{{ ui_name or symbol }}" class="search" autocomplete="off">
+        <select name="tf" id="tf">
+          {% for k in ["1h","4h","8h","12h","24h","7d","30d","1y","all"] %}
+            <option value="{{k}}" {% if tf==k %}selected{% endif %}>{{k}}</option>
+          {% endfor %}
         </select>
         <button type="submit" class="btn">Go</button>
-        <span class="updated">Updated {{ updated }}</span>
       </form>
+      <div class="updated">Updated {{ updated }}</div>
     </div>
-  </header>
+  </div>
 
-  <main class="grid">
+  <!-- pills -->
+  <div class="pills">
+    {% for k,v in performance.items() %}
+      <div class="pill"><span class="k">{{k}}</span> <span class="v">{% if v is none %}n/a{% else %}{{'%+.2f'|format(v)}}%{% endif %}</span></div>
+    {% endfor %}
+  </div>
 
-    <!-- Performance / Investment pills could stay here if you render them; omitted for brevity -->
-
-    <!-- Tiles row -->
-    <section class="tiles">
-      <div class="tile small">{{ tiles["RSI"]|safe }}</div>
-      <div class="tile wide">{{ tiles["PRICE"]|safe }}</div>
-      <div class="tile small">{{ tiles["MCAP"]|safe }}</div>
-      <div class="tile small">{{ tiles["MACD"]|safe }}</div>
-      <div class="tile small">{{ tiles["OBV"]|safe }}</div>
-      <div class="tile small">{{ tiles["BANDS"]|safe }}</div>
-      <div class="tile small">{{ tiles["VOL"]|safe }}</div>
-      <div class="tile small">{{ tiles["LIQ"]|safe }}</div>
-      <div class="tile small">{{ tiles["ADX"]|safe }}</div>
-      <div class="tile small">{{ tiles["ATR"]|safe }}</div>
-      <div class="tile small">{{ tiles["ALT"]|safe }}</div>
-    </section>
-
-    <section class="tldr">
-      <div class="tldr-text">{{ tldr_line }}</div>
-    </section>
-
-    <!-- QA Row: Answer LEFT (wide), Ask RIGHT -->
-    <section class="qa-row">
-      <div id="luna-answer" class="panel answer-panel">
-        <div class="panel-title">Luna’s answer</div>
-        <pre id="luna-answer-text" class="answer-text">Ask something on the right — I’ll keep it simple but detailed.</pre>
+  <!-- grid -->
+  <div class="grid">
+    <!-- PRICE (main) -->
+    <div class="tile big">
+      <div class="tile-head">
+        <div class="title">{{ ui_name or symbol }} — Charts</div>
+        <button class="btn-expand" data-key="PRICE">Expand</button>
       </div>
+      <div class="tile-body">{{ tiles["PRICE"]|safe }}</div>
+    </div>
 
-      <div class="panel ask-panel">
-        <div class="panel-title">Ask Luna</div>
-        <textarea id="ask-input" rows="6" placeholder="e.g., Is this bearish for the next 24h? Is this a rug? What coin is this?"></textarea>
-        <div class="ask-actions">
-          <button id="ask-btn" class="btn">Ask</button>
-          <span class="hint">Symbol: <code id="ask-symbol">{{ symbol }}</code> • TF: <code id="ask-tf">{{ tf }}</code></span>
-        </div>
+    <!-- RSI -->
+    <div class="tile">
+      <div class="tile-head"><div class="title">RSI</div><button class="btn-expand" data-key="RSI">Expand</button></div>
+      <div class="tile-body">{{ tiles["RSI"]|safe }}</div>
+    </div>
+
+    <!-- MCAP -->
+    <div class="tile">
+      <div class="tile-head"><div class="title">Market Cap</div><button class="btn-expand" data-key="MCAP">Expand</button></div>
+      <div class="tile-body">{{ tiles["MCAP"]|safe }}</div>
+    </div>
+
+    <!-- MACD -->
+    <div class="tile">
+      <div class="tile-head"><div class="title">MACD</div><button class="btn-expand" data-key="MACD">Expand</button></div>
+      <div class="tile-body">{{ tiles["MACD"]|safe }}</div>
+    </div>
+
+    <!-- OBV -->
+    <div class="tile">
+      <div class="tile-head"><div class="title">OBV</div><button class="btn-expand" data-key="OBV">Expand</button></div>
+      <div class="tile-body">{{ tiles["OBV"]|safe }}</div>
+    </div>
+
+    <!-- BANDS -->
+    <div class="tile">
+      <div class="tile-head"><div class="title">Bands</div><button class="btn-expand" data-key="BANDS">Expand</button></div>
+      <div class="tile-body">{{ tiles["BANDS"]|safe }}</div>
+    </div>
+
+    <!-- VOL -->
+    <div class="tile">
+      <div class="tile-head"><div class="title">Volume Trend</div><button class="btn-expand" data-key="VOL">Expand</button></div>
+      <div class="tile-body">{{ tiles["VOL"]|safe }}</div>
+    </div>
+
+    <!-- LIQ -->
+    <div class="tile">
+      <div class="tile-head"><div class="title">Liquidity</div><button class="btn-expand" data-key="LIQ">Expand</button></div>
+      <div class="tile-body">{{ tiles["LIQ"]|safe }}</div>
+    </div>
+
+    <!-- ADX -->
+    <div class="tile">
+      <div class="tile-head"><div class="title">ADX</div><button class="btn-expand" data-key="ADX">Expand</button></div>
+      <div class="tile-body">{{ tiles["ADX"]|safe }}</div>
+    </div>
+
+    <!-- ATR -->
+    <div class="tile">
+      <div class="tile-head"><div class="title">ATR</div><button class="btn-expand" data-key="ATR">Expand</button></div>
+      <div class="tile-body">{{ tiles["ATR"]|safe }}</div>
+    </div>
+
+    <!-- ALT -->
+    <div class="tile">
+      <div class="tile-head"><div class="title">ALT (Momentum)</div><button class="btn-expand" data-key="ALT">Expand</button></div>
+      <div class="tile-body">{{ tiles["ALT"]|safe }}</div>
+    </div>
+  </div>
+
+  <!-- TLDR -->
+  <div class="tldr">{{ tldr_line }}</div>
+
+  <!-- QA split -->
+  <div class="qa">
+    <div class="answer">
+      <div class="head">Luna’s answer</div>
+      <div id="answerText">Ask something on the right — I’ll keep it simple but detailed.</div>
+    </div>
+    <div class="ask">
+      <div class="head">Ask Luna</div>
+      <textarea id="askBox" placeholder="e.g., Is this bearish for the next 24h? Is this a rug? What coin is this?"></textarea>
+      <div class="ask-row">
+        <button id="askBtn" class="btn">Ask</button>
+        <div class="small">Symbol: {{ ui_name or symbol }} • TF: {{ tf }}</div>
       </div>
-    </section>
+    </div>
+  </div>
 
-  </main>
+  <!-- expand modal -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-head">
+        <div class="modal-title">Detail</div>
+        <button id="modalClose" class="btn">Close</button>
+      </div>
+      <div id="modalChart" class="modal-chart"></div>
+      <div id="modalTalk" class="modal-talk"></div>
+    </div>
+  </div>
 
+  <script>
+    const SYMBOL = (new URLSearchParams(window.location.search)).get('symbol') || '{{symbol}}';
+    const TF     = (new URLSearchParams(window.location.search)).get('tf') || '{{tf}}';
+  </script>
   <script src="/static/js/control_panel.js"></script>
 </body>
 </html>
