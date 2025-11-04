@@ -36,3 +36,20 @@
 .modal-title{font-weight:700}
 .modal-chart{padding:8px}
 .modal-talk{padding:10px 12px;color:#bcd0e4;border-top:1px solid #1b2638}
+
+/* non-destructive micro styles for the add-on buttons */
+.luna-mini-btn {
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 8px;
+  color: #e5e7eb;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.9;
+}
+.luna-mini-btn:hover {
+  opacity: 1.0;
+  background: #111827;
+}
