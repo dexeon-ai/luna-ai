@@ -893,10 +893,17 @@ def resample_for_tf(df: pd.DataFrame, tf: str) -> pd.DataFrame:
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
     df = df.dropna(subset=["timestamp"]).sort_values("timestamp")
     idx = df.set_index("timestamp")
-    agg = idx.resample(freq).agg({
-        "open":"first", "high":"max", "low":"min", "close":"last", "volume":"sum",
-        "market_cap":"last"
-    }).ffill()
+agg_dict = {
+    "open": "first",
+    "high": "max",
+    "low": "min",
+    "close": "last",
+    "volume": "sum"
+}
+if "market_cap" in df.columns:
+    agg_dict["market_cap"] = "last"
+
+agg = idx.resample(freq).agg(agg_dict).ffill()
     agg = agg.reset_index()
     return agg
 
