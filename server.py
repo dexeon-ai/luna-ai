@@ -457,6 +457,11 @@ def safe_fetch(url: str, params: dict | None = None, retries: int = 3, timeout: 
             time.sleep(1)
     return None
 
+def safe_resample(df: pd.DataFrame, tf: str) -> pd.DataFrame:
+    if df is None or df.empty:
+        return df
+    return resample_for_tf(df, tf)
+
 def ds_get(path: str, params: Optional[dict] = None) -> Optional[dict | list]:
     r = safe_fetch(f"{DS_BASE}{path}", params=params)
     if r and r.status_code == 200:
