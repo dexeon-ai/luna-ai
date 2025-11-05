@@ -1,0 +1,111 @@
+:root{
+  --page-max: 1500px;
+  --gap: 12px;
+  --tile-big-h: 420px;   /* JS will update this from the slider */
+  --tile-small-h: 160px;
+  --bg: #0c1220;
+  --bg2:#0f1628;
+  --ink:#e8f0ff;
+  --muted:#94a3b8;
+  --chip:#1a2236;
+  --accent:#4f7cff;
+  --ok:#36d399;
+  --bad:#f87272;
+  --border:#22314f;
+}
+
+*{box-sizing:border-box}
+body.luna{
+  margin:0; background:var(--bg);
+  color:var(--ink); font:14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+/* Topbar */
+.topbar{
+  max-width:var(--page-max); margin:16px auto 8px auto; padding:8px 12px;
+  display:flex; justify-content:space-between; align-items:center; gap:16px;
+}
+.topbar .brand{font-weight:700}
+.topbar .tfs{display:flex; gap:6px; flex-wrap:wrap; margin-left:12px}
+.chip{
+  background:var(--chip); border:1px solid var(--border); border-radius:8px; padding:6px 10px;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.chip.sel{outline:2px solid var(--accent)}
+.topbar .right{display:flex; align-items:center; gap:12px}
+.search{display:flex; gap:8px}
+.search input{width:280px; background:var(--bg2); border:1px solid var(--border); color:var(--ink); border-radius:8px; padding:6px 10px}
+.search select,.search button{background:var(--chip); color:var(--ink); border:1px solid var(--border); border-radius:8px; padding:6px 10px}
+.updated{color:var(--muted); font-size:12px}
+.height{display:flex; align-items:center; gap:6px}
+.height input{accent-color:var(--accent)}
+
+/* Strips */
+.perf-strip,.invest-strip{
+  max-width:var(--page-max); margin:0 auto 8px auto; display:flex; flex-wrap:wrap; gap:6px; padding:0 12px;
+}
+.chip.perf .lab{color:var(--muted); margin-right:4px}
+.chip.inv  .lab{color:var(--muted); margin-right:4px}
+.chip .val{font-weight:600}
+
+/* Grid 12 */
+.grid12{
+  max-width:var(--page-max); margin:0 auto; padding:0 12px;
+  display:grid; grid-template-columns:repeat(12, 1fr); grid-auto-rows:min-content; gap:var(--gap);
+}
+
+/* Tile skeleton */
+.tile{
+  background:var(--bg2); border:1px solid var(--border); border-radius:10px; overflow:hidden;
+  min-width:0;  /* prevents Plotly overflow */
+}
+.tile .head{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 10px; border-bottom:1px solid var(--border);
+}
+.tile .head .actions{display:flex; gap:8px}
+.tile .head .muted{
+  background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:8px; padding:4px 8px; cursor:pointer;
+}
+.tile .head .expand{
+  background:transparent; color:var(--ink); border:1px solid var(--border); border-radius:8px; padding:4px 8px; cursor:pointer;
+}
+.tile .body{padding:6px}
+
+/* Fixed placements (classic cockpit) */
+#tile-rsi   { grid-column: 1 / span 2; grid-row: 1 / span 2; height: var(--tile-big-h); }
+#tile-price { grid-column: 3 / span 8; grid-row: 1 / span 2; height: var(--tile-big-h); }
+#tile-mcap  { grid-column:11 / span 2; grid-row: 1 / span 2; height: var(--tile-big-h); }
+
+#tile-macd  { grid-column: 1 / span 2; grid-row: 3; height: var(--tile-small-h); }
+#tile-liq   { grid-column: 3 / span 2; grid-row: 3; height: var(--tile-small-h); }
+#tile-vol   { grid-column: 5 / span 2; grid-row: 3; height: var(--tile-small-h); }
+#tile-obv   { grid-column: 7 / span 2; grid-row: 3; height: var(--tile-small-h); }
+#tile-adx   { grid-column: 9 / span 2; grid-row: 3; height: var(--tile-small-h); }
+#tile-bands { grid-column:11 / span 2; grid-row: 3; height: var(--tile-small-h); }
+
+#tile-atr   { grid-column: 1 / span 6; grid-row: 4; height: var(--tile-small-h); }
+#tile-alt   { grid-column: 7 / span 6; grid-row: 4; height: var(--tile-small-h); }
+
+/* TLDR + Ask */
+.tldr{
+  max-width:var(--page-max); margin:8px auto 10px auto; padding:10px 14px; color:#cfe1ff;
+  border:1px solid var(--border); border-radius:10px; background:#0b1426;
+}
+.ask{
+  max-width:var(--page-max); margin:0 auto 24px auto; padding:10px 14px; border:1px solid var(--border); border-radius:10px; background:#0b1426;
+}
+.ask .head{margin-bottom:8px; font-weight:600}
+.ask .row{display:flex; gap:8px; align-items:center}
+.ask input{flex:1; background:var(--bg2); color:var(--ink); border:1px solid var(--border); border-radius:8px; padding:8px 10px}
+.ask button{background:var(--chip); color:var(--ink); border:1px solid var(--border); border-radius:8px; padding:8px 12px; cursor:pointer}
+.ask .muted{color:var(--muted)}
+.ask .small.grey{color:var(--muted); font-size:12px}
+.answer{margin-top:10px; color:#e9f2ff}
+
+/* Modal */
+.modal{position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center}
+.modal.hidden{display:none}
+.dialog{background:#0b1426; border:1px solid var(--border); border-radius:10px; width:min(1120px, 96vw); height:min(680px, 92vh); padding:10px}
+.dialog .close{float:right; background:transparent; color:#fff; border:1px solid var(--border); border-radius:8px; padding:4px 8px; cursor:pointer}
+#modalPlot{width:100%; height:calc(100% - 40px)}

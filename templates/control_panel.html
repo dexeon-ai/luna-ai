@@ -4,227 +4,172 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Luna AI — Control Panel</title>
-  <link rel="stylesheet" href="/static/css/control_panel.css"/>
-  <!-- Plotly (server sends include_plotlyjs=False) -->
-  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
-  <style>
-    .bar {display:flex; gap:.75rem; align-items:center; margin:10px 8px;}
-    .muted {opacity:.7}
-    .tiles {display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; padding:8px;}
-    .tile {background:#0f1220; border:1px solid #1c2240; border-radius:8px; padding:8px; position:relative;}
-    .tile-title {display:flex; justify-content:space-between; align-items:center; margin:0 0 6px 0; font-size:14px;}
-    .tile .expand {position:absolute; right:8px; top:8px;}
-    .row {display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding:8px;}
-    .tldr {background:#0f1220; border:1px solid #1c2240; border-radius:8px; padding:10px; margin:8px;}
-    #answer {white-space:pre-wrap; min-height:120px}
-    .btn {background:#273363; color:#e5eeff; border:1px solid #334285; border-radius:6px; padding:6px 10px; cursor:pointer}
-    .btn:disabled{opacity:.6; cursor:not-allowed}
-    input, select, textarea {background:#0b0e1a; color:#e5eeff; border:1px solid #273363; border-radius:6px; padding:6px 8px;}
-    textarea {width:100%; min-height:100px;}
-  </style>
+
+  <!-- Plotly (needed before tiles because tiles contain inline init from pio.to_html) -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+
+  <link rel="stylesheet" href="/static/app.css?v=2025-11-05"/>
 </head>
-<body>
+<body class="luna">
 
-  <!-- Header bar -->
-  <div class="bar">
-    <div><strong>Luna AI — Control Panel</strong></div>
-    <div class="muted">Updated UTC {{ updated }}</div>
-  </div>
+  <!-- ===== Top bar ===== -->
+  <header class="topbar">
+    <div class="left">
+      <div class="brand">Luna AI — <span>Control Panel</span></div>
 
-  <!-- Symbol entry + timeframe -->
-  <div class="bar">
-    <form id="navForm" action="/analyze" method="get" style="display:flex; gap:.5rem;">
-      <input type="text" name="symbol" id="symbolInput" value="{{ symbol_raw }}" placeholder="Search coin or contract…" style="min-width:360px"/>
-      <select name="tf" id="tfSelect">
-        {% for t in ["1h","4h","8h","12h","24h","7d","30d","1y"] %}
-          <option value="{{t}}" {% if tf==t %}selected{% endif %}>{{t}}</option>
+      <div class="tfs">
+        {% set TFs = ['1h','4h','8h','12h','24h','7d','30d','3mo','6mo','9mo','1y','all'] %}
+        {% for t in TFs %}
+          <a class="chip {{ 'sel' if tf==t else '' }}" href="/analyze?symbol={{ symbol_raw|default(symbol, true)|urlencode }}&tf={{ t }}">{{ t }}</a>
         {% endfor %}
-      </select>
-      <button class="btn" type="submit">Go</button>
-    </form>
-    {% if token_label %}
-      <div class="muted">Viewing: <strong>{{ token_label }}</strong>{% if contract %} <span class="muted">• {{ contract }}</span>{% endif %}</div>
-    {% else %}
-      <div class="muted">Viewing: <strong>{{ symbol }}</strong></div>
-    {% endif %}
-  </div>
+      </div>
+    </div>
 
-  <!-- Performance pills (simple text line; your JS/CSS can keep the same look) -->
-  <div class="bar muted" id="pills">
-    {% for k,v in performance.items() %}
-      <span>{{k}}: {% if v is not none %}{{ '%.2f'|format(v) }}%{% else %}—{% endif %}</span>
+    <div class="right">
+      <form class="search" action="/analyze" method="get">
+        <input type="text" name="symbol" placeholder="Search coin / contract…" value="{{ symbol_raw|default(symbol, true) }}" />
+        <select name="tf">
+          {% for t in TFs %}
+            <option value="{{ t }}" {{ 'selected' if tf==t else '' }}>{{ t }}</option>
+          {% endfor %}
+        </select>
+        <button class="go" type="submit">Go</button>
+      </form>
+
+      <div class="updated">Updated: {{ updated }}</div>
+
+      <div class="height">
+        <label for="hslider">Height</label>
+        <input id="hslider" type="range" min="320" max="560" step="10" value="420"/>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Perf strip ===== -->
+  <section class="perf-strip">
+    {% macro pct(v) -%}{% if v is none %}n/a{% else %}{{ '%+.2f%%'|format(v) }}{% endif %}{%- endmacro %}
+    {% set labels = ['1h','4h','8h','12h','24h','7d','30d','3mo','6mo','9mo','1y','all'] %}
+    {% for k in labels %}
+      <div class="chip perf">
+        <div class="lab">{{ k }}</div>
+        <div class="val">{{ pct(performance.get(k)) }}</div>
+      </div>
     {% endfor %}
-  </div>
+  </section>
 
-  <!-- Grid of tiles: big PRICE left + RSI + MCAP to the right; beneath: the small tiles -->
-  <div class="tiles">
-    <!-- Big composite chart -->
-    <div class="tile" style="grid-column: 1 / span 2;">
-      <div class="tile-title">
-        <span>{{ token_label or symbol }} — Charts</span>
-        <button class="btn expand" data-key="PRICE">Expand</button>
+  <!-- ===== Investment strip (optional) ===== -->
+  <section class="invest-strip">
+    {% for k,v in investment.items() %}
+      <div class="chip inv">
+        <div class="lab">{{ k }}</div>
+        <div class="val">${{ '%.2f'|format(v/1000.0) }}k</div>
       </div>
-      <div id="tile-PRICE">{{ tiles["PRICE"]|safe }}</div>
+    {% endfor %}
+  </section>
+
+  <!-- ===== Grid ===== -->
+  <main class="grid12">
+
+    <!-- Left small: RSI -->
+    <div class="tile small" id="tile-rsi">
+      <div class="head"><span>RSI</span><button class="expand" data-key="RSI">Expand</button></div>
+      <div class="body">{{ tiles['RSI']|safe }}</div>
     </div>
 
-    <div class="tile">
-      <div class="tile-title">
-        <span>RSI</span>
-        <button class="btn expand" data-key="RSI">Expand</button>
+    <!-- Center big: PRICE -->
+    <div class="tile big" id="tile-price">
+      <div class="head">
+        <span class="symbol">{{ symbol }}</span>
+        <div class="actions">
+          <button id="toggleCap" class="muted" title="Toggle Cap/Price">Cap/Price</button>
+          <button id="toggleScale" class="muted" title="Toggle Log/Lin">Log/Lin</button>
+          <button class="expand" data-key="PRICE">Expand</button>
+        </div>
       </div>
-      <div id="tile-RSI">{{ tiles["RSI"]|safe }}</div>
+      <div class="body">{{ tiles['PRICE']|safe }}</div>
     </div>
 
-    <div class="tile">
-      <div class="tile-title">
-        <span>Market Cap</span>
-        <button class="btn expand" data-key="MCAP">Expand</button>
-      </div>
-      <div id="tile-MCAP">{{ tiles["MCAP"]|safe }}</div>
+    <!-- Right small: Market Cap -->
+    <div class="tile small" id="tile-mcap">
+      <div class="head"><span>Market Cap</span><button class="expand" data-key="MCAP">Expand</button></div>
+      <div class="body">{{ tiles['MCAP']|safe }}</div>
     </div>
 
-    <!-- row 2 -->
-    <div class="tile">
-      <div class="tile-title">
-        <span>MACD</span>
-        <button class="btn expand" data-key="MACD">Expand</button>
-      </div>
-      <div id="tile-MACD">{{ tiles["MACD"]|safe }}</div>
+    <!-- Row of small tiles -->
+    <div class="tile small" id="tile-macd">
+      <div class="head"><span>MACD</span><button class="expand" data-key="MACD">Expand</button></div>
+      <div class="body">{{ tiles['MACD']|safe }}</div>
     </div>
 
-    <div class="tile">
-      <div class="tile-title">
-        <span>OBV</span>
-        <button class="btn expand" data-key="OBV">Expand</button>
-      </div>
-      <div id="tile-OBV">{{ tiles["OBV"]|safe }}</div>
+    <div class="tile small" id="tile-liq">
+      <div class="head"><span>Liquidity</span><button class="expand" data-key="LIQ">Expand</button></div>
+      <div class="body">{{ tiles['LIQ']|safe }}</div>
     </div>
 
-    <div class="tile">
-      <div class="tile-title">
-        <span>Bands</span>
-        <button class="btn expand" data-key="BANDS">Expand</button>
-      </div>
-      <div id="tile-BANDS">{{ tiles["BANDS"]|safe }}</div>
+    <div class="tile small" id="tile-vol">
+      <div class="head"><span>Volume Trend</span><button class="expand" data-key="VOL">Expand</button></div>
+      <div class="body">{{ tiles['VOL']|safe }}</div>
     </div>
 
-    <div class="tile">
-      <div class="tile-title">
-        <span>Volume Trend</span>
-        <button class="btn expand" data-key="VOL">Expand</button>
-      </div>
-      <div id="tile-VOL">{{ tiles["VOL"]|safe }}</div>
+    <div class="tile small" id="tile-obv">
+      <div class="head"><span>OBV</span><button class="expand" data-key="OBV">Expand</button></div>
+      <div class="body">{{ tiles['OBV']|safe }}</div>
     </div>
 
-    <div class="tile">
-      <div class="tile-title">
-        <span>Liquidity</span>
-        <button class="btn expand" data-key="LIQ">Expand</button>
-      </div>
-      <div id="tile-LIQ">{{ tiles["LIQ"]|safe }}</div>
+    <div class="tile small" id="tile-adx">
+      <div class="head"><span>ADX</span><button class="expand" data-key="ADX">Expand</button></div>
+      <div class="body">{{ tiles['ADX']|safe }}</div>
     </div>
 
-    <div class="tile">
-      <div class="tile-title">
-        <span>ADX</span>
-        <button class="btn expand" data-key="ADX">Expand</button>
-      </div>
-      <div id="tile-ADX">{{ tiles["ADX"]|safe }}</div>
+    <div class="tile small" id="tile-bands">
+      <div class="head"><span>Bands</span><button class="expand" data-key="BANDS">Expand</button></div>
+      <div class="body">{{ tiles['BANDS']|safe }}</div>
     </div>
 
-    <div class="tile">
-      <div class="tile-title">
-        <span>ATR</span>
-        <button class="btn expand" data-key="ATR">Expand</button>
-      </div>
-      <div id="tile-ATR">{{ tiles["ATR"]|safe }}</div>
+    <!-- ALT momentum & ATR (optional extras) -->
+    <div class="tile small" id="tile-atr">
+      <div class="head"><span>ATR</span><button class="expand" data-key="ATR">Expand</button></div>
+      <div class="body">{{ tiles['ATR']|safe }}</div>
     </div>
 
-    <div class="tile">
-      <div class="tile-title">
-        <span>ALT (Momentum)</span>
-        <button class="btn expand" data-key="ALT">Expand</button>
-      </div>
-      <div id="tile-ALT">{{ tiles["ALT"]|safe }}</div>
+    <div class="tile small" id="tile-alt">
+      <div class="head"><span>ALT (Momentum)</span><button class="expand" data-key="ALT">Expand</button></div>
+      <div class="body">{{ tiles['ALT']|safe }}</div>
     </div>
-  </div>
 
-  <!-- TL;DR -->
-  <div class="tldr">
+  </main>
+
+  <!-- ===== TL;DR ===== -->
+  <section class="tldr">
     {{ tldr_line }}
+  </section>
+
+  <!-- ===== Ask Luna ===== -->
+  <section class="ask">
+    <div class="head">Ask Luna about {{ symbol }}</div>
+    <div class="row">
+      <input id="askInput" type="text" placeholder="e.g., Is this bearish next 24h? Is this a rug? What coin is this?"/>
+      <button id="askSend">Send</button>
+      <button id="askReset" class="muted">Reset</button>
+      <span class="small grey">0 / 21</span>
+    </div>
+    <div id="answer" class="answer"></div>
+  </section>
+
+  <!-- ===== Modal for Expand ===== -->
+  <div id="modal" class="modal hidden">
+    <div class="dialog">
+      <button id="modalClose" class="close">×</button>
+      <div id="modalPlot"></div>
+    </div>
   </div>
 
-  <!-- Q&A row -->
-  <div class="row">
-    <div class="tile">
-      <div class="tile-title"><span>Luna’s answer</span></div>
-      <div id="answer" class="muted">Ask something on the right — I’ll keep it simple but detailed.</div>
-    </div>
-    <div class="tile">
-      <div class="tile-title"><span>Ask Luna</span></div>
-      <textarea id="question" placeholder="e.g., Is this bearish for the next 24h? Is this a rug? What coin is this?"></textarea>
-      <div style="display:flex; justify-content:space-between; margin-top:8px;">
-        <small class="muted">Symbol: {{ symbol_raw }} • TF: {{ tf }}</small>
-        <button id="askBtn" class="btn">Ask</button>
-      </div>
-    </div>
-  </div>
-
+  <!-- Environment for JS -->
   <script>
-    <!-- BEFORE -->
-  const SYMBOL_RAW = {{ symbol_raw|default(symbol, true)|tojson }};
-
-    <!-- AFTER (falls back to symbol if symbol_raw missing) -->
-  const SYMBOL_RAW = {{ (symbol_raw or symbol)|tojson }};
-
-
-    // Expand buttons -> /expand_json
-    document.querySelectorAll('.expand').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const key = btn.dataset.key;
-        try {
-          btn.disabled = true;
-          const url = `/expand_json?symbol=${encodeURIComponent(SYMBOL_RAW)}&tf=${encodeURIComponent(TF)}&key=${encodeURIComponent(key)}`;
-          const r = await fetch(url);
-          const js = await r.json();
-          const el = document.getElementById(`tile-${key}`);
-          if (js && js.fig && el) {
-            // Replace the tile content with a fresh plot
-            const host = document.createElement('div');
-            el.innerHTML = "";
-            el.appendChild(host);
-            Plotly.newPlot(host, js.fig.data, js.fig.layout || {}, {displayModeBar: true, responsive: true});
-          }
-        } catch(err) {
-          console.error(err);
-          alert('Expand failed.');
-        } finally {
-          btn.disabled = false;
-        }
-      });
-    });
-
-    // Ask Luna -> /api/luna
-    const askBtn = document.getElementById('askBtn');
-    askBtn.addEventListener('click', async () => {
-      const q = (document.getElementById('question').value || "").trim();
-      if (!q) return;
-      askBtn.disabled = true;
-      try {
-        const r = await fetch('/api/luna', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({symbol: SYMBOL_RAW, tf: TF, text: q})
-        });
-        const js = await r.json();
-        document.getElementById('answer').textContent = js.reply || '—';
-      } catch(e) {
-        console.error(e);
-        document.getElementById('answer').textContent = 'Error. Try again.';
-      } finally {
-        askBtn.disabled = false;
-      }
-    });
+    const SYMBOL_RAW = {{ symbol_raw|default(symbol, true)|tojson }};
+    const TF         = {{ tf|tojson }};
+    const URL_BASE   = "/expand_json";
   </script>
+  <script src="/static/app.js?v=2025-11-05"></script>
 </body>
 </html>
