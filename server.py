@@ -195,6 +195,14 @@ def _norm_for_cache(s: str) -> str:
 def _disp_symbol(s: str) -> str:
     return s if is_address(s) else s.upper().strip()
 
+# NEW: treat long alphanumerics as “contract‑ish” slugs so we try DS→GT before CC
+LONG_ALNUM_RE = re.compile(r"^[A-Za-z0-9]{30,}$")
+def looks_contractish(q: str) -> bool:
+    s = (q or "").strip()
+    if not s: return False
+    if is_address(s): return True
+    return bool(LONG_ALNUM_RE.match(s))
+
 # ---------- cache io ----------
 def _frame_path(symbol: str, ext: str) -> Path:
     return FRAMES_DIR / f"{_norm_for_cache(symbol)}.{ext}"
@@ -436,7 +444,7 @@ DS_TO_GT = {
     "sui": "sui",
     "ton": "ton",
     "blast": "blast",
-    "pulsechain": "pulsechain",        # ✅ add this line
+    "pulsechain": "pulsechain",        # ✅
 }
 
 PREFERRED_QUOTES = {"USDC","USDT","SOL","ETH","WETH","USD"}
@@ -538,7 +546,7 @@ def pick_chain_tiebreaker(pairs: List[dict]) -> Optional[str]:
     # chain priority list (only used if within 2x)
     PRIORITY = ["solana","ethereum","base","arbitrum","bsc","polygon","optimism","avalanche","fantom","linea","zksync","blast","sui","ton"]
     # within 2x? respect priority order
-    within_2x = {ch: v for ch, v in vols if v_max <= 2*(v_max if ch==ch_max else v)}
+    within_2x = {ch: v for ch, v in vols if v >= (v_max / 2.0)}
     if within_2x and len(within_2x) > 1:
         for ch in PRIORITY:
             if ch in within_2x:
@@ -1093,19 +1101,35 @@ def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd
         # Try to add CG caps (point series) if missing market_cap
         if (df is None or df.empty) and best_pair is None:
             LOG.info("[Hydrate] DS/GT empty; trying CG series for %s", raw)
-            df = cg_series(raw, days=365) or cg_series(raw, days=30)
+            tmp = cg_series(raw, days=365)
+            if tmp is None or tmp.empty:
+                tmp = cg_series(raw, days=30)
+            df = tmp
         # compute indicators later after optional cap scaling
     else:
-        # CC symbol fetch
-        m = cc_hist(s_for_cache, "minute", limit=360)
-        h = cc_hist(s_for_cache, "hour",   limit=24*30)
-        d = cc_hist(s_for_cache, "day",    limit=365)
-        if (m is None or m.empty) and (h is None or h.empty) and (d is None or d.empty):
-            LOG.info("[Hydrate] CC empty → CG fallback for %s", s_for_cache)
-            df = cg_series(raw, days=365) or cg_series(raw, days=30)
-        else:
-            parts = [x for x in (d,h,m) if x is not None and not x.empty]
-            df = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+        # NEW: if it looks like a contract slug (long alnum), try DS→GT first
+        if looks_contractish(s_for_cache):
+            LOG.info("[Hydrate] %s looks contract-ish → DS/GT first", s_for_cache)
+            df_try, best_try = ds_series_via_gt(raw, tf_for_fetch)
+            if df_try is not None and not df_try.empty:
+                df = df_try
+            else:
+                LOG.info("[Hydrate] DS/GT empty for %s → continuing to CC", s_for_cache)
+
+        # If still empty, do the CC→CG path for real symbols
+        if df is None or df.empty:
+            m = cc_hist(s_for_cache, "minute", limit=360)
+            h = cc_hist(s_for_cache, "hour",   limit=24*30)
+            d = cc_hist(s_for_cache, "day",    limit=365)
+            if (m is None or m.empty) and (h is None or h.empty) and (d is None or d.empty):
+                LOG.info("[Hydrate] CC empty → CG fallback for %s", s_for_cache)
+                tmp = cg_series(raw, days=365)
+                if tmp is None or tmp.empty:
+                    tmp = cg_series(raw, days=30)
+                df = tmp
+            else:
+                parts = [x for x in (d,h,m) if x is not None and not x.empty]
+                df = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
     if df is None or df.empty:
         cached = load_cached_frame(s_for_cache)
