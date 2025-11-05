@@ -208,37 +208,51 @@ def _frame_path(symbol: str, ext: str) -> Path:
     return FRAMES_DIR / f"{_norm_for_cache(symbol)}.{ext}"
 
 def save_frame(symbol: str, df: pd.DataFrame) -> None:
-    if df is None or df.empty: return
-    p_parq = _frame_path(symbol, "parquet")
-    p_csv  = _frame_path(symbol, "csv")
-    try:
-        df.to_parquet(p_parq, index=False)
-        return
-    except Exception as e:
-        LOG.warning("[Cache] Parquet save failed (%s), fallback CSV.", e)
-    try:
-        df.to_csv(p_csv, index=False)
-    except Exception as e:
-        LOG.warning("[Cache] CSV save failed: %s", e)
+    if df is None or df.empty:
+    cached = load_cached_frame(s_for_cache)
+    if not cached.empty:
+        _touch_fetch(s_for_cache)
+            LOG.warning("[Hydrate] %s no data after routing — synthesizing placeholder frame", s_for_cache)
 
-def load_cached_frame(symbol: str) -> pd.DataFrame:
-    p_parq = _frame_path(symbol, "parquet")
-    p_csv  = _frame_path(symbol, "csv")
-    if p_parq.exists():
-        try:
-            df = pd.read_parquet(p_parq)
-            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
-            return df.dropna(subset=["timestamp"]).sort_values("timestamp").reset_index(drop=True)
-        except Exception:
-            pass
-    if p_csv.exists():
-        try:
-            df = pd.read_csv(p_csv)
-            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
-            return df.dropna(subset=["timestamp"]).sort_values("timestamp").reset_index(drop=True)
-        except Exception:
-            pass
-    return pd.DataFrame()
+    # --- DS single-point fallback if we have any meta ---
+    price_guess = None
+    if meta:
+        price_guess = meta.get("priceUsd") or None
+        if not price_guess:
+            try:
+                price_guess = float((meta.get("marketCap") or 0) / (meta.get("liq_usd") or 1))
+            except Exception:
+                price_guess = 0.0
+
+    # synthesize 1-bar dataframe so page renders
+    df = pd.DataFrame([{
+        "timestamp": utcnow(),
+        "open": price_guess or 0.0,
+        "high": price_guess or 0.0,
+        "low":  price_guess or 0.0,
+        "close": price_guess or 0.0,
+        "volume": meta.get("vol_h24") if meta else 0.0,
+        "market_cap": meta.get("marketCap") or meta.get("fdv") or 0.0
+    }])
+
+    LOG.info("[Hydrate] Synthesized placeholder bar for %s", s_for_cache)
+
+    # --- NEW emergency fallback: synthesize single candle from DS meta ---
+    if meta and meta.get("marketCap") and meta.get("liq_usd"):
+        LOG.warning("[Hydrate] %s DS fallback — synthesizing 1-bar frame", s_for_cache)
+        now = utcnow()
+        df = pd.DataFrame([{
+            "timestamp": now,
+            "open": meta.get("priceUsd") or meta.get("marketCap")/meta.get("liq_usd"),
+            "high": meta.get("priceUsd") or meta.get("marketCap")/meta.get("liq_usd"),
+            "low":  meta.get("priceUsd") or meta.get("marketCap")/meta.get("liq_usd"),
+            "close": meta.get("priceUsd") or meta.get("marketCap")/meta.get("liq_usd"),
+            "volume": meta.get("vol_h24") or 0,
+            "market_cap": meta.get("marketCap") or meta.get("fdv") or 0
+        }])
+    else:
+        LOG.warning("[Hydrate] %s no data after routing", s_for_cache)
+        return pd.DataFrame()
 
 # ---------- CryptoCompare (symbols only) ----------
 CC_BASE = "https://min-api.cryptocompare.com/data"
@@ -1201,6 +1215,8 @@ def fig_price(df: pd.DataFrame, symbol: str, y_mode: str, log_scale: bool) -> go
     y_mode: 'price' or 'cap'
     """
     fig = make_subplots(rows=3, cols=1, shared_xaxes=True, row_heights=[0.64, 0.22, 0.14], vertical_spacing=0.03)
+    if len(df) == 1:
+    fig.add_annotation(text="Live price only — no OHLC data yet", showarrow=False, xref="paper", yref="paper", x=0.5, y=0.5)
 
     # pick series
     if y_mode == "cap" and "market_cap" in df.columns and not pd.isna(df["market_cap"]).all():
