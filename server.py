@@ -887,25 +887,89 @@ def slice_df(df: pd.DataFrame, tf: str) -> pd.DataFrame:
     return out
 
 def resample_for_tf(df: pd.DataFrame, tf: str) -> pd.DataFrame:
-    if df.empty or "timestamp" not in df.columns: return df
-    freq = RESAMPLE_BY_TF.get(tf, "1H")
-    df = df.copy()
-    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
-    df = df.dropna(subset=["timestamp"]).sort_values("timestamp")
-    idx = df.set_index("timestamp")
-agg_dict = {
-    "open": "first",
-    "high": "max",
-    "low": "min",
-    "close": "last",
-    "volume": "sum"
-}
-if "market_cap" in df.columns:
-    agg_dict["market_cap"] = "last"
+    """
+    Robust resampler for any candle shape:
+      - Works if some columns are missing (e.g., no market_cap, no volume)
+      - Synthesizes O/H/L if only 'close' is present
+      - Chooses frequency by UI timeframe
+      - Never raises KeyError if columns are absent
+    """
+    if df is None or df.empty:
+        return df
 
-agg = idx.resample(freq).agg(agg_dict).ffill()
-    agg = agg.reset_index()
-    return agg
+    if "timestamp" not in df.columns:
+        return df
+
+    out = df.copy()
+
+    # Normalize timestamps (supports seconds or ms)
+    def _to_ms(ts):
+        try:
+            t = float(ts)
+            return int(t * 1000) if t < 1e10 else int(t)
+        except Exception:
+            return ts
+
+    out["timestamp"] = pd.to_datetime(out["timestamp"].apply(_to_ms), unit="ms", utc=True, errors="coerce")
+    out = out.dropna(subset=["timestamp"]).sort_values("timestamp").reset_index(drop=True)
+
+    if out.empty:
+        return out
+
+    # If only 'close' exists, synthesize minimal OHLC for plotting/indicators
+    if "close" in out.columns:
+        if "open" not in out.columns or out["open"].isna().all():
+            out["open"] = out["close"].shift(1).fillna(out["close"])
+        if "high" not in out.columns:
+            out["high"] = out[["open", "close"]].max(axis=1)
+        if "low" not in out.columns:
+            out["low"] = out[["open", "close"]].min(axis=1)
+
+    # Pick resample frequency by UI timeframe
+    FREQ_MAP = {
+        "1h": "1T",   # 1 minute
+        "4h": "5T",   # 5 minutes
+        "8h": "5T",
+        "12h": "15T", # 15 minutes
+        "24h": "15T",
+        "7d": "1H",
+        "30d": "4H",
+        "1y": "1D",
+        "all": "1D",
+    }
+    freq = FREQ_MAP.get(tf, "1H")
+
+    idx = out.set_index("timestamp")
+
+    # Build aggregation dict ONLY for columns that exist
+    agg_dict = {}
+    if "open" in idx.columns:  agg_dict["open"]  = "first"
+    if "high" in idx.columns:  agg_dict["high"]  = "max"
+    if "low"  in idx.columns:  agg_dict["low"]   = "min"
+    if "close" in idx.columns: agg_dict["close"] = "last"
+    if "volume" in idx.columns: agg_dict["volume"] = "sum"
+    if "market_cap" in idx.columns: agg_dict["market_cap"] = "last"
+
+    # If somehow nothing to aggregate, return original data
+    if not agg_dict:
+        return out
+
+    res = idx.resample(freq).agg(agg_dict)
+
+    # Forward-fill price fields; keep volume as-is, cap as last
+    for col in ("open", "high", "low", "close"):
+        if col in res.columns:
+            res[col] = res[col].ffill()
+
+    if "market_cap" in res.columns:
+        res["market_cap"] = res["market_cap"].ffill()
+
+    # If after resample we got nothing, fall back to original
+    if res is None or res.empty:
+        return out
+
+    res = res.ffill().reset_index()
+    return res
 
 def value_at_or_before(df: pd.DataFrame, hours: int, anchor: Optional[datetime]=None) -> Optional[float]:
     if df.empty: return None
