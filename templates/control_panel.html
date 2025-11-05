@@ -171,8 +171,12 @@
   </div>
 
   <script>
-    const SYMBOL_RAW = {{ symbol_raw|tojson }};
-    const TF        = {{ tf|tojson }};
+    <!-- BEFORE -->
+  const SYMBOL_RAW = {{ symbol_raw|default(symbol, true)|tojson }};
+
+    <!-- AFTER (falls back to symbol if symbol_raw missing) -->
+  const SYMBOL_RAW = {{ (symbol_raw or symbol)|tojson }};
+
 
     // Expand buttons -> /expand_json
     document.querySelectorAll('.expand').forEach(btn => {
