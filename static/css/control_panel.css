@@ -1,161 +1,167 @@
-/* Luna AI — control_panel.css (square tiles, fixed 6-col grid) */
+/* Luna AI — control_panel.css (square tiles, fixed 6‑col grid) */
 
-body {
-  background: #000 url("/static/img/space_center_bg.png") center center no-repeat fixed;
-  background-size: cover;
-  color: #cfe3ff;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+/* ---------- Base ---------- */
+body{
+  background:#000 url("/static/img/space_center_bg.png") center center no-repeat fixed;
+  background-size:cover;
+  color:#cfe3ff;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif;
 }
 
-/* dark overlay for readability */
-.shell::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.35);
-  z-index: -1;
+/* dark veil for readability over the busy bg */
+.shell::before{
+  content:"";
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.35);
+  z-index:-1;
 }
 
-/* --- shell / widths --- */
-.shell {
-  --gap: 14px;
-  --tile: 220px;            /* base square size */
-  --price-h: 360px;
-  max-width: calc(6 * var(--tile) + 7 * var(--gap)); /* 6 tiles + gaps */
-  margin: 22px auto 48px auto;
-  padding: 0 6px;
+/* ---------- Shell / width ---------- */
+.shell{
+  --gap:12px;               /* tile gap */
+  --tile:220px;             /* square tile edge */
+  --price-h:360px;          /* not used by CSS, price height is handled by Plotly, but kept for clarity */
+  max-width:calc(6 * var(--tile) + 7 * var(--gap)); /* 6 tiles + 7 gaps (edges included) */
+  margin:16px auto 32px auto;
+  padding:0 6px;
 }
 
-/* topbar fixed width like shell */
-.topbar {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.topbar strong { white-space: nowrap; }
-.topbar .updated { opacity:.8; font-size:12px; }
-
-/* symbol/tf/apply/refresh/search line */
-.go-line { display:flex; gap:8px; align-items:center; }
-.go-line input#searchBox {
-  width: 260px; padding:6px 10px; border-radius:10px; border:1px solid #2a3d56;
-  background:#0b1726; color:#cfe3ff;
-}
-
-/* --- panels --- */
-.panel {
-  background: rgba(11,23,38,.7);
-  border: 1px solid #22354d;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  box-shadow: 0 0 0 0 rgba(164,120,250,.3);
-}
-.panel:hover { box-shadow: 0 0 16px 0 rgba(164,120,250,.35); }
-
-.panel.row-compact {
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-}
-
-/* chips inline with header */
-.chips { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-.chip { padding:6px 10px; border-radius:14px; background:#0f2338; border:1px solid #1f2f46; font-size:12px; }
-
-.fg .bar { height:10px;background:#1a2b3e;border-radius:6px;overflow:hidden; }
-.fg .bar .fill { height:10px;background:#2ec27e;}
-
-/* --- grid --- */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(6, var(--tile));
-  grid-auto-rows: var(--tile);
-  gap: var(--gap);
-  margin: 10px 0 8px 0;
-}
-
-/* mega price tile occupies 4×wide and 2×tall */
-.tile--price { grid-column: span 4; grid-row: span 2; }
-
-/* --- tiles --- */
-.tile {
-  background: rgba(11,23,38,.72);
-  border: 1px solid #22354d;
-  border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: 0 0 0 0 rgba(164,120,250,.2);
-  transition: box-shadow .15s ease, transform .15s ease;
-}
-.tile:hover { box-shadow: 0 0 16px 0 rgba(164,120,250,.35); }
-
-.tile header {
-  display:flex; align-items:center; justify-content:space-between;
-  padding: 6px 10px; background:#0b1726; border-bottom:1px solid #22354d; font-size:12px;
-}
-.tile .expand {
-  font-size:12px; padding:4px 8px; background:#0b2237; border:1px solid #2a3d56; color:#cfe3ff; border-radius: 6px;
-}
-.tile__body { padding: 8px; height: calc(100% - 32px); }  /* keep chart area inside the square */
-
-/* Force Plotly to fit the tile (prevents tall graphs stretching the grid) */
-.js-plotly-plot, .plotly, .plot-container { width:100% !important; height:100% !important; }
-.svg-container { height: 100% !important; }
-
-/* --- Q&A --- */
-.panel.qa { height: 220px; display:flex; flex-direction:column; }
-#qaQ, #qaA { flex:1; overflow:auto; background:rgba(3,10,18,.35); border:1px solid #24364f; border-radius:8px; padding:8px; }
-.bubble { padding:5px 4px; font-size:13px; }
-.bubble.q { color:#cfe3ff; }
-.bubble.a { color:#a7e9c9; }
-.ask-line { display:flex; gap:8px; margin-top:8px; }
-.ask-line input { flex:1; padding:8px 10px; border-radius:10px; border:1px solid #29405d; background:#0a1a2b; color:#cfe3ff; }
-.ask-line button { padding:6px 12px; border-radius:8px; border:1px solid #2a3d56; background:#0b2237; color:#cfe3ff; }
-
-/* --- modal --- */
-#modal.hidden { display:none; }
-#modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:9999; }
-.m-box { width:min(1200px, 92vw); height:min(640px, 88vh); background:#0c1726; border:1px solid #203044; border-radius:10px; display:flex; flex-direction:column; }
-.m-head { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid #203044; }
-.m-body { display:flex; gap:12px; padding:12px; height:100%; }
-.m-chart { flex: 1 1 auto; min-width:0; }
-.m-aside { width:320px; max-width:40%; border-left:1px solid #203044; padding-left:12px; overflow:auto; }
-.m-aside h4 { margin:0 0 6px 0; }
-
-/* --- placeholder for empty tiles (stays full size; no collapsing) */
-.chart-missing {
-  display:flex;
+/* Topbar row (symbol/tf/apply/refresh/updated text) */
+.topbar{
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  gap:12px;
   align-items:center;
-  justify-content:center;
+  margin-bottom:10px;
+}
+.topbar strong{white-space:nowrap;}
+.topbar .updated{opacity:.8;font-size:12px;}
+
+/* Search line (if present) */
+.go-line{display:flex;gap:8px;align-items:center;}
+.go-line input#searchBox{
+  width:260px;padding:6px 10px;border-radius:10px;border:1px solid #2a3d56;
+  background:#0b1726;color:#cfe3ff;
+}
+
+/* ---------- Panels (Performance, Investment, Q&A, TL;DR) ---------- */
+.panel{
+  background:rgba(11,23,38,.72);
+  border:1px solid #22354d;
+  border-radius:10px;
+  padding:8px 10px;
+  margin-bottom:8px;
+  box-shadow:0 0 0 0 rgba(164,120,250,.0);
+  transition:box-shadow .15s ease;
+}
+.panel:hover{ box-shadow:0 0 16px 0 rgba(164,120,250,.28); }
+
+.panel.row-compact{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+
+/* chips under Performance/Investment */
+.chips{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.chip{padding:6px 10px;border-radius:14px;background:#0f2338;border:1px solid #1f2f46;font-size:12px;}
+
+.fg .bar{height:10px;background:#1a2b3e;border-radius:6px;overflow:hidden;}
+.fg .bar .fill{height:10px;background:#2ec27e;}
+
+/* ---------- Grid ---------- */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(6,var(--tile));
+  grid-auto-rows:var(--tile);
+  gap:var(--gap);
+  margin:10px 0 8px 0;
+}
+
+/* price chart spans 4x wide by 2x tall */
+.tile--price{ grid-column:span 4; grid-row:span 2; }
+
+/* ---------- Tiles ---------- */
+.tile{
+  background:rgba(11,23,38,.72);
+  border:1px solid #22354d;
+  border-radius:10px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 0 0 0 rgba(164,120,250,0);
+  transition:box-shadow .15s ease, transform .15s ease;
+}
+
+/* Stronger purple glow on hover/focus without layout shifts */
+.tile:hover,
+.tile:focus-within{
+  box-shadow:0 0 0 2px #a478fa, 0 0 26px 6px rgba(164,120,250,.45);
+}
+
+.tile header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 10px;
+  background:#0b1726;border-bottom:1px solid #22354d;
+  font-size:12px;
+}
+.tile .expand{
+  font-size:12px;padding:4px 8px;background:#0b2237;border:1px solid #2a3d56;color:#cfe3ff;border-radius:6px;
+}
+
+/* keep chart area inside the square */
+.tile__body{ padding:8px; height:calc(100% - 32px); }
+
+/* Force Plotly to fit tiles exactly */
+.js-plotly-plot,.plotly,.plot-container{ width:100% !important; height:100% !important; }
+.svg-container{ height:100% !important; }
+
+/* Give the big price plot a little bottom room for X‑axis ticks */
+.tile--price .tile__body{ padding-bottom:14px; }
+
+/* ---------- Placeholder (when a tile has no data) ---------- */
+.chart-missing{
+  display:flex;align-items:center;justify-content:center;
   height:100%;
   background:rgba(15,25,40,.4);
-  color:#586d86;
-  font-size:12px;
-  border-radius:8px;
+  color:#586d86;font-size:12px;border-radius:8px;
 }
 
-/* Stronger purple hover glow without changing layout */
-.tile { box-shadow: 0 0 0 0 rgba(164,120,250,0); }
-.tile:hover, .tile:focus-within {
-  box-shadow: 0 0 0 2px #a478fa, 0 0 26px 6px rgba(164,120,250,.45);
+/* ---------- Q&A ---------- */
+.panel.qa{
+  height:260px; /* a touch taller; uses pixels reclaimed from smaller margins */
+  display:flex;flex-direction:column;
+}
+#qaQ,#qaA{
+  flex:1;overflow:auto;background:rgba(3,10,18,.35);
+  border:1px solid #24364f;border-radius:8px;padding:8px;
+}
+.bubble{ padding:5px 4px;font-size:13px; }
+.bubble.q{ color:#cfe3ff; }
+.bubble.a{ color:#a7e9c9; }
+.ask-line{ display:flex;gap:8px;margin-top:8px; }
+.ask-line input{
+  flex:1;padding:8px 10px;border-radius:10px;border:1px solid #29405d;background:#0a1a2b;color:#cfe3ff;
+}
+.ask-line button{
+  padding:6px 12px;border-radius:8px;border:1px solid #2a3d56;background:#0b2237;color:#cfe3ff;
 }
 
-/* Price tile: give the plot a breath at the bottom for X ticks */
-.tile--price .tile__body { padding-bottom: 14px; }
-
-/* Make Plotly fill tile body cleanly */
-.js-plotly-plot, .plotly, .plot-container { width:100% !important; height:100% !important; }
-.svg-container { height: 100% !important; }
-
-/* --- Compact vertical tuning --- */
-.shell {
-  --gap: 10px;               /* reduce tile gaps (was 14px) */
-  margin: 12px auto 28px auto;  /* tighter top/bottom margins */
+/* ---------- Modal (Expand) ---------- */
+#modal.hidden{ display:none; }
+#modal{
+  position:fixed; inset:0; background:rgba(0,0,0,.6);
+  display:flex; align-items:center; justify-content:center; z-index:9999;
 }
+.m-box{
+  width:min(1200px,92vw); height:min(640px,88vh);
+  background:#0c1726; border:1px solid #203044; border-radius:10px;
+  display:flex;flex-direction:column;
+}
+.m-head{ display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #203044; }
+.m-body{ display:flex; gap:12px; padding:12px; height:100%; }
+.m-chart{ flex:1 1 auto; min-width:0; }
+.m-aside{ width:320px; max-width:40%; border-left:1px solid #203044; padding-left:12px; overflow:auto; }
+.m-aside h4{ margin:0 0 6px 0; }
 
-/* Slightly shorter panels */
-.panel.row-compact { padding: 6px 10px; margin-bottom: 6px; }
-
-/* Make Q&A area taller but use reclaimed pixels from gaps */
-.panel.qa { height: 260px; }  /* was 220px */
+/* ---------- Optional, space saver ----------
+   If you decide TL;DR is redundant, you can hide it by adding class "tldr" to its panel in HTML
+   and uncommenting the rule below. */
+/* .panel.tldr{ display:none; } */

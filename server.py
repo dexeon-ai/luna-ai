@@ -989,45 +989,76 @@ def token_meta_for(q: str) -> dict:
         LOG.warning("[Meta] DS failed: %s", e)
     return meta
 
+# --- tiny format helpers for small indicator numbers
+def fmt_sig(x, default="0.00"):
+    try:
+        x = float(x)
+        if x == 0: return "0.00"
+        m = abs(x)
+        if m >= 1:       return f"{x:.2f}"
+        if m >= 1e-2:    return f"{x:.4f}"
+        if m >= 1e-4:    return f"{x:.6f}"
+        return f"{x:.2e}"
+    except Exception:
+        return default
+
 def talk_for_key(key: str, df: pd.DataFrame) -> str:
     if df is None or df.empty:
-        return "No data for this timeframe."
+        return "No data available for this timeframe."
+
     last = df.iloc[-1]
     try:
         if key == "RSI":
             v = to_float(last.get("rsi"))
-            if v is None: return "RSI unavailable."
-            zone = "overbought" if v >= 70 else "oversold" if v <= 30 else "neutral"
-            return f"RSI {v:.1f} — {zone}."
+            if v is None: return "RSI data missing."
+            if v >= 70:  return f"RSI {v:.1f}: price has run hot—momentum may cool."
+            if v <= 30:  return f"RSI {v:.1f}: oversold—buyers may step in."
+            return f"RSI {v:.1f}: neutral zone; trend waiting for direction."
+
         if key == "MACD":
-            ml = to_float(last.get("macd_line")); sg = to_float(last.get("macd_signal")); hs = to_float(last.get("macd_hist"))
-            if ml is None or sg is None: return "MACD unavailable."
-            cross = "above" if ml >= sg else "below"
-            hist = f", hist {hs:+.2f}" if hs is not None else ""
-            return f"MACD {ml:.2f} {cross} signal {sg:.2f}{hist}."
+            ml = to_float(last.get("macd_line")); sg = to_float(last.get("macd_signal"))
+            hs = to_float(last.get("macd_hist"))
+            if ml is None or sg is None: return "MACD not available."
+            cross = "above" if ml > sg else "below"
+            bias  = "bullish" if ml > sg else "bearish"
+            return f"MACD {fmt_sig(ml)} {cross} signal {fmt_sig(sg)} ({bias}); hist {fmt_sig(hs, '+0.00')}. Up‑crosses often precede short‑term strength; down‑crosses warn of fading momentum."
+
         if key == "ADX":
-            a = to_float(last.get("adx14")); 
-            if a is None: return "ADX unavailable."
-            strength = "strong trend" if a >= 25 else "range-bound/weak"
-            return f"ADX(14) {a:.1f} — {strength}."
+            a = to_float(last.get("adx14"))
+            if a is None: return "ADX missing."
+            if a >= 40: return f"ADX {a:.1f}: strong trend—moves can extend."
+            if a >= 25: return f"ADX {a:.1f}: trend forming—watch volume for confirmation."
+            return f"ADX {a:.1f}: weak trend—range trading likely."
+
         if key == "ATR":
-            a = to_float(last.get("atr14")); 
-            return "ATR unavailable." if a is None else f"ATR(14) {a:.4g} (volatility)."
+            a = to_float(last.get("atr14"))
+            return "ATR not available." if a is None else f"ATR(14) {a:.4g}: average candle range—higher = more volatility."
+
         if key == "BANDS":
             w = to_float(last.get("bb_width"))
-            return "Bands width unavailable." if w is None else f"Bollinger width {w:.2f}%."
+            if w is None: return "Bollinger data missing."
+            if w > 5:  return f"Bollinger width {w:.2f}%: wide bands—volatile market."
+            if w < 1:  return f"Bollinger width {w:.2f}%: tight bands—potential breakout setup."
+            return f"Bollinger width {w:.2f}%: normal volatility."
+
         if key in ("VOL","LIQ"):
             v = to_float(last.get("volume"))
-            return "Volume unavailable." if v is None else f"Volume last bar: {v:,.0f}."
+            return "Volume unavailable." if v is None else f"Volume {v:,.0f}: spikes with price confirm stronger moves."
+
         if key == "MCAP":
             mc = to_float(last.get("market_cap"))
-            return "Market cap unavailable." if mc is None else f"Market cap ~ {money(mc)} (approx)."
+            return "Market cap missing." if mc is None else f"Market cap ≈ {money(mc)}; rising caps reflect broader participation."
+
         if key == "ALT":
             a = to_float(last.get("alt_momentum"))
-            return "ALT momentum unavailable." if a is None else f"ALT momentum {a:+.4g}."
-    except Exception:
-        pass
-    return "Tap a tile for details."
+            if a is None: return "Momentum data missing."
+            trend = "positive" if a > 0 else "negative"
+            return f"ALT momentum {a:+.2f}: {trend} impulse; rising values suggest acceleration."
+
+    except Exception as e:
+        LOG.warning("[Talk] error %s", e)
+
+    return "Data available—interpret alongside trend, volume, and context."
 
 def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd.DataFrame:
     raw_in = (query or "").strip()
@@ -1221,39 +1252,73 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
     view = slice_df(df, tf)
     if view.empty: view = df.tail(200)
     view = resample_for_tf(view, tf)
+    view = compute_indicators(view)
 
     bias, reasons = classify_bias_metrics(view)
     ch, _ = compute_rollups(view)
-    price = money(to_float(view["close"].iloc[-1]) if not view.empty else None)
-    perf = f"1h {_fmt_pct(ch.get('1h'))}, 4h {_fmt_pct(ch.get('4h'))}, 12h {_fmt_pct(ch.get('12h'))}, 24h {_fmt_pct(ch.get('24h'))}"
+    last_price = to_float(view["close"].iloc[-1]) if not view.empty else None
+
+    # feature taps
+    rsi = to_float(view["rsi"].iloc[-1]) if "rsi" in view.columns else None
+    adx = to_float(view["adx14"].iloc[-1]) if "adx14" in view.columns else None
+    hist = view["macd_hist"].dropna() if "macd_hist" in view.columns else pd.Series(dtype=float)
+    macd_note = ""
+    if len(hist) >= 3:
+        slope = hist.iloc[-1] - hist.iloc[-3]
+        if hist.iloc[-1] > 0 and slope > 0: macd_note = "MACD momentum rising"
+        elif hist.iloc[-1] < 0 and slope < 0: macd_note = "MACD momentum falling"
+
+    # compact perf
+    perf_bits = [f"1h {(_fmt_pct(ch.get('1h')))}", f"4h {(_fmt_pct(ch.get('4h')))}",
+                 f"12h {(_fmt_pct(ch.get('12h')))}", f"24h {(_fmt_pct(ch.get('24h')))}"]
+    perf = ", ".join(perf_bits)
+
     header = build_header_facts(meta or {})
+    where = f"{symbol} around {money(last_price)}" if last_price is not None else symbol
 
-    sentiment = ""
-    try:
-        vol = view["volume"].fillna(0)
-        if len(vol.dropna()) >= 20:
-            ema20 = vol.ewm(span=20).mean().iloc[-1]
-            vnow = vol.iloc[-1]
-            if ema20 and vnow >= 1.3*ema20: sentiment = "Hype picking up (volume spike). "
-            elif ema20 and vnow <= 0.7*ema20: sentiment = "Fading interest (volume cooling). "
-    except Exception:
-        pass
+    # tone based on state
+    tone = {
+        "bullish": "Bias: constructive up‑trend.",
+        "bearish": "Bias: pressure lower.",
+        "range":   "Bias: range‑bound."
+    }.get(bias, "Bias: range‑bound.")
 
-    ql = (question or "").lower()
+    # rsi/volatility guidance
+    rsi_text = ""
+    if rsi is not None:
+        if rsi >= 70: rsi_text = "RSI is hot—pullback risk increases near the highs."
+        elif rsi <= 30: rsi_text = "RSI is washed‑out—mean‑reversion bounce is plausible."
+        else: rsi_text = "RSI is neutral—direction likely driven by fresh catalysts."
+
+    adx_text = ""
+    if adx is not None:
+        if adx >= 40: adx_text = "Trend strength is high; moves often extend."
+        elif adx >= 25: adx_text = "Trend is building; confirm with volume."
+        else: adx_text = "Trend is weak; expect chop."
+
+    parts = []
+    if header: parts.append(header)
+    parts.append(perf + ".")
+    parts.append(tone)
+    if macd_note: parts.append(macd_note + ".")
+    if rsi_text: parts.append(rsi_text)
+    if adx_text: parts.append(adx_text)
+
+    # quick levels (visual anchor)
     def line_levels():
         try:
-            high = money(float(view["high"].tail(60).max()))
-            low  = money(float(view["low"].tail(60).min()))
-            return f"Levels: ↑ {high}, ↓ {low}."
+            hi = float(view["high"].tail(60).max())
+            lo = float(view["low"].tail(60).min())
+            return f"Near‑term levels: ↑ {money(hi)}, ↓ {money(lo)}."
         except Exception:
             return ""
+    lev = line_levels()
+    if lev: parts.append(lev)
 
-    txt = f"{intro_line()} {symbol} around {price}. {header}\n{perf}. "
-    if bias == "bullish": txt += "Lean: bullish. "
-    elif bias == "bearish": txt += "Lean: bearish. "
-    else: txt += "Lean: range‑bound. "
-    txt += sentiment + line_levels()
-    return txt.strip()
+    # short CTA‑style explainer for laypeople
+    parts.append("Not advice—just a read on momentum and participation. Watch volume into breakouts and whether pullbacks hold above prior swing lows.")
+
+    return f"{intro_line()} {where}. " + " ".join(parts)
 
 # ---------- safe tile placeholder ----------
 def safe_tile(html_block, label="No data for this timeframe."):
@@ -1335,31 +1400,50 @@ def analyze():
 
 @app.get("/expand_json")
 def expand_json():
-    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "na").split(",")[0].strip()
-    if not allow_rate(ip, "/expand_json", limit=12, window_sec=60):
-        return jsonify({"error":"rate limited"}), 429
+    try:
+        ip = request.headers.get("X-Forwarded-For", request.remote_addr or "na").split(",")[0].strip()
+        if not allow_rate(ip, "/expand_json", limit=12, window_sec=60):
+            tf  = (request.args.get("tf") or "12h")
+            key = (request.args.get("key") or "").upper()
+            empty = fig_line(pd.DataFrame(), "close", "No data", h=360)
+            return jsonify({"fig": empty.to_plotly_json(), "talk": "Rate limited. Try again in a moment.", "tf": tf, "key": key}), 429
 
-    symbol_raw = sanitize_query(request.args.get("symbol") or "ETH")
-    tf     = (request.args.get("tf") or "12h")
-    key    = (request.args.get("key") or "RSI").upper()
+        symbol_raw = sanitize_query(request.args.get("symbol") or "ETH")
+        tf     = (request.args.get("tf") or "12h")
+        key    = (request.args.get("key") or "RSI").upper()
 
-    df = load_cached_frame(symbol_raw)
-    if df.empty: df = hydrate_symbol(symbol_raw, force=False, tf_for_fetch=tf)
-    dfv = slice_df(df, tf); dfv = resample_for_tf(dfv, tf)
-    dfv = compute_indicators(dfv)
+        df = load_cached_frame(symbol_raw)
+        if df.empty:
+            df = hydrate_symbol(symbol_raw, force=False, tf_for_fetch=tf)
 
-    if   key == "PRICE":  fig = fig_price(dfv if not dfv.empty else df, _disp_symbol(symbol_raw))
-    elif key == "RSI":    fig = fig_line(dfv, "rsi", "RSI", h=360)
-    elif key == "MACD":   fig = fig_line(dfv, "macd_line", "MACD", h=360)
-    elif key == "MCAP":   fig = fig_line(dfv if "market_cap" in dfv.columns else df, "market_cap", "Market Cap", h=360)
-    elif key == "BANDS":  fig = fig_line(dfv, "bb_width", "Bollinger Width", h=360)
-    elif key == "VOL":    fig = fig_line(dfv, "volume", "Volume Trend", h=360)
-    elif key == "LIQ":    fig = fig_line(dfv, "volume", "Liquidity", h=360)
-    elif key == "OBV":    fig = fig_line(dfv, "obv", "OBV", h=360)
-    elif key == "ADX":    fig = fig_line(dfv, "adx14", "ADX 14", h=360)
-    elif key == "ATR":    fig = fig_line(dfv, "atr14", "ATR 14", h=360)
-    elif key == "ALT":    fig = fig_line(dfv, "alt_momentum", "ALT momentum", h=360)
-    else:                 fig = fig_line(dfv, "close", key, h=360)
+        dfv = slice_df(df, tf)
+        dfv = resample_for_tf(dfv, tf)
+        dfv = compute_indicators(dfv)  # ensure tiles have their values
+
+        # choose figure
+        if   key == "PRICE":  fig = fig_price(dfv if not dfv.empty else df, _disp_symbol(symbol_raw))
+        elif key == "RSI":    fig = fig_line(dfv, "rsi", "RSI", h=360)
+        elif key == "MACD":   fig = fig_line(dfv, "macd_line", "MACD", h=360)
+        elif key == "MCAP":   fig = fig_line(dfv if "market_cap" in dfv.columns else df, "market_cap", "Market Cap", h=360)
+        elif key == "BANDS":  fig = fig_line(dfv, "bb_width", "Bollinger Width", h=360)
+        elif key == "VOL":    fig = fig_line(dfv, "volume", "Volume Trend", h=360)
+        elif key == "LIQ":    fig = fig_line(dfv, "volume", "Liquidity", h=360)
+        elif key == "OBV":    fig = fig_line(dfv, "obv", "OBV", h=360)
+        elif key == "ADX":    fig = fig_line(dfv, "adx14", "ADX 14", h=360)
+        elif key == "ATR":    fig = fig_line(dfv, "atr14", "ATR 14", h=360)
+        elif key == "ALT":    fig = fig_line(dfv, "alt_momentum", "ALT momentum", h=360)
+        else:                 fig = fig_line(dfv, "close", key, h=360)
+
+        talk = talk_for_key(key, dfv if not dfv.empty else df)
+        return jsonify({"fig": fig.to_plotly_json(), "talk": talk, "tf": tf, "key": key})
+
+    except Exception as e:
+        LOG.exception("[expand_json] failed: %s", e)
+        # return a harmless payload so the modal never blanks
+        tf  = (request.args.get("tf") or "12h")
+        key = (request.args.get("key") or "").upper()
+        empty = fig_line(pd.DataFrame(), "close", "No data", h=360)
+        return jsonify({"fig": empty.to_plotly_json(), "talk": "Error loading chart.", "tf": tf, "key": key}), 200
 
 def talk_for_key(key: str, df: pd.DataFrame) -> str:
     if df is None or df.empty:
