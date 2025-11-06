@@ -5,62 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Luna AI — Control Panel</title>
 
-  <!-- Your existing CSS and Plotly. Do not change order. -->
-  <link rel="stylesheet" href="/static/css/control_panel.css?v=2">
+  <!-- Cache-bust CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/control_panel.css') }}?v={{ build|default('v') }}">
   <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
 </head>
 
-<body>
+<body data-symbol="{{ symbol }}" data-tf-default="{{ tf }}">
   <div class="shell">
+
+    <!-- ░░░ TOPBAR ░░░ -->
     <header class="topbar">
       <strong>Luna AI — Control Panel</strong>
       <form class="go-line" method="get" action="/analyze">
-        <input type="text" name="symbol" id="symbol" value="{{ symbol_raw }}" placeholder="Search coin / contract…" />
+        <select name="symbol" id="symbol">
+          {% for s in ['BTC','ETH','SOL','BNB','XRP','ADA','DOGE','LINK','AVAX','TON'] %}
+            <option value="{{s}}" {% if s==symbol %}selected{% endif %}>{{s}}</option>
+          {% endfor %}
+        </select>
         <select name="tf" id="tf">
           {% for t in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
             <option value="{{t}}" {% if t==tf %}selected{% endif %}>{{t}}</option>
           {% endfor %}
         </select>
         <button type="submit">Apply</button>
-        <button type="button" id="refreshBtn" title="Force refresh cache">Refresh</button>
+        <button type="button" id="refreshBtn">Refresh</button>
+        <input id="searchBox" name="symbol" placeholder="Search coin or contract..." />
+        <button type="submit" id="goBtn">Go</button>
       </form>
-      <div class="updated">Updated {{ updated }} · Build {{ build }}</div>
+      <div class="updated">Updated {{ updated }}</div>
     </header>
 
-    <!-- Performance chips (null-safe) -->
+    <!-- ░░░ PERFORMANCE ░░░ -->
     <section class="panel row-compact">
       <header><strong>Performance</strong></header>
       <div class="chips">
         {% for k in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
-          {% set v = performance.get(k) %}
-          <span class="chip">{{ k }}: {{ 'n/a' if v is none else ('%+.2f%%'|format(v)) }}</span>
+          <span class="chip">{{ k }}:
+            {{ 'n/a' if performance.get(k) is none else ('%+.2f%%'|format(performance.get(k))) }}
+          </span>
         {% endfor %}
       </div>
     </section>
 
-    <!-- Investment chips (null-safe) -->
+    <!-- ░░░ INVESTMENT ░░░ -->
     <section class="panel row-compact">
       <header><strong>Investment ($1000 model)</strong></header>
       <div class="chips">
         {% for k in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
-          {% set v = investment.get(k) %}
-          <span class="chip">{{ k }}: {{ '$—' if v is none else ('$%0.2f'|format(v)) }}</span>
+          <span class="chip">{{ k }}:
+            {{ '$—' if investment.get(k) is none else ('$%0.2f'|format(investment.get(k))) }}
+          </span>
         {% endfor %}
       </div>
     </section>
 
-    <!-- Main grid (your existing CSS controls size/placement) -->
+    <!-- ░░░ MAIN GRID ░░░ -->
     <section class="grid">
+      <!-- Left -->
       <article class="tile" data-key="RSI">
         <header>RSI <button class="expand" data-key="RSI">Expand</button></header>
         <div class="tile__body">{{ tiles['RSI']|safe }}</div>
       </article>
 
+      <!-- Price (4×wide, 2×tall) -->
       <article class="tile tile--price" data-key="PRICE">
         <header>{{ symbol }} — Charts <button class="expand" data-key="PRICE">Expand</button></header>
         <div class="tile__body">{{ tiles['PRICE']|safe }}</div>
       </article>
 
+      <!-- Right column -->
       <article class="tile" data-key="MCAP">
         <header>Market Cap <button class="expand" data-key="MCAP">Expand</button></header>
         <div class="tile__body">{{ tiles['MCAP']|safe }}</div>
@@ -76,6 +89,7 @@
         <div class="tile__body">{{ tiles['OBV']|safe }}</div>
       </article>
 
+      <!-- Lower row -->
       <article class="tile" data-key="ATR">
         <header>Volatility (ATR 14) <button class="expand" data-key="ATR">Expand</button></header>
         <div class="tile__body">{{ tiles['ATR']|safe }}</div>
@@ -107,36 +121,44 @@
       </article>
     </section>
 
-    <!-- TL;DR -->
+    <!-- ░░░ TL;DR + FEAR & GREED ░░░ -->
     <section class="row">
-      <article class="panel">
+      <article class="panel tldr">
         <header><strong>TL;DR</strong></header>
         <div>{{ tldr_line }}</div>
       </article>
+      <article class="panel fg">
+        <header><strong>Fear & Greed</strong></header>
+        <div class="bar"><div class="fill" style="width:50%"></div></div>
+        <div>50 / 100</div>
+      </article>
     </section>
 
-    <!-- Ask Luna -->
+    <!-- ░░░ Q&A ░░░ -->
     <section class="row">
       <article class="panel qa">
         <header><strong>Questions</strong></header>
         <div id="qaQ"></div>
       </article>
+
       <article class="panel qa">
         <header><strong>Luna’s answers</strong></header>
         <div id="qaA"></div>
         <div class="ask-line">
-          <input id="askBox" placeholder="Ask Luna about {{ symbol }}…">
+          <input id="askBox" placeholder="Ask Luna about {{symbol}}…">
           <button id="askSend">Ask</button>
         </div>
       </article>
     </section>
-  </div>
 
-  <!-- Expand modal (unchanged structure) -->
+  </div><!-- /shell -->
+
+  <!-- ░░░ EXPAND MODAL ░░░ -->
   <div id="modal" class="hidden">
     <div class="m-box">
       <div class="m-head">
-        <div><strong id="m-title">Expand</strong>
+        <div>
+          <strong id="m-title">Expand</strong>
           <select id="m-tf">
             {% for t in ['1h','4h','8h','12h','24h','7d','30d','1y'] %}
               <option value="{{t}}" {% if t==tf %}selected{% endif %}>{{t}}</option>
@@ -155,60 +177,11 @@
     </div>
   </div>
 
-  <!-- Provide the variables your JS expects -->
+  <!-- ░░░ SCRIPTS ░░░ -->
   <script>
-    const SYMBOL      = {{ (symbol or '')|tojson }};
-    const SYMBOL_RAW  = {{ (symbol_raw or '')|tojson }};  /* <- this line fixed: always defined */
-    const TF_DEFAULT  = {{ (tf or '12h')|tojson }};
+    window.__SYMBOL__ = "{{ symbol }}";
+    window.__TF__     = "{{ tf }}";
   </script>
-
-  <!-- Inline JS (kept minimal and compatible with your existing IDs/classes) -->
-  <script>
-    (function () {
-      const $ = (sel) => document.querySelector(sel);
-      const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-
-      // Refresh (respects server TTL)
-      $("#refreshBtn")?.addEventListener("click", () => {
-        fetch(`/api/refresh/${encodeURIComponent(SYMBOL_RAW || SYMBOL)}`)
-          .then(() => window.location.reload());
-      });
-
-      // Expand modal
-      const modal = $("#modal"), mClose = $("#m-close"), mChart = $("#m-chart"), mTalk = $("#m-talk"), mTf = $("#m-tf");
-      let currentKey = null;
-      function openModal(key) {
-        currentKey = key;
-        modal.classList.remove("hidden");
-        const s = SYMBOL_RAW || SYMBOL;
-        fetch(`/expand_json?symbol=${encodeURIComponent(s)}&key=${encodeURIComponent(key)}&tf=${encodeURIComponent(mTf.value)}`)
-          .then(r => r.json())
-          .then(j => {
-            mChart.innerHTML = "";
-            Plotly.newPlot(mChart, j.fig.data, j.fig.layout || {}, {responsive: true});
-            mTalk.textContent = j.talk || "";
-          })
-          .catch(err => { mTalk.textContent = "Error loading chart."; console.error(err); });
-      }
-      function closeModal(){ modal.classList.add("hidden"); }
-      mClose.addEventListener("click", closeModal);
-      modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
-      mTf.addEventListener("change", () => { if (currentKey) openModal(currentKey); });
-      $$(".expand").forEach(btn => btn.addEventListener("click", () => openModal(btn.dataset.key)));
-
-      // Ask Luna
-      const askBox=$("#askBox"), askSend=$("#askSend"), qaQ=$("#qaQ"), qaA=$("#qaA");
-      function pushQA(q, a){
-        if(q){ const li=document.createElement("div"); li.className="bubble q"; li.textContent="• "+q; qaQ.appendChild(li); qaQ.scrollTop=qaQ.scrollHeight; }
-        if(a){ const li=document.createElement("div"); li.className="bubble a"; li.textContent=a; qaA.appendChild(li); qaA.scrollTop=qaA.scrollHeight; }
-      }
-      askSend?.addEventListener("click", ()=>{
-        const q=(askBox.value||"").trim(); if(!q) return;
-        pushQA(q,null); askBox.value="";
-        fetch("/api/luna",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({symbol:SYMBOL_RAW||SYMBOL, tf: $("#tf")?.value || TF_DEFAULT, text:q})})
-          .then(r=>r.json()).then(j=>pushQA(null,j.reply)).catch(err=>pushQA(null,"Error: "+String(err)));
-      });
-    })();
-  </script>
+  <script src="{{ url_for('static', filename='js/control_panel.js') }}?v={{ build|default('v') }}"></script>
 </body>
 </html>
