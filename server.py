@@ -1,9 +1,14 @@
 # ============================================================
-# server.py — Luna Cockpit (stable grid + DS/GT/Birdeye/CG routing)
+# server.py — Luna Cockpit (stable grid + DS/GT/CG routing + cap-mode)
+#   - Address-aware routing (DexScreener → GeckoTerminal, Birdeye on Solana)
+#   - CC→CG fallback for tickers
+#   - Robust resampling (no KeyErrors when columns are missing)
+#   - Safe template context (symbol_raw + null-safe chips)
+#   - No grid/Expand changes; all UI contract intact
 # ============================================================
 
 from __future__ import annotations
-import os, re, io, json, time, random, logging, math
+import os, re, json, time, random, logging, math
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Dict, Any, Tuple, Optional, List
@@ -15,20 +20,23 @@ from dotenv import load_dotenv
 
 from flask import Flask, jsonify, render_template, request, Response
 from flask.json.provider import DefaultJSONProvider
+
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
 
+# ---------- build tag ----------
 BUILD_TAG = "LUNA-PROD-DS_GT_BIRD-CAPMODE-2025-11-05"
 
+# ---------- logging ----------
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(levelname)s %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
 )
 LOG = logging.getLogger("luna")
-LOG.info("Starting Luna backend build=%s", BUILD_TAG)
 
+# ---------- paths ----------
 ROOT = Path(__file__).parent.resolve()
 TEMPLATES_DIR = ROOT / "templates"
 STATIC_DIR    = ROOT / "static"
@@ -46,6 +54,7 @@ for d in (FRAMES_DIR, STATE_DIR, SESS_DIR):
 FETCH_LOG = STATE_DIR / "fetch_log.json"
 HOTSET    = STATE_DIR / "hotset.txt"
 
+# ---------- constants ----------
 TTL_MINUTES = 15
 TTL_SECONDS = TTL_MINUTES * 60
 
@@ -100,10 +109,10 @@ def money(x: Optional[float]) -> str:
     try:
         if x is None: return "—"
         v = float(x)
-        if not math.isfinite(v): return "—"
-        if abs(v) >= 1e9:  return f"${v/1e9:.2f}B"
-        if abs(v) >= 1e6:  return f"${v/1e6:.2f}M"
-        if abs(v) >= 1e3:  return f"${v/1e3:.2f}K"
+        if math.isfinite(v) is False: return "—"
+        if abs(v) >= 1_000_000_000: return f"${v/1e9:.2f}B"
+        if abs(v) >= 1_000_000:     return f"${v/1e6:.2f}M"
+        if abs(v) >= 1_000:         return f"${v/1e3:.2f}K"
         return "$" + format(v, ",.2f")
     except Exception:
         return "—"
@@ -123,7 +132,7 @@ def to_float(x) -> Optional[float]:
     except Exception:
         return None
 
-# ---------- simple in-memory rate limit ----------
+# ---------- rate limit (lightweight; no new deps) ----------
 _RL_BUCKETS: Dict[str, Dict[str, List[float]]] = {}
 def allow_rate(ip: str, key: str, limit: int, window_sec: int) -> bool:
     now = time.time()
@@ -137,7 +146,7 @@ def allow_rate(ip: str, key: str, limit: int, window_sec: int) -> bool:
 
 # ---------- address detection / canonicalization ----------
 _BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-_BASE58_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")
+_BASE58_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")  # tightened
 
 def _b58decode_ok(s: str) -> bool:
     if not (32 <= len(s) <= 44): return False
@@ -149,16 +158,16 @@ def is_address(q: str) -> bool:
     if not isinstance(q, str) or not q: return False
     s = q.strip()
     if re.fullmatch(r"0x[a-fA-F0-9]{40}", s): return True  # EVM
-    if _BASE58_RE.match(s) and _b58decode_ok(s): return True  # Solana-like
+    if _BASE58_RE.match(s) and _b58decode_ok(s): return True  # Solana base58
     if re.fullmatch(r"(?i)^(eq|uf)[a-z0-9_-]{46}$", s): return True  # TON-ish
     return False
 
 def canonicalize_address(raw: str) -> str:
     s = (raw or "").strip()
     if s.startswith("0X"): s = "0x" + s[2:]
-    if s.lower().startswith("0x"):  # EVM
+    if s.lower().startswith("0x"):
         return s.lower()
-    # Base58/TON — ask DexScreener to get canonical token casing, if possible
+    # Base58 / TON: ask DexScreener search for canonical case
     try:
         r = requests.get("https://api.dexscreener.com/latest/dex/search", params={"q": s}, timeout=10)
         if r.ok:
@@ -338,7 +347,7 @@ def cg_id_for_symbol_or_contract(q: str) -> Optional[str]:
 
     ql = q_raw.lower()
 
-    if is_address(q_raw):  # match any platform contract
+    if is_address(q_raw):
         for c in coins:
             plats = c.get("platforms") or {}
             for _, addr in plats.items():
@@ -395,6 +404,7 @@ def cg_series(symbol_or_contract: str, days: int = 30) -> pd.DataFrame:
         dc["market_cap"] = pd.to_numeric(dc["mc"], errors="coerce")
         dp = dp.merge(dc[["timestamp","market_cap"]], on="timestamp", how="left")
 
+    # synth OHLC for indicators (price)
     dp["open"] = dp["close"].shift(1)
     dp["high"] = dp["close"].rolling(3, min_periods=1).max()
     dp["low"]  = dp["close"].rolling(3, min_periods=1).min()
@@ -404,6 +414,7 @@ def cg_series(symbol_or_contract: str, days: int = 30) -> pd.DataFrame:
 DS_BASE = "https://api.dexscreener.com"
 GT_BASE = "https://api.geckoterminal.com/api/v2"
 
+# authoritative mapping
 DS_TO_GT = {
     "ethereum": "eth",
     "bsc": "bsc",
@@ -423,6 +434,7 @@ DS_TO_GT = {
     "blast": "blast",
     "pulsechain": "pulsechain",
 }
+
 PREFERRED_QUOTES = {"USDC","USDT","SOL","ETH","WETH","USD"}
 
 def safe_fetch(url: str, params: dict | None = None, retries: int = 3, timeout: int = 12) -> Optional[requests.Response]:
@@ -430,13 +442,15 @@ def safe_fetch(url: str, params: dict | None = None, retries: int = 3, timeout: 
         try:
             r = requests.get(url, params=params or {}, timeout=timeout, headers={"Accept":"application/json"})
             if r.status_code == 429:
-                time.sleep([1,4,16][min(attempt,2)])
+                sleep = [1,4,16][min(attempt,2)]
+                time.sleep(sleep)
                 continue
             return r
         except requests.Timeout:
             time.sleep([1,4,16][min(attempt,2)])
         except Exception as e:
-            LOG.warning("[fetch] %s", e); time.sleep(1)
+            LOG.warning("[fetch] %s", e)
+            time.sleep(1)
     return None
 
 def ds_get(path: str, params: Optional[dict] = None) -> Optional[dict | list]:
@@ -445,7 +459,7 @@ def ds_get(path: str, params: Optional[dict] = None) -> Optional[dict | list]:
         try:
             return r.json()
         except Exception as e:
-            LOG.warning("[DS] JSON decode failed: %s", e)
+            LOG.warning("[DS] JSON decode failed: %s...", e)
             return None
     if r:
         LOG.warning("[DS] HTTP %s for %s (%s)", r.status_code, path, (r.text or "")[:160])
@@ -543,7 +557,8 @@ def pick_best_pair(pairs: List[dict]) -> Optional[dict]:
                 liq = float(((p.get("liquidity") or {}).get("usd")) or 0.0)
                 vol_h24 = float(((p.get("volume") or {}).get("h24")) or 0.0)
                 if vol_h24 < 2500 or liq < 2500: return 0.0
-                return liq + vol_h24/2000.0
+                base = liq + vol_h24/2000.0
+                return base
             except Exception:
                 return 0.0
         scored = [(score_relax(p), p) for p in cand]
@@ -553,64 +568,12 @@ def pick_best_pair(pairs: List[dict]) -> Optional[dict]:
     if not scored:
         return None
     scored.sort(key=lambda t: t[0], reverse=True)
-    return scored[0][1]
+    best = scored[0][1]
+    return best
 
-def token_meta_for(q: str) -> dict:
-    meta = {
-        "name":"Unknown","symbol":"UNK","chain":"","dexId":"","pairAddress":"",
-        "decimals": None, "label": q[:10]+"...", "marketCap": None, "fdv": None,
-        "liq_usd": None, "vol_h24": None
-    }
-    try:
-        js = ds_get("/latest/dex/search", params={"q": q})
-        pairs = _collect_pairs_from_ds_payload(js)
-        if pairs:
-            best = pick_best_pair(pairs)
-            if best:
-                chain = best.get("chainId") or ""
-                token = None
-                ql = q.lower()
-                bt = (((best.get("baseToken") or {}).get("address") or "")).lower()
-                qt = (((best.get("quoteToken") or {}).get("address") or "")).lower()
-                if ql == bt:
-                    token = best.get("baseToken") or {}
-                elif ql == qt:
-                    token = best.get("quoteToken") or {}
-                else:
-                    token = best.get("baseToken") or {}
-                sym = token.get("symbol") or "UNK"
-                name = token.get("name") or "Unknown"
-                decs = token.get("decimals")
-                liq  = (best.get("liquidity") or {}).get("usd")
-                vol  = (best.get("volume") or {}).get("h24")
-                meta.update({
-                    "name": name, "symbol": sym, "chain": chain, "dexId": best.get("dexId") or "",
-                    "pairAddress": best.get("pairAddress") or "", "decimals": decs,
-                    "marketCap": best.get("marketCap"), "fdv": best.get("fdv"),
-                    "liq_usd": liq, "vol_h24": vol,
-                })
-                meta["label"] = f"{name} ({sym}) — {meta['dexId'].capitalize()}/{meta['chain'].capitalize()}"
-                return meta
-    except Exception as e:
-        LOG.warning("[Meta] DS failed: %s", e)
-    try:
-        cg_id = cg_id_for_symbol_or_contract(q)
-        if cg_id:
-            data = cg_get(f"coins/{cg_id}", {
-                "localization":"false","tickers":"false","market_data":"false",
-                "community_data":"false","developer_data":"false","sparkline":"false",
-            })
-            if data:
-                name = data.get("name") or meta["name"]
-                sym  = (data.get("symbol") or meta["symbol"] or "").upper()
-                meta.update({"name":name, "symbol":sym})
-                meta["label"] = f"{name} ({sym})"
-    except Exception:
-        pass
-    return meta
-
-def gt_ohlcv_by_pool(network: str, pool_id: str, tf: str, limit: int = 500) -> pd.DataFrame:
-    js = gt_get(f"/networks/{network}/pools/{pool_id}/ohlcv/{tf}", params={"limit": limit})
+def gt_ohlcv_by_pool(network: str, pool_id: str, timeframe: str, aggregate: int = 1, limit: int = 500) -> pd.DataFrame:
+    # timeframe in {'minute','hour','day'}; aggregate >=1
+    js = gt_get(f"/networks/{network}/pools/{pool_id}/ohlcv/{timeframe}", params={"aggregate": aggregate, "limit": limit})
     if not js: return pd.DataFrame()
     data = js.get("data")
     attrs = None
@@ -650,6 +613,7 @@ def gt_find_token_pools(network: str, addr: str) -> List[str]:
     return ids[:3]
 
 def birdeye_ohlc_solana(addr: str, tf: str) -> pd.DataFrame:
+    # tf given as pandas alias; map to Birdeye
     tf_map = {"1T":"1m","5T":"5m","15T":"15m","1H":"1h","4H":"4h","1D":"1d"}
     birdeye_tf = tf_map.get(tf, "1h")
     now = int(time.time())
@@ -673,14 +637,236 @@ def birdeye_ohlc_solana(addr: str, tf: str) -> pd.DataFrame:
         recs.append({"timestamp": ts, "open": close, "high": close, "low": close, "close": close, "volume": 0.0})
     return pd.DataFrame.from_records(recs).dropna(subset=["timestamp"]).sort_values("timestamp")
 
-# ---------- supply / decimals ----------
-_SUPPLY_CACHE: Dict[str, dict] = {}
+# ---------- indicators ----------
+def ema(s: pd.Series, span: int) -> pd.Series:
+    return s.ewm(span=span, adjust=False).mean()
+
+def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty: return df.copy()
+    out = df.copy()
+
+    # RSI(14)
+    delta = out["close"].diff()
+    up = delta.clip(lower=0.0)
+    dn = -delta.clip(upper=0.0)
+    rs = up.ewm(span=14, adjust=False).mean() / dn.replace(0,1e-9).ewm(span=14, adjust=False).mean()
+    out["rsi"] = 100 - (100/(1+rs))
+
+    # MACD (12,26,9)
+    ema12 = ema(out["close"], 12); ema26 = ema(out["close"], 26)
+    out["macd_line"]   = ema12 - ema26
+    out["macd_signal"] = ema(out["macd_line"], 9)
+    out["macd_hist"]   = out["macd_line"] - out["macd_signal"]
+
+    # Bollinger (20,2) + width
+    ma20  = out["close"].rolling(20).mean()
+    std20 = out["close"].rolling(20).std()
+    out["bb_mid"]   = ma20
+    out["bb_upper"] = ma20 + 2*std20
+    out["bb_lower"] = ma20 - 2*std20
+    out["bb_width"] = ((out["bb_upper"] - out["bb_lower"]) / ma20.replace(0,np.nan) * 100).fillna(0)
+
+    # ADX(14)
+    try:
+        hi, lo, cl = out["high"].fillna(out["close"]), out["low"].fillna(out["close"]), out["close"]
+        plus_dm  = (hi.diff().where(hi.diff() > lo.diff(), 0.0)).clip(lower=0)
+        minus_dm = (lo.diff().where(lo.diff() > hi.diff(), 0.0)).clip(lower=0).abs()
+        tr  = pd.concat([(hi-lo),(hi-cl.shift()).abs(),(lo-cl.shift()).abs()], axis=1).max(axis=1)
+        atr = tr.rolling(14).mean()
+        plus_di  = 100 * (plus_dm.rolling(14).mean()  / atr.replace(0,np.nan))
+        minus_di = 100 * (minus_dm.rolling(14).mean() / atr.replace(0,np.nan))
+        dx  = (100 * (plus_di - minus_di).abs() / (plus_di+minus_di).replace(0,np.nan)).fillna(0)
+        out["adx14"] = dx.rolling(14).mean()
+    except Exception:
+        out["adx14"] = np.nan
+
+    # OBV
+    try:
+        vol = out["volume"].fillna(0)
+        direction = np.sign(out["close"].diff()).fillna(0)
+        out["obv"] = (direction * vol).cumsum()
+    except Exception:
+        out["obv"] = np.nan
+
+    # ATR(14)
+    try:
+        high = out["high"].fillna(out["close"])
+        low  = out["low"].fillna(out["close"])
+        close= out["close"]
+        tr = pd.concat([(high-low), (high-close.shift()).abs(), (low-close.shift()).abs()], axis=1).max(axis=1)
+        out["atr14"] = tr.rolling(14, min_periods=1).mean()
+    except Exception:
+        out["atr14"] = np.nan
+
+    # ALT momentum (simple EMA spread surrogate)
+    try:
+        out["alt_momentum"] = (ema(out["close"], 10) - ema(out["close"], 30))
+    except Exception:
+        out["alt_momentum"] = np.nan
+
+    return out
+
+# ---------- timeframe windows & resample ----------
+LOOKBACK = {
+    "1h": timedelta(hours=1), "4h": timedelta(hours=4), "8h": timedelta(hours=8),
+    "12h": timedelta(hours=12), "24h": timedelta(days=1), "7d": timedelta(days=7),
+    "30d": timedelta(days=30), "1y": timedelta(days=365), "all": None
+}
+RESAMPLE_BY_TF = {
+    "1h": "1T",   # 1 minute
+    "4h": "5T",
+    "8h": "5T",
+    "12h": "15T",
+    "24h": "15T",
+    "7d": "1H",
+    "30d": "4H",
+    "1y": "1D",
+    "all": "1D",
+}
+
+def slice_df(df: pd.DataFrame, tf: str) -> pd.DataFrame:
+    if df.empty: return df
+    win = LOOKBACK.get(tf, timedelta(hours=4))
+    if win is None: return df
+    anchor = pd.to_datetime(df["timestamp"]).max()
+    cutoff = (anchor - win) if pd.notna(anchor) else (utcnow() - win)
+    out = df[df["timestamp"] >= cutoff].copy()
+    return out
+
+def resample_for_tf(df: pd.DataFrame, tf: str) -> pd.DataFrame:
+    """
+    Robust resampler for any candle shape:
+      - Works if some columns are missing (e.g., no market_cap, no volume)
+      - Synthesizes O/H/L if only 'close' is present
+      - Chooses frequency by UI timeframe
+      - Never raises KeyError if columns are absent
+    """
+    if df is None or df.empty:
+        return df
+    if "timestamp" not in df.columns:
+        return df
+
+    out = df.copy()
+
+    def _to_ms(ts):
+        try:
+            t = float(ts)
+            return int(t * 1000) if t < 1e10 else int(t)
+        except Exception:
+            return ts
+
+    out["timestamp"] = pd.to_datetime(out["timestamp"].apply(_to_ms), unit="ms", utc=True, errors="coerce")
+    out = out.dropna(subset=["timestamp"]).sort_values("timestamp").reset_index(drop=True)
+
+    if out.empty:
+        return out
+
+    if "close" in out.columns:
+        if "open" not in out.columns or out["open"].isna().all():
+            out["open"] = out["close"].shift(1).fillna(out["close"])
+        if "high" not in out.columns:
+            out["high"] = out[["open", "close"]].max(axis=1)
+        if "low" not in out.columns:
+            out["low"] = out[["open", "close"]].min(axis=1)
+
+    freq = RESAMPLE_BY_TF.get(tf, "1H")
+    idx = out.set_index("timestamp")
+
+    agg_dict = {}
+    if "open" in idx.columns:  agg_dict["open"]  = "first"
+    if "high" in idx.columns:  agg_dict["high"]  = "max"
+    if "low"  in idx.columns:  agg_dict["low"]   = "min"
+    if "close" in idx.columns: agg_dict["close"] = "last"
+    if "volume" in idx.columns: agg_dict["volume"] = "sum"
+    if "market_cap" in idx.columns: agg_dict["market_cap"] = "last"
+
+    if not agg_dict:
+        return out
+
+    res = idx.resample(freq).agg(agg_dict)
+
+    for col in ("open", "high", "low", "close"):
+        if col in res.columns:
+            res[col] = res[col].ffill()
+    if "market_cap" in res.columns:
+        res["market_cap"] = res["market_cap"].ffill()
+
+    if res is None or res.empty:
+        return out
+
+    res = res.ffill().reset_index()
+    return res
+
+def value_at_or_before(df: pd.DataFrame, hours: int, anchor: Optional[datetime]=None) -> Optional[float]:
+    if df.empty: return None
+    anchor = anchor or (pd.to_datetime(df["timestamp"]).max().to_pydatetime() if not df.empty else utcnow())
+    t = anchor - timedelta(hours=hours)
+    older = df[df["timestamp"] <= t]
+    if older.empty:
+        return to_float(df["close"].iloc[0])
+    return to_float(older["close"].iloc[-1])
+
+def compute_rollups(df: pd.DataFrame) -> Tuple[Dict[str, Optional[float]], Dict[str, Optional[float]]]:
+    if df.empty: return {}, {}
+    ch = {}
+    anchor = pd.to_datetime(df["timestamp"]).max().to_pydatetime() if not df.empty else utcnow()
+    last = to_float(df["close"].iloc[-1])
+    for k, hrs in [("1h",1),("4h",4),("8h",8),("12h",12),("24h",24),("7d",24*7),("30d",24*30),("1y",24*365)]:
+        base = value_at_or_before(df, hrs, anchor)
+        ch[k] = None if (base in (None,0) or last in (None,0)) else round((last/base-1)*100, 2)
+    inv = {k: (None if v is None else round(1000*(1+v/100.0),2)) for k,v in ch.items()}
+    return ch, inv
+
+# ---------- DS/GT hydrate for addresses ----------
+def _tf_to_gt(tf: str) -> Tuple[str, int]:
+    """
+    Map UI TF → (GT timeframe, aggregate).
+    """
+    if tf in ("1h",):      return ("minute", 1)   # ~60 points
+    if tf in ("4h","8h"):  return ("minute", 5)   # 5m agg
+    if tf in ("12h","24h"):return ("minute", 15)  # 15m agg
+    if tf == "7d":         return ("hour", 1)
+    if tf == "30d":        return ("hour", 4)
+    return ("day", 1)      # 1y/all
+
+def ds_series_via_gt(addr: str, tf: str) -> Tuple[pd.DataFrame, Optional[dict]]:
+    pairs = ds_pairs_for_token(addr)
+    best = pick_best_pair(pairs)
+    if not best:
+        LOG.info("[DS] no pairs for %s", addr)
+        return pd.DataFrame(), None
+    chain  = (best.get("chainId") or "").lower().strip()
+    pair   = best.get("pairAddress") or ""
+    net    = DS_TO_GT.get(chain, chain)
+    if not net or not pair:
+        LOG.info("[DS→GT] missing net/pair for %s (chain=%s, pair=%s)", addr, chain, pair)
+        return pd.DataFrame(), best
+    gt_tf, agg = _tf_to_gt(tf)
+    LOG.info("[DS→GT] GT OHLCV net=%s pair=%s %s agg=%s", net, pair, gt_tf, agg)
+    df = gt_ohlcv_by_pool(net, pair, gt_tf, aggregate=agg, limit=500)
+    if (df is None or df.empty):
+        # Try GT token pools (limit 3), then Birdeye (Solana only)
+        pools = gt_find_token_pools(net, addr)
+        for pid in pools:
+            LOG.info("[DS→GT] trying token pool id %s", pid)
+            df = gt_ohlcv_by_pool(net, pid, gt_tf, aggregate=agg, limit=500)
+            if not df.empty: break
+        if (df is None or df.empty) and chain == "solana":
+            tf_resample = RESAMPLE_BY_TF.get(tf, "1H")
+            LOG.info("[DS→GT] GT empty, trying Birdeye for %s (%s)", addr, tf_resample)
+            df = birdeye_ohlc_solana(addr, tf_resample)
+    if df is not None and not df.empty and "market_cap" not in df.columns:
+        df["market_cap"] = np.nan
+    return df, best
+
+# ---------- supply / decimals (cap mode) ----------
+_SUPPLY_CACHE: Dict[str, dict] = {}  # key: f"{chain}:{addr}" -> {"ts":..., "decimals":..., "supply":...}
 
 def _cache_supply_get(chain: str, addr: str) -> Optional[dict]:
     k = f"{chain}:{addr}"
     item = _SUPPLY_CACHE.get(k)
     if not item: return None
-    if time.time() - item["ts"] > 3600:
+    if time.time() - item["ts"] > 3600:  # 1h TTL
         return None
     return item
 
@@ -703,19 +889,20 @@ def get_evm_supply_decimals(addr: str, chain: str) -> Tuple[int, Optional[float]
         "linea":    "https://rpc.linea.build",
         "zksync":   "https://mainnet.era.zksync.io",
         "zk_sync_era":"https://mainnet.era.zksync.io",
-        "blast":    "https://rpc.blast.io"
+        "blast":    "https://rpc.blast.io",
+        "pulsechain":"https://rpc.pulsechain.com"
     }
     rpc = rpc_map.get(chain)
     if not rpc:
         _cache_supply_put(chain, addr, 18, None)
         return 18, None
     try:
-        payload = {"jsonrpc":"2.0","method":"eth_call","params":[{"to":addr,"data":"0x313ce567"}, "latest"],"id":1}
+        payload = {"jsonrpc":"2.0","method":"eth_call","params":[{"to":addr,"data":"0x313ce567"}, "latest"],"id":1}  # decimals
         r = requests.post(rpc, json=payload, timeout=12)
         dec = 18
         if r.ok and isinstance(r.json(), dict) and r.json().get("result"):
             dec = int(r.json()["result"], 16)
-        payload["params"][0]["data"] = "0x18160ddd"
+        payload["params"][0]["data"] = "0x18160ddd"  # totalSupply
         r2 = requests.post(rpc, json=payload, timeout=12)
         supply = None
         if r2.ok and isinstance(r2.json(), dict) and r2.json().get("result"):
@@ -746,227 +933,55 @@ def get_solana_supply_decimals(addr: str) -> Tuple[int, Optional[float]]:
     _cache_supply_put("solana", addr, 9, None)
     return 9, None
 
-# ---------- indicators ----------
-def ema(s: pd.Series, span: int) -> pd.Series:
-    return s.ewm(span=span, adjust=False).mean()
-
-def compute_indicators(df: pd.DataFrame) -> pd.DataFrame:
-    if df.empty: return df.copy()
-    out = df.copy()
-
-    delta = out["close"].diff()
-    up = delta.clip(lower=0.0)
-    dn = -delta.clip(upper=0.0)
-    rs = up.ewm(span=14, adjust=False).mean() / dn.replace(0,1e-9).ewm(span=14, adjust=False).mean()
-    out["rsi"] = 100 - (100/(1+rs))
-
-    ema12 = ema(out["close"], 12); ema26 = ema(out["close"], 26)
-    out["macd_line"]   = ema12 - ema26
-    out["macd_signal"] = ema(out["macd_line"], 9)
-    out["macd_hist"]   = out["macd_line"] - out["macd_signal"]
-
-    ma20  = out["close"].rolling(20).mean()
-    std20 = out["close"].rolling(20).std()
-    out["bb_mid"]   = ma20
-    out["bb_upper"] = ma20 + 2*std20
-    out["bb_lower"] = ma20 - 2*std20
-    out["bb_width"] = ((out["bb_upper"] - out["bb_lower"]) / ma20.replace(0,np.nan) * 100).fillna(0)
-
-    try:
-        hi, lo, cl = out["high"].fillna(out["close"]), out["low"].fillna(out["close"]), out["close"]
-        plus_dm  = (hi.diff().where(hi.diff() > lo.diff(), 0.0)).clip(lower=0)
-        minus_dm = (lo.diff().where(lo.diff() > hi.diff(), 0.0)).clip(lower=0).abs()
-        tr  = pd.concat([(hi-lo),(hi-cl.shift()).abs(),(lo-cl.shift()).abs()], axis=1).max(axis=1)
-        atr = tr.rolling(14).mean()
-        plus_di  = 100 * (plus_dm.rolling(14).mean()  / atr.replace(0,np.nan))
-        minus_di = 100 * (minus_dm.rolling(14).mean() / atr.replace(0,np.nan))
-        dx  = (100 * (plus_di - minus_di).abs() / (plus_di+minus_di).replace(0,np.nan)).fillna(0)
-        out["adx14"] = dx.rolling(14).mean()
-    except Exception:
-        out["adx14"] = np.nan
-
-    try:
-        vol = out["volume"].fillna(0)
-        direction = np.sign(out["close"].diff()).fillna(0)
-        out["obv"] = (direction * vol).cumsum()
-    except Exception:
-        out["obv"] = np.nan
-
-    try:
-        high = out["high"].fillna(out["close"])
-        low  = out["low"].fillna(out["close"])
-        close= out["close"]
-        tr = pd.concat([(high-low), (high-close.shift()).abs(), (low-close.shift()).abs()], axis=1).max(axis=1)
-        out["atr14"] = tr.rolling(14, min_periods=1).mean()
-    except Exception:
-        out["atr14"] = np.nan
-
-    try:
-        out["alt_momentum"] = (ema(out["close"], 10) - ema(out["close"], 30))
-    except Exception:
-        out["alt_momentum"] = np.nan
-
-    return out
-
-# ---------- timeframe windows & resample ----------
-LOOKBACK = {
-    "1h": timedelta(hours=1), "4h": timedelta(hours=4), "8h": timedelta(hours=8),
-    "12h": timedelta(hours=12), "24h": timedelta(days=1), "7d": timedelta(days=7),
-    "30d": timedelta(days=30), "1y": timedelta(days=365), "all": None
-}
-RESAMPLE_BY_TF = {
-    "1h": "1T", "4h": "5T", "8h": "5T", "12h": "15T", "24h": "15T",
-    "7d": "1H", "30d": "4H", "1y": "1D", "all": "1D",
-}
-
-def slice_df(df: pd.DataFrame, tf: str) -> pd.DataFrame:
-    if df.empty: return df
-    win = LOOKBACK.get(tf, timedelta(hours=4))
-    if win is None: return df
-    anchor = pd.to_datetime(df["timestamp"]).max()
-    cutoff = (anchor - win) if pd.notna(anchor) else (utcnow() - win)
-    out = df[df["timestamp"] >= cutoff].copy()
-    return out
-
-def resample_for_tf(df: pd.DataFrame, tf: str) -> pd.DataFrame:
-    if df is None or df.empty:
-        return df
-    if "timestamp" not in df.columns:
-        return df
-
-    out = df.copy()
-
-    def _to_ms(ts):
-        try:
-            t = float(ts)
-            return int(t * 1000) if t < 1e10 else int(t)
-        except Exception:
-            return ts
-
-    out["timestamp"] = pd.to_datetime(out["timestamp"].apply(_to_ms), unit="ms", utc=True, errors="coerce")
-    out = out.dropna(subset=["timestamp"]).sort_values("timestamp").reset_index(drop=True)
-    if out.empty: return out
-
-    if "close" in out.columns:
-        if "open" not in out.columns or out["open"].isna().all():
-            out["open"] = out["close"].shift(1).fillna(out["close"])
-        if "high" not in out.columns:
-            out["high"] = out[["open", "close"]].max(axis=1)
-        if "low" not in out.columns:
-            out["low"] = out[["open", "close"]].min(axis=1)
-
-    freq = RESAMPLE_BY_TF.get(tf, "1H")
-    idx = out.set_index("timestamp")
-
-    agg_dict = {}
-    if "open" in idx.columns:  agg_dict["open"]  = "first"
-    if "high" in idx.columns:  agg_dict["high"]  = "max"
-    if "low"  in idx.columns:  agg_dict["low"]   = "min"
-    if "close" in idx.columns: agg_dict["close"] = "last"
-    if "volume" in idx.columns: agg_dict["volume"] = "sum"
-    if "market_cap" in idx.columns: agg_dict["market_cap"] = "last"
-    if not agg_dict:
-        return out
-
-    res = idx.resample(freq).agg(agg_dict)
-
-    for col in ("open", "high", "low", "close"):
-        if col in res.columns:
-            res[col] = res[col].ffill()
-    if "market_cap" in res.columns:
-        res["market_cap"] = res["market_cap"].ffill()
-
-    if res is None or res.empty:
-        return out
-
-    return res.ffill().reset_index()
-
-def value_at_or_before(df: pd.DataFrame, hours: int, anchor: Optional[datetime]=None) -> Optional[float]:
-    if df.empty: return None
-    anchor = anchor or (pd.to_datetime(df["timestamp"]).max().to_pydatetime() if not df.empty else utcnow())
-    t = anchor - timedelta(hours=hours)
-    older = df[df["timestamp"] <= t]
-    if older.empty:
-        return to_float(df["close"].iloc[0])
-    return to_float(older["close"].iloc[-1])
-
-def compute_rollups(df: pd.DataFrame) -> Tuple[Dict[str, Optional[float]], Dict[str, Optional[float]]]:
-    if df.empty: return {}, {}
-    ch = {}
-    anchor = pd.to_datetime(df["timestamp"]).max().to_pydatetime() if not df.empty else utcnow()
-    last = to_float(df["close"].iloc[-1])
-    for k, hrs in [("1h",1),("4h",4),("8h",8),("12h",12),("24h",24),("7d",24*7),("30d",24*30),("1y",24*365)]:
-        base = value_at_or_before(df, hrs, anchor)
-        ch[k] = None if (base in (None,0) or last in (None,0)) else round((last/base-1)*100, 2)
-    inv = {k: (None if v is None else round(1000*(1+v/100.0),2)) for k,v in ch.items()}
-    return ch, inv
-
-# ---------- DS/GT hydrate for addresses ----------
-def _gt_tf_for_days(days: int) -> str:
-    if days <= 2: return "5m"
-    if days <= 7: return "15m"
-    if days <= 30: return "1h"
-    if days <= 120: return "4h"
-    return "1d"
-
-def _tf_to_gt(tf: str) -> str:
-    mp = {"1h":"5m","4h":"15m","8h":"15m","12h":"1h","24h":"1h","7d":"1h","30d":"4h","1y":"1d","all":"1d"}
-    return mp.get(tf, "1h")
-
-def ds_series_via_gt(addr: str, tf: str, days_hint: int = 365) -> Tuple[pd.DataFrame, Optional[dict]]:
-    pairs = ds_pairs_for_token(addr)
-    best = pick_best_pair(pairs)
-    if not best:
-        LOG.info("[DS] no pairs for %s", addr)
-        return pd.DataFrame(), None
-    chain  = (best.get("chainId") or "").lower().strip()
-    pair   = best.get("pairAddress") or ""
-    net    = DS_TO_GT.get(chain, chain)
-    if not net or not pair:
-        LOG.info("[DS→GT] missing net/pair for %s (chain=%s, pair=%s)", addr, chain, pair)
-        return pd.DataFrame(), best
-    gt_tf = _tf_to_gt(tf) if tf in RESAMPLE_BY_TF else _gt_tf_for_days(days_hint)
-    LOG.info("[DS→GT] GT OHLCV net=%s pair=%s hour agg=1", net, pair)
-    df = gt_ohlcv_by_pool(net, pair, gt_tf, limit=500)
-    if (df is None or df.empty):
-        pools = gt_find_token_pools(net, addr)
-        for pid in pools:
-            LOG.info("[DS→GT] trying token pool id %s", pid)
-            df = gt_ohlcv_by_pool(net, pid, gt_tf, limit=500)
-            if not df.empty: break
-        if (df is None or df.empty) and chain == "solana":
-            tf_resample = RESAMPLE_BY_TF.get(tf, "1H")
-            LOG.info("[DS→GT] GT empty, trying Birdeye for %s (%s)", addr, tf_resample)
-            df = birdeye_ohlc_solana(addr, tf_resample)
-    if df is not None and not df.empty and "market_cap" not in df.columns:
-        df["market_cap"] = np.nan
-    return df, best
-
-# ---------- cap/FDV helpers ----------
-def derive_cap_or_fdv(meta: dict, ds_pair: Optional[dict], cg_token: Optional[dict]) -> Tuple[Optional[float], str]:
-    try:
-        if cg_token:
-            mc = (((cg_token.get("market_data") or {}).get("market_cap") or {}).get("usd"))
-            if mc: return float(mc), "Market Cap"
-        if ds_pair and ds_pair.get("marketCap"):
-            return float(ds_pair["marketCap"]), "Market Cap"
-        if cg_token:
-            fdv = (((cg_token.get("market_data") or {}).get("fully_diluted_valuation") or {}).get("usd"))
-            if fdv: return float(fdv), "FDV (est.) — supply unverified"
-        if ds_pair and ds_pair.get("fdv"):
-            return float(ds_pair["fdv"]), "FDV (est.) — supply unverified"
-    except Exception:
-        pass
-    return None, "n/a"
-
-def should_use_cap_view(price: Optional[float], decimals: Optional[int]) -> bool:
-    if price is None: return True
-    if price <= 0.10: return True
-    if decimals is not None and decimals >= 9: return True
-    return False
+# ---------- cap/FDV derivation (labels) ----------
+def derive_cap_or_fdv_from_meta(meta: dict) -> Optional[float]:
+    # prefer marketCap; then fdv
+    if meta.get("marketCap"): return to_float(meta.get("marketCap"))
+    if meta.get("fdv"): return to_float(meta.get("fdv"))
+    return None
 
 # ---------- master hydrate ----------
-META_CACHE: Dict[str, dict] = {}
+META_CACHE: Dict[str, dict] = {}  # normalized key -> meta
+
+def token_meta_for(q: str) -> dict:
+    meta = {
+        "name":"Unknown","symbol":"UNK","chain":"","dexId":"","pairAddress":"",
+        "decimals": None, "label": q[:10]+"...", "marketCap": None, "fdv": None,
+        "liq_usd": None, "vol_h24": None
+    }
+    try:
+        js = ds_get("/latest/dex/search", params={"q": q})
+        pairs = _collect_pairs_from_ds_payload(js)
+        if pairs:
+            best = pick_best_pair(pairs)
+            if best:
+                chain = best.get("chainId") or ""
+                token = None
+                ql = q.lower()
+                bt = (((best.get("baseToken") or {}).get("address") or "")).lower()
+                qt = (((best.get("quoteToken") or {}).get("address") or "")).lower()
+                if ql == bt:
+                    token = best.get("baseToken") or {}
+                elif ql == qt:
+                    token = best.get("quoteToken") or {}
+                else:
+                    token = best.get("baseToken") or {}
+                sym = token.get("symbol") or "UNK"
+                name = token.get("name") or "Unknown"
+                decs = token.get("decimals")
+                liq  = (best.get("liquidity") or {}).get("usd")
+                vol  = (best.get("volume") or {}).get("h24")
+                meta.update({
+                    "name": name, "symbol": sym, "chain": chain, "dexId": best.get("dexId") or "",
+                    "pairAddress": best.get("pairAddress") or "", "decimals": decs,
+                    "marketCap": best.get("marketCap"), "fdv": best.get("fdv"),
+                    "liq_usd": liq, "vol_h24": vol,
+                })
+                meta["label"] = f"{name} ({sym}) — {meta['dexId'].capitalize()}/{meta['chain'].capitalize()}"
+                return meta
+    except Exception as e:
+        LOG.warning("[Meta] DS failed: %s", e)
+    return meta
 
 def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd.DataFrame:
     raw_in = (query or "").strip()
@@ -984,16 +999,32 @@ def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd
     is_addr = is_address(s_for_cache)
     df = pd.DataFrame()
 
-    meta = token_meta_for(raw)
+    meta = token_meta_for(raw) if is_addr else {}
     META_CACHE[s_for_cache] = meta
 
     if is_addr:
-        LOG.info("[Hydrate] %s looks contract-ish → DS/GT first", s_for_cache)
         df, best_pair = ds_series_via_gt(raw, tf_for_fetch)
-        if (df is None or df.empty) and best_pair is None:
-            LOG.info("[Hydrate] DS/GT empty for %s — trying CG contract chart", raw)
-            df = cg_series(raw, days=365) or cg_series(raw, days=30)
-    else:
+        if (df is None or df.empty):
+            LOG.info("[Hydrate] DS/GT empty for %s → continuing to CC", raw)
+        else:
+            # cap series if we have supply
+            chain = (meta.get("chain") or "").lower()
+            addr  = raw
+            decs  = meta.get("decimals")
+            supply = None
+            try:
+                if chain == "solana":
+                    decs2, supply = get_solana_supply_decimals(addr)
+                    decs = decs if decs is not None else decs2
+                elif chain:
+                    decs2, supply = get_evm_supply_decimals(addr, chain)
+                    decs = decs if decs is not None else decs2
+            except Exception:
+                pass
+            if supply and "close" in df.columns:
+                df["market_cap"] = df["close"] * float(supply)
+
+    if df.empty:  # ticker path or address fallback
         m = cc_hist(s_for_cache, "minute", limit=360)
         h = cc_hist(s_for_cache, "hour",   limit=24*30)
         d = cc_hist(s_for_cache, "day",    limit=365)
@@ -1012,23 +1043,6 @@ def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd
             return cached
         LOG.warning("[Hydrate] %s no data after routing", s_for_cache)
         return pd.DataFrame()
-
-    if is_addr:
-        chain = (meta.get("chain") or "").lower()
-        addr  = raw
-        decs  = meta.get("decimals")
-        supply = None
-        try:
-            if chain == "solana":
-                decs2, supply = get_solana_supply_decimals(addr)
-                decs = decs if decs is not None else decs2
-            elif chain:
-                decs2, supply = get_evm_supply_decimals(addr, chain)
-                decs = decs if decs is not None else decs2
-        except Exception:
-            pass
-        if supply and "close" in df.columns:
-            df["market_cap"] = df["close"] * float(supply)
 
     df = compute_indicators(df)
 
@@ -1053,74 +1067,30 @@ def _apply_time_axis(fig: go.Figure) -> None:
         ]
     )
 
-def _add_fibs(fig: go.Figure, series: pd.Series, use_extension: bool=False) -> None:
-    if series is None or series.empty: return
-    high, low = float(series.max()), float(series.min())
-    diff = high - low if high >= low else 0.0
-    levels = [(low, "Fib 0%"), (low + 0.236*diff, "Fib 23.6%"), (low + 0.5*diff, "Fib 50%"),
-              (low + 0.618*diff, "Fib 61.8%"), (high, "Fib 100%")]
-    if use_extension:
-        levels.append((high + 0.618*diff, "Fib 161.8% Ext"))
-    for y, label in levels:
-        fig.add_hline(y=y, line_dash="dot", opacity=0.25, annotation_text=label, annotation_position="top right")
-
-def fig_price(df: pd.DataFrame, symbol: str, y_mode: str, log_scale: bool) -> go.Figure:
-    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, row_heights=[0.64, 0.22, 0.14], vertical_spacing=0.03)
-
-    if y_mode == "cap" and "market_cap" in df.columns and not pd.isna(df["market_cap"]).all():
-        ratio = (df["market_cap"]/df["close"]).replace([np.inf, -np.inf], np.nan).fillna(method="ffill").fillna(1.0)
-        o = df["open"] * ratio
-        h = df["high"] * ratio
-        l = df["low"]  * ratio
-        c = df["market_cap"]
-        y_title = "Market Cap (USD)"
-    else:
-        o, h, l, c = df["open"], df["high"], df["low"], df["close"]
-        y_title = "Price (USD)"
-        y_mode = "price"
-
-    fig.add_trace(go.Candlestick(
-        x=df["timestamp"], open=o, high=h, low=l, close=c,
-        name=f"{symbol} {y_mode.upper()}",
-        increasing_line_color="#36d399", decreasing_line_color="#f87272", opacity=0.95
-    ), row=1, col=1)
-
-    series_for_bb = df["market_cap"] if y_mode == "cap" else df["close"]
-    if series_for_bb is not None and not pd.isna(series_for_bb).all():
-        bb_ma = series_for_bb.rolling(20).mean()
-        bb_sd = series_for_bb.rolling(20).std()
-        bb_u = bb_ma + 2*bb_sd
-        bb_l = bb_ma - 2*bb_sd
-        for name, series, color in [("BB upper", bb_u, "#a78bfa"), ("BB mid", bb_ma, "#90a4ec"), ("BB lower", bb_l, "#a78bfa")]:
-            fig.add_trace(go.Scatter(x=df["timestamp"], y=series, name=name, line=dict(width=1, color=color)), row=1, col=1)
-
-    adx_last = to_float(df["adx14"].iloc[-1]) if "adx14" in df.columns and not df.empty else None
-    close_series = c if isinstance(c, pd.Series) else pd.Series(c)
-    _add_fibs(fig, close_series, use_extension=bool(adx_last and adx_last > 25))
-
-    if "macd_line" in df.columns and "macd_signal" in df.columns:
-        fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_line"],   name="MACD",  line=dict(width=1.1)), row=2, col=1)
-        fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_signal"], name="Signal", line=dict(width=1, dash="dot")), row=2, col=1)
-    if "macd_hist" in df.columns:
-        fig.add_trace(go.Bar(x=df["timestamp"], y=df["macd_hist"], name="MACD Hist"), row=2, col=1)
-
-    if "volume" in df.columns:
-        diff = df["close"].diff().fillna(0)
-        colors = ['#36d399' if d >= 0 else '#f87272' for d in diff.tolist()]
-        fig.add_trace(go.Bar(x=df["timestamp"], y=df["volume"].fillna(0), name="Volume", marker=dict(color=colors), opacity=0.8), row=3, col=1)
-        if df["volume"].fillna(0).sum() == 0:
-            fig.add_annotation(text="Volume n/a (source fallback)", showarrow=False, xref="paper", yref="paper", x=0.95, y=0.33)
-
+def fig_price(df: pd.DataFrame, symbol: str) -> go.Figure:
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.74, 0.26], vertical_spacing=0.04)
+    if not df.empty:
+        fig.add_trace(go.Candlestick(
+            x=df["timestamp"], open=df["open"], high=df["high"], low=df["low"], close=df["close"],
+            name=f"{symbol} OHLC", increasing_line_color="#36d399", decreasing_line_color="#f87272", opacity=0.95
+        ), row=1, col=1)
+        if "bb_upper" in df.columns:
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["bb_upper"], name="BB upper", line=dict(width=1)), row=1, col=1)
+        if "bb_mid" in df.columns:
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["bb_mid"],   name="BB mid",   line=dict(width=1, dash="dot")), row=1, col=1)
+        if "bb_lower" in df.columns:
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["bb_lower"], name="BB lower", line=dict(width=1)), row=1, col=1)
+        if "macd_line" in df.columns and "macd_signal" in df.columns:
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_line"],   name="MACD",  line=dict(width=1.1)), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_signal"], name="Signal", line=dict(width=1, dash="dot")), row=2, col=1)
+        if "macd_hist" in df.columns:
+            fig.add_trace(go.Bar(x=df["timestamp"], y=df["macd_hist"], name="MACD Hist"), row=2, col=1)
     fig.update_layout(
-        template="plotly_dark", height=420,
-        margin=dict(l=12, r=12, t=24, b=10),
+        template="plotly_dark", height=420, margin=dict(l=12,r=12,t=24,b=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        xaxis_rangeslider_visible=False, barmode="relative",
-        yaxis_title=y_title
+        xaxis_rangeslider_visible=False
     )
     _apply_time_axis(fig)
-    if log_scale:
-        fig.update_yaxes(type="log", row=1, col=1)
     return fig
 
 def fig_line(df: pd.DataFrame, y: str, name: str, h: int = 155) -> go.Figure:
@@ -1139,10 +1109,13 @@ def fig_line(df: pd.DataFrame, y: str, name: str, h: int = 155) -> go.Figure:
     return fig
 
 # ---------- Ask-Luna ----------
-INTRO_LINES = ["Here’s the read:","Quick take:","Alright — chart check:","Let’s keep it real:"]
-def intro_line() -> str: return random.choice(INTRO_LINES)
+def intro_line() -> str:
+    return random.choice(["Here’s the read:","Quick take:","Alright — chart check:","Let’s keep it real:"])
 
 def _fmt_pct(v: Optional[float]) -> str: return "n/a" if v is None else f"{v:+.2f}%"
+def _safe_tail(series: pd.Series, n: int) -> pd.Series:
+    try: return series.dropna().tail(n)
+    except Exception: return pd.Series(dtype="float64")
 
 def classify_bias_metrics(df: pd.DataFrame) -> Tuple[str, dict]:
     if df.empty: return "range", {}
@@ -1215,46 +1188,10 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
         except Exception:
             return ""
 
-    if any(k in ql for k in ["up", "bull", "rally", "pump"]):
-        txt = f"{intro_line()} {symbol} around {price}. {header}\n"
-        txt += f"Bias: {'bullish' if bias=='bullish' else 'not strongly bullish'}; {perf}. "
-        txt += sentiment + "Why: "
-        if 'rsi' in reasons and reasons['rsi'].startswith(">"): txt += "RSI elevated; "
-        if reasons.get('macd') == "pos+rising": txt += "MACD turning up; "
-        if '24h' in reasons and reasons['24h'].startswith('+'): txt += "24h momentum positive; "
-        txt += line_levels()
-        return txt.strip()
-
-    if any(k in ql for k in ["down", "bear", "dump", "red"]):
-        txt = f"{intro_line()} {symbol} around {price}. {header}\n"
-        txt += f"Bias: {'bearish' if bias=='bearish' else 'risk of pullback'}; {perf}. "
-        txt += sentiment + "Watch: "
-        if 'rsi' in reasons and reasons['rsi'].startswith("<"): txt += "RSI weak; "
-        if reasons.get('macd') == "neg+falling": txt += "MACD sliding; "
-        if '24h' in reasons and reasons['24h'].startswith('-'): txt += "24h pressure; "
-        txt += line_levels()
-        return txt.strip()
-
-    if any(k in ql for k in ["vol", "range", "choppy", "squeeze"]):
-        txt = f"{intro_line()} {symbol} around {price}. {header}\n"
-        txt += f"{perf}. "
-        bbw = to_float(view["close"].rolling(20).std().iloc[-1] / (view['close'].rolling(20).mean().iloc[-1] or 1) * 100) if len(view)>=20 else None
-        state = "tight (squeeze)" if (bbw is not None and bbw <= 1.0) else "normal" if (bbw is not None and bbw < 5.0) else "expanding"
-        txt += f"Volatility: {state}. {sentiment}{line_levels()}"
-        return txt.strip()
-
-    if any(k in ql for k in ["buy", "entry", "accum"]):
-        txt = f"{intro_line()} {symbol} around {price}. {header}\n"
-        txt += f"{perf}. "
-        txt += "Consider entries on dips into prior support with rising volume; manage risk — small caps can swing fast. "
-        txt += line_levels()
-        return txt.strip()
-
-    txt = f"{intro_line()} {symbol} around {price}. {header}\n"
-    txt += f"{perf}. "
-    if bias == "bullish": txt += f"Lean: bullish. "
-    elif bias == "bearish": txt += f"Lean: bearish. "
-    else: txt += f"Lean: range‑bound. "
+    txt = f"{intro_line()} {symbol} around {price}. {header}\n{perf}. "
+    if bias == "bullish": txt += "Lean: bullish. "
+    elif bias == "bearish": txt += "Lean: bearish. "
+    else: txt += "Lean: range‑bound. "
     txt += sentiment + line_levels()
     return txt.strip()
 
@@ -1270,118 +1207,82 @@ def sanitize_query(q: str) -> str:
 
 @app.get("/analyze")
 def analyze():
-    symbol_raw = sanitize_query(request.args.get("symbol") or "ETH")
-    tf         = (request.args.get("tf") or "12h")
-    view_pref  = (request.args.get("view") or "").lower()   # 'cap' or 'price'
-    yscale     = (request.args.get("scale") or "").lower()  # 'log' or 'lin'
+    symbol_raw = (request.args.get("symbol") or "ETH").strip()
+    symbol_raw = sanitize_query(symbol_raw)
+    tf = (request.args.get("tf") or "12h")
 
     df_full = hydrate_symbol(symbol_raw, force=False, tf_for_fetch=tf)
-    if df_full is None or df_full.empty:
+    if df_full.empty:
+        # return a non-crashing placeholder without breaking layout
         LOG.warning("[Analyze] %s returned empty frame — rendering placeholder.", symbol_raw)
+        now = utcnow()
         df_full = pd.DataFrame({
-            "timestamp": [utcnow()],
-            "open": [0.0], "high": [0.0], "low": [0.0], "close": [0.0],
-            "volume": [0.0], "market_cap": [np.nan]
+            "timestamp": [now - timedelta(minutes=1), now],
+            "open":[0,0],"high":[0,0],"low":[0,0],"close":[0,0],"volume":[0,0]
         })
 
-    # resample for timeframe
     df_view = slice_df(df_full, tf)
     df_view = resample_for_tf(df_view, tf)
 
-    # meta for label + facts
     meta = META_CACHE.get(_norm_for_cache(canonicalize_query(symbol_raw))) or {}
     name_sym = meta.get("label")
     symbol_disp = name_sym if (name_sym and is_address(symbol_raw)) else _disp_symbol(symbol_raw)
 
-    # cap‑mode default
-    last_price = None
-    try:
-        if "close" in df_view.columns and not df_view["close"].dropna().empty:
-            last_price = to_float(df_view["close"].dropna().iloc[-1])
-    except Exception:
-        pass
-    cap_default = should_use_cap_view(last_price, meta.get("decimals"))
-    y_mode  = view_pref if view_pref in ("cap","price") else ("cap" if cap_default else "price")
-    log_scale = (yscale == "log")
-
     perf, invest = compute_rollups(df_full)
 
     tiles: Dict[str, str] = {
+        "PRICE": pio.to_html(fig_price(df_view if not df_view.empty else df_full, symbol_disp), include_plotlyjs=False, full_html=False),
         "RSI":   pio.to_html(fig_line(df_view, "rsi", "RSI"), include_plotlyjs=False, full_html=False),
-        "PRICE": pio.to_html(fig_price(df_view if not df_view.empty else df_full, symbol_disp, y_mode, log_scale), include_plotlyjs=False, full_html=False),
         "MCAP":  pio.to_html(fig_line(df_view if "market_cap" in df_view.columns else df_full, "market_cap", "Market Cap"), include_plotlyjs=False, full_html=False),
         "MACD":  pio.to_html(fig_line(df_view, "macd_line", "MACD"), include_plotlyjs=False, full_html=False),
         "OBV":   pio.to_html(fig_line(df_view, "obv", "OBV"), include_plotlyjs=False, full_html=False),
+        "ATR":   pio.to_html(fig_line(df_view, "atr14", "ATR 14"), include_plotlyjs=False, full_html=False),
         "BANDS": pio.to_html(fig_line(df_view, "bb_width", "Bands Width"), include_plotlyjs=False, full_html=False),
         "VOL":   pio.to_html(fig_line(df_view, "volume", "Volume Trend"), include_plotlyjs=False, full_html=False),
         "LIQ":   pio.to_html(fig_line(df_view, "volume", "Liquidity"), include_plotlyjs=False, full_html=False),
         "ADX":   pio.to_html(fig_line(df_view, "adx14", "ADX 14"), include_plotlyjs=False, full_html=False),
-        "ATR":   pio.to_html(fig_line(df_view, "atr14", "Volatility (ATR 14)"), include_plotlyjs=False, full_html=False),
         "ALT":   pio.to_html(fig_line(df_view, "alt_momentum", "ALT (Momentum)"), include_plotlyjs=False, full_html=False),
     }
 
-    facts = build_header_facts(meta)
     def pct(v): return ("n/a" if v is None else f"{v:+.2f}%")
     tldr_line = f"{symbol_disp}: 1h {pct(perf.get('1h'))}, 4h {pct(perf.get('4h'))}, 12h {pct(perf.get('12h'))}, 24h {pct(perf.get('24h'))}."
+    facts = build_header_facts(meta)
     if facts: tldr_line = f"{facts} — " + tldr_line
 
-    try:
-        updated_ts = pd.to_datetime(df_full["timestamp"]).max()
-        updated = updated_ts.strftime("UTC %Y-%m-%d %H:%M") if pd.notna(updated_ts) else _to_iso(utcnow())
-    except Exception:
-        updated = _to_iso(utcnow())
+    updated = (pd.to_datetime(df_full["timestamp"]).max().strftime("UTC %Y-%m-%d %H:%M") if not df_full.empty else _to_iso(utcnow()))
 
-    # ⬇️ CRITICAL: include symbol_raw so template can use it
     return render_template(
         "control_panel.html",
-        symbol=symbol_disp,
-        symbol_raw=symbol_raw,             # <-- this line fixes the UndefinedError
-        tf=tf,
-        updated=updated,
-        tiles=tiles,
-        performance=perf,
-        investment=invest,
-        tldr_line=tldr_line,
+        symbol=symbol_disp, symbol_raw=symbol_raw, tf=tf, updated=updated,
+        tiles=tiles, performance=perf, investment=invest, tldr_line=tldr_line, build=BUILD_TAG
     )
 
 @app.get("/expand_json")
 def expand_json():
     ip = request.headers.get("X-Forwarded-For", request.remote_addr or "na").split(",")[0].strip()
-    if not allow_rate(ip, "/expand_json", limit=10, window_sec=60):
-        return jsonify({"error":"rate limit"}), 429
+    if not allow_rate(ip, "/expand_json", limit=12, window_sec=60):
+        return jsonify({"error":"rate limited"}), 429
 
     symbol_raw = sanitize_query(request.args.get("symbol") or "ETH")
     tf     = (request.args.get("tf") or "12h")
     key    = (request.args.get("key") or "RSI").upper()
-    view_pref = (request.args.get("view") or "").lower()
-    yscale    = (request.args.get("scale") or "").lower()
 
     df = load_cached_frame(symbol_raw)
     if df.empty: df = hydrate_symbol(symbol_raw, force=False, tf_for_fetch=tf)
     dfv = slice_df(df, tf); dfv = resample_for_tf(dfv, tf)
-    meta = META_CACHE.get(_norm_for_cache(canonicalize_query(symbol_raw))) or {}
-    last_price = to_float(dfv["close"].iloc[-1]) if not dfv.empty else None
-    cap_default = should_use_cap_view(last_price, meta.get("decimals"))
-    y_mode = view_pref if view_pref in ("cap","price") else ("cap" if cap_default else "price")
-    log_scale = True if yscale == "log" else False
 
-    if key == "PRICE":
-        fig = fig_price(dfv if not dfv.empty else df, _disp_symbol(symbol_raw), y_mode, log_scale)
-    else:
-        key_map = {
-            "RSI":   ("rsi","RSI"),
-            "MACD":  ("macd_line","MACD"),
-            "BANDS": ("bb_width","Bands Width"),
-            "VOL":   ("volume","Volume Trend"),
-            "LIQ":   ("volume","Liquidity"),
-            "OBV":   ("obv","OBV"),
-            "ADX":   ("adx14","ADX 14"),
-            "MCAP":  ("market_cap","Market Cap"),
-            "ATR":   ("atr14","Volatility (ATR 14)"),
-            "ALT":   ("alt_momentum","ALT (Momentum)")
-        }
-        ycol, title = key_map.get(key, ("close", key))
-        fig = fig_line(dfv, ycol, title)
+    if   key == "PRICE":  fig = fig_price(dfv if not dfv.empty else df, _disp_symbol(symbol_raw))
+    elif key == "RSI":    fig = fig_line(dfv, "rsi", "RSI", h=360)
+    elif key == "MACD":   fig = fig_line(dfv, "macd_line", "MACD", h=360)
+    elif key == "MCAP":   fig = fig_line(dfv if "market_cap" in dfv.columns else df, "market_cap", "Market Cap", h=360)
+    elif key == "BANDS":  fig = fig_line(dfv, "bb_width", "Bollinger Width", h=360)
+    elif key == "VOL":    fig = fig_line(dfv, "volume", "Volume Trend", h=360)
+    elif key == "LIQ":    fig = fig_line(dfv, "volume", "Liquidity", h=360)
+    elif key == "OBV":    fig = fig_line(dfv, "obv", "OBV", h=360)
+    elif key == "ADX":    fig = fig_line(dfv, "adx14", "ADX 14", h=360)
+    elif key == "ATR":    fig = fig_line(dfv, "atr14", "ATR 14", h=360)
+    elif key == "ALT":    fig = fig_line(dfv, "alt_momentum", "ALT momentum", h=360)
+    else:                 fig = fig_line(dfv, "close", key, h=360)
 
     talk = "Tap a tile for details."
     return jsonify({"fig": fig.to_plotly_json(), "talk": talk, "tf": tf, "key": key})
@@ -1394,7 +1295,7 @@ def api_refresh(symbol: str):
 @app.post("/api/luna")
 def api_luna():
     ip = request.headers.get("X-Forwarded-For", request.remote_addr or "na").split(",")[0].strip()
-    if not allow_rate(ip, "/api/luna", limit=5, window_sec=60):
+    if not allow_rate(ip, "/api_luna", limit=5, window_sec=60):
         return jsonify({"symbol":"", "reply":"Hold up—too many requests; try again in a minute."}), 429
 
     data    = request.get_json(silent=True) or {}
@@ -1411,80 +1312,14 @@ def api_luna():
     reply = luna_answer(disp, df, tf, text, meta) if not df.empty else f"{disp}: I don’t have enough fresh data yet."
     return jsonify({"symbol": disp, "reply": reply})
 
-# --- helpers: suggestions & resolve -----------------------------------------
-def _list_cached_symbols(maxn=500) -> list[str]:
-    out = set()
-    for p in (FRAMES_DIR.glob("*.csv")): out.add(_disp_symbol(p.stem))
-    for p in (FRAMES_DIR.glob("*.parquet")): out.add(_disp_symbol(p.stem))
-    try:
-        for k in (CG_IDS.keys() if 'CG_IDS' in globals() else []): out.add(k.upper())
-    except Exception: pass
-    try:
-        coins = cg_fetch_coin_list()
-        for c in coins[:2000]:
-            sym = c.get("symbol")
-            if sym: out.add(sym.upper())
-    except Exception: pass
-    return sorted(out)[:maxn]
-
-def _resolve_symbol(query: str) -> str | None:
-    if not query: return None
-    q = query.strip()
-    if is_address(q): return canonicalize_query(q)
-    syms = _list_cached_symbols(maxn=2000)
-    if q.upper() in syms: return q.upper()
-    cg_id = cg_id_for_symbol_or_contract(q)
-    if cg_id:
-        coins = cg_fetch_coin_list()
-        for c in coins:
-            if (c.get("id","") or "").lower() == cg_id.lower():
-                sym = c.get("symbol") or ""
-                return sym.upper() if sym else cg_id
-        return cg_id
-    return None
-
-@app.get("/api/suggest")
-def api_suggest():
-    q = (request.args.get("q") or "").strip().upper()
-    syms = _list_cached_symbols()
-    if q:
-        syms = [s for s in syms if q in s]
-    return jsonify({"symbols": syms[:20]})
-
-@app.get("/api/resolve")
-def api_resolve():
-    q = (request.args.get("query") or "").strip()
-    sym = _resolve_symbol(q)
-    if not sym: return jsonify({"ok": False, "error": "not found"}), 404
-    return jsonify({"ok": True, "symbol": sym})
-
-# --- debug endpoints ---------------------------------------------------------
-@app.get("/debug/resolve")
-def debug_resolve():
-    q = (request.args.get("q") or "").strip()
-    can = canonicalize_query(q)
-    pairs = ds_pairs_for_token(q) if is_address(q) else []
-    return jsonify({
-        "input": q, "is_addr": is_address(q),
-        "canonical": can, "pairs_found": len(pairs),
-        "build": BUILD_TAG
-    })
-
-@app.get("/debug/ds_pairs")
-def debug_ds_pairs():
-    q = (request.args.get("q") or "").strip()
-    pairs = ds_pairs_for_token(q)
-    return jsonify({"count": len(pairs), "pairs": pairs[:3]})
-
 # --- healthz -----------------------------------------------------------------
 @app.get("/healthz")
 def healthz():
-    def ping(url, params=None):
+    def ping(url, params=None): 
         try:
-            r = safe_fetch(url, params=params or {}, timeout=6)
+            r = safe_fetch(url, params=params or {}, timeout=6); 
             return "ok" if (r and r.ok) else "down"
-        except Exception:
-            return "down"
+        except Exception: return "down"
     vendors = {
         "cc": ping("https://min-api.cryptocompare.com/data/price", {"fsym":"ETH","tsyms":"USD"}),
         "cg": ping("https://api.coingecko.com/api/v3/ping"),
@@ -1494,7 +1329,9 @@ def healthz():
     st = _fetch_log()
     return jsonify({
         "vendors": vendors,
-        "cache": {"frames_files": len(list(FRAMES_DIR.glob("*.*"))),},
+        "cache": {
+            "frames_files": len(list(FRAMES_DIR.glob("*.*"))),
+        },
         "last_fetches": st,
         "build": BUILD_TAG
     })
