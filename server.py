@@ -1363,6 +1363,3 @@ def healthz():
 # ---------- run ----------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-'''
-open('/mnt/data/server_fixed.py','w',encoding='utf-8').write(server_code)
-print("Wrote /mnt/data/server_fixed.py")
