@@ -134,3 +134,16 @@ body {
   font-size:12px;
   border-radius:8px;
 }
+
+/* Stronger purple hover glow without changing layout */
+.tile { box-shadow: 0 0 0 0 rgba(164,120,250,0); }
+.tile:hover, .tile:focus-within {
+  box-shadow: 0 0 0 2px #a478fa, 0 0 26px 6px rgba(164,120,250,.45);
+}
+
+/* Price tile: give the plot a breath at the bottom for X ticks */
+.tile--price .tile__body { padding-bottom: 14px; }
+
+/* Make Plotly fill tile body cleanly */
+.js-plotly-plot, .plotly, .plot-container { width:100% !important; height:100% !important; }
+.svg-container { height: 100% !important; }

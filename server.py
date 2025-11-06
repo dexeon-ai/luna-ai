@@ -936,12 +936,22 @@ def derive_cap_or_fdv_from_meta(meta: dict) -> Optional[float]:
 
 # ---------- master hydrate ----------
 META_CACHE: Dict[str, dict] = {}  # normalized key -> meta
+# --- helpers for odd contract-like inputs (Hyperliquid/Sui/Aptos etc.)
+_CONTRACTISH = re.compile(r"^(0x[a-fA-F0-9]{8,64}|[A-Za-z0-9]{32,}|.+::.+)$")
+
+def looks_contractish(s: str) -> bool:
+    s = (s or "").strip()
+    if is_address(s): 
+        return True
+    if _CONTRACTISH.match(s):
+        return True
+    return False
 
 def token_meta_for(q: str) -> dict:
     meta = {
         "name":"Unknown","symbol":"UNK","chain":"","dexId":"","pairAddress":"",
         "decimals": None, "label": q[:10]+"...", "marketCap": None, "fdv": None,
-        "liq_usd": None, "vol_h24": None
+        "liq_usd": None, "vol_h24": None, "tokenAddress": None
     }
     try:
         js = ds_get("/latest/dex/search", params={"q": q})
@@ -960,6 +970,7 @@ def token_meta_for(q: str) -> dict:
                     token = best.get("quoteToken") or {}
                 else:
                     token = best.get("baseToken") or {}
+
                 sym = token.get("symbol") or "UNK"
                 name = token.get("name") or "Unknown"
                 decs = token.get("decimals")
@@ -970,12 +981,53 @@ def token_meta_for(q: str) -> dict:
                     "pairAddress": best.get("pairAddress") or "", "decimals": decs,
                     "marketCap": best.get("marketCap"), "fdv": best.get("fdv"),
                     "liq_usd": liq, "vol_h24": vol,
+                    "tokenAddress": (token.get("address") or None),
                 })
                 meta["label"] = f"{name} ({sym}) — {meta['dexId'].capitalize()}/{meta['chain'].capitalize()}"
                 return meta
     except Exception as e:
         LOG.warning("[Meta] DS failed: %s", e)
     return meta
+
+def talk_for_key(key: str, df: pd.DataFrame) -> str:
+    if df is None or df.empty:
+        return "No data for this timeframe."
+    last = df.iloc[-1]
+    try:
+        if key == "RSI":
+            v = to_float(last.get("rsi"))
+            if v is None: return "RSI unavailable."
+            zone = "overbought" if v >= 70 else "oversold" if v <= 30 else "neutral"
+            return f"RSI {v:.1f} — {zone}."
+        if key == "MACD":
+            ml = to_float(last.get("macd_line")); sg = to_float(last.get("macd_signal")); hs = to_float(last.get("macd_hist"))
+            if ml is None or sg is None: return "MACD unavailable."
+            cross = "above" if ml >= sg else "below"
+            hist = f", hist {hs:+.2f}" if hs is not None else ""
+            return f"MACD {ml:.2f} {cross} signal {sg:.2f}{hist}."
+        if key == "ADX":
+            a = to_float(last.get("adx14")); 
+            if a is None: return "ADX unavailable."
+            strength = "strong trend" if a >= 25 else "range-bound/weak"
+            return f"ADX(14) {a:.1f} — {strength}."
+        if key == "ATR":
+            a = to_float(last.get("atr14")); 
+            return "ATR unavailable." if a is None else f"ATR(14) {a:.4g} (volatility)."
+        if key == "BANDS":
+            w = to_float(last.get("bb_width"))
+            return "Bands width unavailable." if w is None else f"Bollinger width {w:.2f}%."
+        if key in ("VOL","LIQ"):
+            v = to_float(last.get("volume"))
+            return "Volume unavailable." if v is None else f"Volume last bar: {v:,.0f}."
+        if key == "MCAP":
+            mc = to_float(last.get("market_cap"))
+            return "Market cap unavailable." if mc is None else f"Market cap ~ {money(mc)} (approx)."
+        if key == "ALT":
+            a = to_float(last.get("alt_momentum"))
+            return "ALT momentum unavailable." if a is None else f"ALT momentum {a:+.4g}."
+    except Exception:
+        pass
+    return "Tap a tile for details."
 
 def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd.DataFrame:
     raw_in = (query or "").strip()
@@ -995,6 +1047,17 @@ def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd
 
     meta = token_meta_for(raw) if is_addr else {}
     META_CACHE[s_for_cache] = meta
+
+    if (not is_addr) and looks_contractish(raw):
+        meta_guess = token_meta_for(raw)
+        addr_guess = (meta_guess or {}).get("tokenAddress")
+        if addr_guess:
+        LOG.info("[Hydrate] contract-like '%s' resolved to %s on %s", raw, addr_guess, meta_guess.get("chain"))
+        META_CACHE[s_for_cache] = meta_guess
+        df, _ = ds_series_via_gt(addr_guess, tf_for_fetch)
+        if df is not None and not df.empty:
+            is_addr = True  # we have a real address now
+            meta = meta_guess
 
     if is_addr:
         df, best_pair = ds_series_via_gt(raw, tf_for_fetch)
@@ -1024,7 +1087,8 @@ def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd
         d = cc_hist(s_for_cache, "day",    limit=365)
         if (m is None or m.empty) and (h is None or h.empty) and (d is None or d.empty):
             LOG.info("[Hydrate] CC empty → CG fallback for %s", s_for_cache)
-            df = cg_series(raw, days=365) or cg_series(raw, days=30)
+            df365 = cg_series(raw, days=365)
+            df = df365 if (df365 is not None and not df365.empty) else cg_series(raw, days=30)
         else:
             parts = [x for x in (d,h,m) if x is not None and not x.empty]
             df = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
@@ -1063,7 +1127,8 @@ def _apply_time_axis(fig: go.Figure) -> None:
     )
 
 def fig_price(df: pd.DataFrame, symbol: str) -> go.Figure:
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.74, 0.26], vertical_spacing=0.04)
+    # a tad shorter, more bottom margin -> x ticks visible
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.78, 0.22], vertical_spacing=0.04)
     if not df.empty:
         fig.add_trace(go.Candlestick(
             x=df["timestamp"], open=df["open"], high=df["high"], low=df["low"], close=df["close"],
@@ -1081,7 +1146,7 @@ def fig_price(df: pd.DataFrame, symbol: str) -> go.Figure:
         if "macd_hist" in df.columns:
             fig.add_trace(go.Bar(x=df["timestamp"], y=df["macd_hist"], name="MACD Hist"), row=2, col=1)
     fig.update_layout(
-        template="plotly_dark", height=420, margin=dict(l=12,r=12,t=24,b=10),
+        template="plotly_dark", height=400, margin=dict(l=12,r=12,t=24,b=36),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         xaxis_rangeslider_visible=False
     )
@@ -1231,6 +1296,7 @@ def analyze():
 
     df_view = slice_df(df_full, tf)
     df_view = resample_for_tf(df_view, tf)
+    df_view = compute_indicators(df_view)  # <-- recompute on the resampled view
 
     meta = META_CACHE.get(_norm_for_cache(canonicalize_query(symbol_raw))) or {}
     name_sym = meta.get("label")
@@ -1280,6 +1346,7 @@ def expand_json():
     df = load_cached_frame(symbol_raw)
     if df.empty: df = hydrate_symbol(symbol_raw, force=False, tf_for_fetch=tf)
     dfv = slice_df(df, tf); dfv = resample_for_tf(dfv, tf)
+    dfv = compute_indicators(dfv)
 
     if   key == "PRICE":  fig = fig_price(dfv if not dfv.empty else df, _disp_symbol(symbol_raw))
     elif key == "RSI":    fig = fig_line(dfv, "rsi", "RSI", h=360)
@@ -1294,7 +1361,7 @@ def expand_json():
     elif key == "ALT":    fig = fig_line(dfv, "alt_momentum", "ALT momentum", h=360)
     else:                 fig = fig_line(dfv, "close", key, h=360)
 
-    talk = "Tap a tile for details."
+    talk = talk_for_key(key, dfv if not dfv.empty else df)
     return jsonify({"fig": fig.to_plotly_json(), "talk": talk, "tf": tf, "key": key})
 
 @app.get("/api/refresh/<symbol>")
