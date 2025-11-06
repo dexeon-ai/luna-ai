@@ -1361,8 +1361,80 @@ def expand_json():
     elif key == "ALT":    fig = fig_line(dfv, "alt_momentum", "ALT momentum", h=360)
     else:                 fig = fig_line(dfv, "close", key, h=360)
 
-    talk = talk_for_key(key, dfv if not dfv.empty else df)
-    return jsonify({"fig": fig.to_plotly_json(), "talk": talk, "tf": tf, "key": key})
+def talk_for_key(key: str, df: pd.DataFrame) -> str:
+    if df is None or df.empty:
+        return "No data available for this timeframe."
+
+    last = df.iloc[-1]
+    try:
+        if key == "RSI":
+            v = to_float(last.get("rsi"))
+            if v is None:
+                return "RSI data missing."
+            if v >= 70:
+                return f"RSI {v:.1f}: price has run hot—momentum may cool soon."
+            if v <= 30:
+                return f"RSI {v:.1f}: market is oversold—buyers could step in."
+            return f"RSI {v:.1f}: neutral zone, trend waiting for direction."
+
+        if key == "MACD":
+            ml = to_float(last.get("macd_line"))
+            sg = to_float(last.get("macd_signal"))
+            hs = to_float(last.get("macd_hist"))
+            if ml is None or sg is None:
+                return "MACD not available."
+            cross = "above" if ml > sg else "below"
+            bias = "bullish" if ml > sg else "bearish"
+            hist = f"hist {hs:+.2f}" if hs is not None else ""
+            return f"MACD line {cross} signal ({bias} bias); {hist}. When the line crosses upward it often precedes upward momentum—downward crosses hint at short-term weakness."
+
+        if key == "ADX":
+            a = to_float(last.get("adx14"))
+            if a is None:
+                return "ADX missing."
+            if a >= 40:
+                return f"ADX {a:.1f}: strong trend in play—moves likely to extend."
+            if a >= 25:
+                return f"ADX {a:.1f}: trend forming; follow volume for confirmation."
+            return f"ADX {a:.1f}: weak trend—range trading dominates."
+
+        if key == "ATR":
+            a = to_float(last.get("atr14"))
+            if a is None:
+                return "ATR not available."
+            return f"ATR(14) {a:.4g}: shows the average candle range. Higher ATR = more volatility."
+
+        if key == "BANDS":
+            w = to_float(last.get("bb_width"))
+            if w is None:
+                return "Bollinger data missing."
+            if w > 5:
+                return f"Bollinger width {w:.2f}%: wide bands—market volatile."
+            if w < 1:
+                return f"Bollinger width {w:.2f}%: bands tight—possible breakout setup."
+            return f"Bollinger width {w:.2f}%: normal volatility."
+
+        if key in ("VOL", "LIQ"):
+            v = to_float(last.get("volume"))
+            if v is None:
+                return "Volume unavailable."
+            return f"Volume {v:,.0f}: watch for spikes alongside price surges; sustained volume validates moves."
+
+        if key == "MCAP":
+            mc = to_float(last.get("market_cap"))
+            return "Market cap missing." if mc is None else f"Market cap ≈ {money(mc)}; changes here reflect broader participation and valuation shifts."
+
+        if key == "ALT":
+            a = to_float(last.get("alt_momentum"))
+            if a is None:
+                return "Momentum data missing."
+            trend = "positive" if a > 0 else "negative"
+            return f"ALT momentum {a:+.2f}: {trend} impulse; rising values suggest acceleration in price movement."
+
+    except Exception as e:
+        LOG.warning("[Talk] error %s", e)
+
+    return "Data available, interpret with volume and context."
 
 @app.get("/api/refresh/<symbol>")
 def api_refresh(symbol: str):

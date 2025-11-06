@@ -147,3 +147,15 @@ body {
 /* Make Plotly fill tile body cleanly */
 .js-plotly-plot, .plotly, .plot-container { width:100% !important; height:100% !important; }
 .svg-container { height: 100% !important; }
+
+/* --- Compact vertical tuning --- */
+.shell {
+  --gap: 10px;               /* reduce tile gaps (was 14px) */
+  margin: 12px auto 28px auto;  /* tighter top/bottom margins */
+}
+
+/* Slightly shorter panels */
+.panel.row-compact { padding: 6px 10px; margin-bottom: 6px; }
+
+/* Make Q&A area taller but use reclaimed pixels from gaps */
+.panel.qa { height: 260px; }  /* was 220px */
