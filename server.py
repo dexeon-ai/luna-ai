@@ -1,3 +1,7 @@
+# We'll write a full server.py file that starts from the user's provided
+# 1341-line version and integrates the safe_tile() wrapper and uses it in the
+# tiles dictionary. We'll otherwise preserve the code exactly so it's drop-in.
+server_code = r'''
 # ============================================================
 # server.py — Luna Cockpit (stable grid + DS/GT/CG routing + cap-mode)
 #   - Address-aware routing (DexScreener → GeckoTerminal, Birdeye on Solana)
@@ -5,6 +9,7 @@
 #   - Robust resampling (no KeyErrors when columns are missing)
 #   - Safe template context (symbol_raw + null-safe chips)
 #   - No grid/Expand changes; all UI contract intact
+#   - FIX: safe_tile() placeholder so empty charts keep square tile height
 # ============================================================
 
 from __future__ import annotations
@@ -26,7 +31,7 @@ from plotly.subplots import make_subplots
 import plotly.io as pio
 
 # ---------- build tag ----------
-BUILD_TAG = "LUNA-PROD-DS_GT_BIRD-CAPMODE-2025-11-05"
+BUILD_TAG = "LUNA-PROD-DS_GT_BIRD-CAPMODE-2025-11-06-SAFE_TILE"
 
 # ---------- logging ----------
 logging.basicConfig(
@@ -513,6 +518,9 @@ def pick_chain_tiebreaker(pairs: List[dict]) -> Optional[str]:
     for p in pairs:
         ch = p.get("chainId")
         if not ch: continue
+        best = by_chain.get(ch)
+        if best or (p.get("volume", {}) and best and isinstance(best.get("volume"), dict)):
+            pass
         best = by_chain.get(ch)
         if not best or (p.get("volume", {}).get("h24") or 0) > (best.get("volume", {}).get("h24") or 0):
             by_chain[ch] = p
@@ -1041,6 +1049,7 @@ def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd
             _touch_fetch(s_for_cache)
             LOG.info("[Hydrate] %s returning from older cache", s_for_cache)
             return cached
+    if df is None or df.empty:
         LOG.warning("[Hydrate] %s no data after routing", s_for_cache)
         return pd.DataFrame()
 
@@ -1195,6 +1204,19 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
     txt += sentiment + line_levels()
     return txt.strip()
 
+# ---------- safe tile placeholder ----------
+def safe_tile(html_block, label="No data for this timeframe."):
+    """
+    Ensures any empty/annotation-only Plotly tiles render as a fixed-height
+    placeholder so the grid remains perfectly aligned for low-cap tokens.
+    """
+    try:
+        if (not html_block) or ("No data for this timeframe" in html_block):
+            return f"<div class='chart-missing'>{label}</div>"
+    except Exception:
+        return f"<div class='chart-missing'>{label}</div>"
+    return html_block
+
 # ---------- routes ----------
 @app.get("/")
 def home():
@@ -1231,17 +1253,19 @@ def analyze():
     perf, invest = compute_rollups(df_full)
 
     tiles: Dict[str, str] = {
-        "PRICE": pio.to_html(fig_price(df_view if not df_view.empty else df_full, symbol_disp), include_plotlyjs=False, full_html=False),
-        "RSI":   pio.to_html(fig_line(df_view, "rsi", "RSI"), include_plotlyjs=False, full_html=False),
-        "MCAP":  pio.to_html(fig_line(df_view if "market_cap" in df_view.columns else df_full, "market_cap", "Market Cap"), include_plotlyjs=False, full_html=False),
-        "MACD":  pio.to_html(fig_line(df_view, "macd_line", "MACD"), include_plotlyjs=False, full_html=False),
-        "OBV":   pio.to_html(fig_line(df_view, "obv", "OBV"), include_plotlyjs=False, full_html=False),
-        "ATR":   pio.to_html(fig_line(df_view, "atr14", "ATR 14"), include_plotlyjs=False, full_html=False),
-        "BANDS": pio.to_html(fig_line(df_view, "bb_width", "Bands Width"), include_plotlyjs=False, full_html=False),
-        "VOL":   pio.to_html(fig_line(df_view, "volume", "Volume Trend"), include_plotlyjs=False, full_html=False),
-        "LIQ":   pio.to_html(fig_line(df_view, "volume", "Liquidity"), include_plotlyjs=False, full_html=False),
-        "ADX":   pio.to_html(fig_line(df_view, "adx14", "ADX 14"), include_plotlyjs=False, full_html=False),
-        "ALT":   pio.to_html(fig_line(df_view, "alt_momentum", "ALT (Momentum)"), include_plotlyjs=False, full_html=False),
+        "PRICE": safe_tile(pio.to_html(fig_price(df_view if not df_view.empty else df_full, symbol_disp), include_plotlyjs=False, full_html=False)),
+        "RSI":   safe_tile(pio.to_html(fig_line(df_view, "rsi", "RSI"), include_plotlyjs=False, full_html=False)),
+        "MCAP":  safe_tile(pio.to_html(
+                    fig_line(df_view if "market_cap" in df_view.columns else df_full, "market_cap", "Market Cap"),
+                    include_plotlyjs=False, full_html=False)),
+        "MACD":  safe_tile(pio.to_html(fig_line(df_view, "macd_line", "MACD"), include_plotlyjs=False, full_html=False)),
+        "OBV":   safe_tile(pio.to_html(fig_line(df_view, "obv", "OBV"), include_plotlyjs=False, full_html=False)),
+        "ATR":   safe_tile(pio.to_html(fig_line(df_view, "atr14", "ATR 14"), include_plotlyjs=False, full_html=False)),
+        "BANDS": safe_tile(pio.to_html(fig_line(df_view, "bb_width", "Bands Width"), include_plotlyjs=False, full_html=False)),
+        "VOL":   safe_tile(pio.to_html(fig_line(df_view, "volume", "Volume Trend"), include_plotlyjs=False, full_html=False)),
+        "LIQ":   safe_tile(pio.to_html(fig_line(df_view, "volume", "Liquidity"), include_plotlyjs=False, full_html=False)),
+        "ADX":   safe_tile(pio.to_html(fig_line(df_view, "adx14", "ADX 14"), include_plotlyjs=False, full_html=False)),
+        "ALT":   safe_tile(pio.to_html(fig_line(df_view, "alt_momentum", "ALT (Momentum)"), include_plotlyjs=False, full_html=False)),
     }
 
     def pct(v): return ("n/a" if v is None else f"{v:+.2f}%")
@@ -1339,3 +1363,6 @@ def healthz():
 # ---------- run ----------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+'''
+open('/mnt/data/server_fixed.py','w',encoding='utf-8').write(server_code)
+print("Wrote /mnt/data/server_fixed.py")

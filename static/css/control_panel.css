@@ -53,3 +53,13 @@
   opacity: 1.0;
   background: #111827;
 }
+.chart-missing {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100%;
+  background:rgba(15,25,40,.4);
+  color:#586d86;
+  font-size:12px;
+  border-radius:8px;
+}
