@@ -1049,9 +1049,9 @@ def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd
     META_CACHE[s_for_cache] = meta
 
     if (not is_addr) and looks_contractish(raw):
-        meta_guess = token_meta_for(raw)
-        addr_guess = (meta_guess or {}).get("tokenAddress")
-        if addr_guess:
+    meta_guess = token_meta_for(raw)
+    addr_guess = (meta_guess or {}).get("tokenAddress")
+    if addr_guess:
         LOG.info("[Hydrate] contract-like '%s' resolved to %s on %s", raw, addr_guess, meta_guess.get("chain"))
         META_CACHE[s_for_cache] = meta_guess
         df, _ = ds_series_via_gt(addr_guess, tf_for_fetch)
