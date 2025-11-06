@@ -1,17 +1,3 @@
-# We'll write a full server.py file that starts from the user's provided
-# 1341-line version and integrates the safe_tile() wrapper and uses it in the
-# tiles dictionary. We'll otherwise preserve the code exactly so it's drop-in.
-server_code = r'''
-# ============================================================
-# server.py — Luna Cockpit (stable grid + DS/GT/CG routing + cap-mode)
-#   - Address-aware routing (DexScreener → GeckoTerminal, Birdeye on Solana)
-#   - CC→CG fallback for tickers
-#   - Robust resampling (no KeyErrors when columns are missing)
-#   - Safe template context (symbol_raw + null-safe chips)
-#   - No grid/Expand changes; all UI contract intact
-#   - FIX: safe_tile() placeholder so empty charts keep square tile height
-# ============================================================
-
 from __future__ import annotations
 import os, re, json, time, random, logging, math
 from datetime import datetime, timezone, timedelta
