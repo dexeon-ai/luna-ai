@@ -1134,6 +1134,66 @@ def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd
 
     return df
 
+def _directional_tilt(view: pd.DataFrame) -> tuple[str, int]:
+    """
+    Build a directional tilt ('mild ↑', 'modest ↓', etc.) and a confidence score (0–100)
+    using MACD slope, RSI location, ADX strength and band width.
+    """
+    if view.empty:
+        return ("flat", 0)
+
+    score = 0
+    parts = []
+
+    # MACD histogram slope
+    if "macd_hist" in view.columns:
+        h = view["macd_hist"].dropna()
+        if len(h) >= 4:
+            slope = float(h.iloc[-1] - h.iloc[-4])
+            if slope > 0: score += 2; parts.append("MACD rising")
+            elif slope < 0: score -= 2; parts.append("MACD falling")
+
+    # RSI location
+    rsi = to_float(view.get("rsi", pd.Series(dtype=float)).iloc[-1]) if "rsi" in view.columns and len(view) else None
+    if rsi is not None:
+        if rsi >= 60: score += 1; parts.append("RSI>60")
+        elif rsi <= 40: score -= 1; parts.append("RSI<40")
+
+    # ADX strength
+    adx = to_float(view.get("adx14", pd.Series(dtype=float)).iloc[-1]) if "adx14" in view.columns and len(view) else None
+    if adx is not None:
+        if adx >= 30: score += 1; parts.append("ADX strong")
+        elif adx <= 15: score -= 1; parts.append("ADX weak")
+
+    # Bollinger width contraction/expansion
+    bw = to_float(view.get("bb_width", pd.Series(dtype=float)).iloc[-1]) if "bb_width" in view.columns and len(view) else None
+    if bw is not None:
+        # expansion with positive MACD slope favors up continuation, contraction favors breakout risk
+        if bw >= 3 and score > 0: score += 1; parts.append("bands expanding")
+        elif bw <= 1 and abs(score) == 0: parts.append("bands tight")
+
+    # Map score to label and confidence
+    if score >= 3:   return ("modest ↑", 70)
+    if score == 2:   return ("mild ↑", 60)
+    if score == 1:   return ("slight ↑", 55)
+    if score == 0:   return ("flat", 50)
+    if score == -1:  return ("slight ↓", 55)
+    if score == -2:  return ("mild ↓", 60)
+    return ("modest ↓", 70)
+
+def _summarize_24h(view: pd.DataFrame, ch: dict) -> str:
+    """1–2 sentence recap for the past 24 hours."""
+    d = ch.get("24h")
+    if d is None:
+        return "Past 24h: not enough clean data on this timeframe."
+    sign = "up" if d >= 0 else "down"
+    hi = float(view["high"].tail(96).max()) if "high" in view.columns else None
+    lo = float(view["low"].tail(96).min())  if "low"  in view.columns else None
+    bits = [f"Past 24h: {d:+.2f}% ({sign})."]
+    if hi and lo:
+        bits.append(f"Range ≈ {money_smart(lo)} → {money_smart(hi)}.")
+    return " ".join(bits)
+
 # ---------- figures ----------
 def _apply_time_axis(fig: go.Figure) -> None:
     fig.update_xaxes(
@@ -1235,28 +1295,57 @@ def build_header_facts(meta: dict) -> str:
     return " | ".join(parts)
 
 def make_conversational(text: str, symbol: str) -> str:
-    """Lightweight rewrite; no OpenAI dependency required."""
-    lead = random.choice([
-        "Here’s the read:",
-        "Quick take:",
-        "Alright — chart check:",
-        "Let’s keep it real:"
-    ])
-    tail = random.choice([
-        "Not advice—just how the tape reads right now.",
-        "As always, manage risk and stay level-headed.",
-        "Interpret with caution—markets can flip fast."
-    ])
-    return f"{lead} {text} {tail}"
+    """
+    Best-effort “humanizing” pass.
+    - If the 'openai' package and OPENAI_API_KEY are present, call the model.
+    - Otherwise, return a lightly polished version of `text` (never crash).
+    """
+    # --- Try OpenAI if available
+    try:
+        import importlib
+        if importlib.util.find_spec("openai") is not None and os.getenv("OPENAI_API_KEY"):
+            import openai
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+            prompt = (
+                "You are Luna, a friendly crypto analyst. "
+                f"Rewrite the following technical summary about {symbol} into a short, conversational answer. "
+                "Keep it accurate; 3–6 sentences; avoid repeating the same numbers twice; end with one practical takeaway.\n\n"
+                f"{text}"
+            )
+            resp = openai.ChatCompletion.create(
+                model="gpt-4o-mini",
+                messages=[{"role":"user","content":prompt}],
+                temperature=0.7,
+            )
+            out = (resp.choices[0].message.content or "").strip()
+            if out:
+                return out
+    except Exception as e:
+        LOG.warning("[Luna conversational rewrite skipped] %s", e)
+
+    # --- Local fallback: tiny cleanups so the text reads less robotic
+    try:
+        msg = text
+        # Collapse multiple spaces, ensure single trailing period
+        msg = re.sub(r"\s+", " ", msg).strip()
+        if not msg.endswith("."): msg += "."
+        # Soften some phrases
+        msg = msg.replace("Not advice—", "Note—")
+        msg = msg.replace("Bias:", "Bias →")
+        return msg
+    except Exception:
+        return text
 
 # ---- Question classifier (maps user phrasing to a topic bucket)
 QUESTION_TYPES = {
-    "trend":       ["trend","direction","bias","bullish","bearish","up","down","next 24h","24 hours"],
-    "support":     ["support","resistance","levels","floor","ceiling","s/r","local high","local low","last high","last low","swing"],
-    "volume":      ["volume","liquidity","hype","interest","vol","spike","jump","surge","00:00"],
-    "volatility":  ["atr","volatility","wild","calm","range","choppy","band"],
+    "trend":       ["trend","direction","bias","bullish","bearish","up or down","up/down","tilt","next 24h","24 hours","coming day","today"],
+    "support":     ["support","resistance","levels","floor","ceiling","s/r","local high","local low","last high","last low","swing","range high","range low"],
+    "volume":      ["volume","liquidity","hype","interest","vol","spike","jump","surge","why the volume","00:00"],
+    "volatility":  ["atr","volatility","wild","calm","range","choppy","band","bollinger","tight","squeeze"],
     "fundamental": ["market cap","mcap","fdv","supply","tokenomics","holders"],
-    "prediction":  ["future","next","soon","where","price","move","forecast","breakout","break out","rip","pump","explode"]
+    "history24h":  ["past 24","last 24","previous 24","what happened","recap"],
+    "history1m":   ["month","30d","last month","a month ago"],
+    "prediction":  ["future","next","soon","where","price","move","forecast","breakout","break out","rip","pump","explode","projection","increase or decrease"]
 }
 def classify_question(q: str) -> str:
     ql = (q or "").lower()
@@ -1308,97 +1397,113 @@ def _recent_volume_spike(df: pd.DataFrame, lookback: int = 60, ema_span: int = 2
     except Exception:
         return None
 
-def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta: Optional[dict] = None) -> str:
-    # Prep view ---------------------------------------------------------------
+def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta: Optional[dict]=None) -> str:
+    # Prepare a clean view
     view = slice_df(df, tf)
     if view.empty: view = df.tail(200)
     view = resample_for_tf(view, tf)
     view = compute_indicators(view)
 
-    # Core metrics ------------------------------------------------------------
+    intents = parse_intents(question)
+    q_type  = classify_question(question)
+
     bias, _ = classify_bias_metrics(view)
     ch, _   = compute_rollups(view)
-    price   = to_float(view["close"].iloc[-1]) if not view.empty else None
-    rsi     = to_float(view["rsi"].iloc[-1])   if "rsi"   in view.columns else None
-    adx     = to_float(view["adx14"].iloc[-1]) if "adx14" in view.columns else None
-    hist    = view["macd_hist"].dropna() if "macd_hist" in view.columns else pd.Series(dtype=float)
 
-    # Bias + indicators ------------------------------------------------------
-    bias_text = {"bullish":"Bias: constructive up-trend.",
-                 "bearish":"Bias: pressure lower.",
-                 "range":"Bias: range-bound."}.get(bias,"Bias: range-bound.")
-    rsi_text = ""
-    if rsi is not None:
-        if rsi >= 70: rsi_text = "RSI hot—pullback risk elevated."
-        elif rsi <= 30: rsi_text = "RSI washed-out—bounce plausible."
-        else: rsi_text = "RSI neutral—direction news/flow-driven."
-    adx_text = ""
-    if adx is not None:
-        if adx >= 40: adx_text = "Trend strength high; moves often extend."
-        elif adx >= 25: adx_text = "Trend building; confirm with volume."
-        else: adx_text = "Trend weak; expect chop."
+    price = to_float(view["close"].iloc[-1]) if not view.empty else None
+    rsi   = to_float(view["rsi"].iloc[-1])   if "rsi"   in view.columns else None
+    adx   = to_float(view["adx14"].iloc[-1]) if "adx14" in view.columns else None
 
+    # MACD slope note
+    hist = view["macd_hist"].dropna() if "macd_hist" in view.columns else pd.Series(dtype=float)
     macd_note = ""
     if len(hist) >= 3:
         slope = hist.iloc[-1] - hist.iloc[-3]
         if hist.iloc[-1] > 0 and slope > 0: macd_note = "MACD momentum rising"
         elif hist.iloc[-1] < 0 and slope < 0: macd_note = "MACD momentum falling"
 
-    # Performance line -------------------------------------------------------
     perf = f"1h {_fmt_pct(ch.get('1h'))}, 4h {_fmt_pct(ch.get('4h'))}, 12h {_fmt_pct(ch.get('12h'))}, 24h {_fmt_pct(ch.get('24h'))}"
-    where = f"{symbol} around {money_smart(price)}" if price else symbol
+    header = build_header_facts(meta or {})
+    where  = f"{symbol} around {money_smart(price)}" if price is not None else symbol
 
-    # Question classification ------------------------------------------------
-    q_type = classify_question(question or "")
+    bias_text = {"bullish":"Bias: constructive up‑trend.",
+                 "bearish":"Bias: pressure lower.",
+                 "range":"Bias: range‑bound."}.get(bias,"Bias: range‑bound.")
 
-    # Specific logic per topic -----------------------------------------------
-    extras = []
-    if q_type in ("trend","prediction"):
-        tilt = "sideways"
-        if len(hist) >= 3 and adx and adx >= 25:
-            slope = hist.iloc[-1] - hist.iloc[-3]
-            tilt = "upward" if slope > 0 else "downward" if slope < 0 else "sideways"
-        extras.append(f"24h tilt: {tilt} (MACD + ADX read).")
+    # Indicator reads
+    rsi_text = ""
+    if rsi is not None:
+        if rsi >= 70:   rsi_text = "RSI is hot—pullback risk increases near highs."
+        elif rsi <= 30: rsi_text = "RSI is washed‑out—mean‑reversion bounce is plausible."
+        else:           rsi_text = "RSI neutral—direction likely news/flow‑driven."
 
-    elif q_type in ("support","levels_high","levels_low"):
-        kind, ts, val = _last_local_extrema(view.set_index("timestamp")["close"], window=60)
-        if val:
-            extras.append(f"Last local {kind}: {money_smart(val)} at {ts:%b %d %H:%M UTC}.")
+    adx_text = ""
+    if adx is not None:
+        if adx >= 40:   adx_text = "Trend strength high; moves often extend."
+        elif adx >= 25: adx_text = "Trend building; confirm with volume."
+        else:           adx_text = "Trend weak; expect chop."
 
-    elif q_type == "volume":
-        spike = _recent_volume_spike(view)
-        if spike: extras.append(spike)
-
-    elif q_type == "volatility":
-        a = to_float(view["atr14"].iloc[-1]) if "atr14" in view.columns else None
-        if a is not None: extras.append(f"ATR(14) {a:.4g} → volatility gauge; higher = more range risk.")
-
-    elif q_type == "history":
+    # Quick levels
+    def near_levels():
         try:
-            last = view["close"].iloc[-1]
-            t24  = view.index[-1] - pd.Timedelta(hours=24)
-            past = view.loc[view.index >= t24]["close"]
-            if len(past) > 1:
-                ch24 = (past.iloc[-1]/past.iloc[0]-1)*100
-                extras.append(f"Change 24h: {ch24:+.2f}%.")
-        except Exception: pass
+            hi = float(view["high"].tail(60).max())
+            lo = float(view["low"].tail(60).min())
+            return f"Near‑term levels: ↑ {money_smart(hi)}, ↓ {money_smart(lo)}."
+        except Exception:
+            return ""
+    levels = near_levels()
 
-    # Generic anchor levels --------------------------------------------------
-    try:
-        hi = float(view["high"].tail(60).max())
-        lo = float(view["low"].tail(60).min())
-        extras.append(f"Near-term levels ↑ {money_smart(hi)}, ↓ {money_smart(lo)}.")
-    except Exception:
-        pass
+    # Intent add‑ons
+    extras: List[str] = []
 
-    # Compose ---------------------------------------------------------------
-    parts = [perf+".", bias_text]
-    if macd_note: parts.append(macd_note+".")
+    if q_type == "history24h":
+        extras.append(_summarize_24h(view, ch))
+
+    if q_type == "history1m":
+        d30 = ch.get("30d")
+        if d30 is not None:
+            direction = "higher" if d30 >= 0 else "lower"
+            extras.append(f"Past 30d: {d30:+.2f}% — you’d be {direction} from a month ago.")
+
+    if q_type == "support":
+        kind, ts, val = _last_local_extrema(view.set_index("timestamp")["close"], window=60)
+        if kind in ("high","low") and ts and val is not None:
+            extras.append(f"Last local {kind}: {money_smart(val)} at {ts:%Y-%m-%d %H:%M UTC}.")
+
+    if q_type == "volume":
+        vs = _recent_volume_spike(view, lookback=96, ema_span=20)
+        if vs: extras.append(vs)
+
+    if q_type in ("trend","prediction"):
+        tilt, conf = _directional_tilt(view)
+        extras.append(f"24h tilt: {tilt} (confidence ~{conf}%).")
+
+    # Keyword-style intents
+    if "breakout" in intents:
+        extras.append("For breakouts: look for closes above recent swing highs on rising volume; failures at the band midline often fade.")
+    if "volatility" in intents:
+        a = to_float(view["atr14"].iloc[-1]) if "atr14" in view.columns else None
+        if a is not None: extras.append(f"Volatility (ATR14) {a:.4g}; size positions accordingly.")
+    if "support" in intents:
+        extras.append("Support/resistance: prior reaction zones are your best invalidation—below higher‑lows risks a trend flip.")
+    if "fib" in intents:
+        extras.append("Fibs: watch 0.618 pullbacks for continuation and 1.618 extensions for exhaustion; pair with volume/OBV.")
+    if "risk" in intents:
+        extras.append("Risk framing: define a stop just beyond the last failed level; avoid chasing thin liquidity spikes.")
+
+    intro = random.choice(["Let’s keep it real:", "Quick take:", "Alright — chart check:", "Here’s the read:"])
+    parts: List[str] = []
+    if header: parts.append(header + ".")
+    parts += [perf + ".", bias_text]
+    if macd_note: parts.append(macd_note + ".")
     if rsi_text:  parts.append(rsi_text)
     if adx_text:  parts.append(adx_text)
+    if levels:    parts.append(levels)
     if extras:    parts.append(" ".join(extras))
-    text = f"{where}. " + " ".join(parts)
-    return make_conversational(text, symbol)
+    parts.append("Note—this is not financial advice, just how the tape reads right now.")
+
+    final_text = f"{intro} {where}. " + " ".join(parts)
+    return make_conversational(final_text, symbol)
 
 # ---------- safe tile placeholder ----------
 def safe_tile(html_block, label="No data for this timeframe."):
@@ -1526,61 +1631,84 @@ def expand_json():
         return jsonify({"fig": empty.to_plotly_json(), "talk": "Error loading chart.", "tf": tf, "key": key}), 200
 
 def talk_for_key(key: str, df: pd.DataFrame) -> str:
+    """
+    Longer, plain‑English explanations with thresholds and 'what it means'.
+    Always returns a multi‑sentence blurb.
+    """
     if df is None or df.empty:
-        return "No data for this timeframe."
+        return "No data available for this timeframe."
+
     last = df.iloc[-1]
     try:
         if key == "RSI":
             v = to_float(last.get("rsi"))
-            if v is None: return "RSI unavailable."
-            zone = "overbought" if v>=70 else "oversold" if v<=30 else "neutral"
-            return f"RSI {v:.1f} → {zone} zone; gauges momentum speed."
+            if v is None: return "RSI — unavailable on this timeframe."
+            if v >= 70:
+                return f"RSI — {v:.1f} in the hot zone. Momentum is stretched; pullbacks are common after extended runs."
+            if v <= 30:
+                return f"RSI — {v:.1f} in oversold territory. Mean‑reversion bounces are plausible if buyers show up."
+            return f"RSI — {v:.1f}: neutral zone; gauges momentum speed. Watch for moves through 60 (strength) or under 40 (weakness)."
 
         if key == "MACD":
-            ml, sg, hs = (to_float(last.get("macd_line")),
-                          to_float(last.get("macd_signal")),
-                          to_float(last.get("macd_hist")))
-            if ml is None or sg is None: return "MACD unavailable."
-            cross = "above" if ml>sg else "below"
-            bias  = "bullish" if ml>sg else "bearish"
-            return f"MACD — Line {cross} signal ({bias}); hist {hs:+.4f}."
-
-        if key == "ATR":
-            a = to_float(last.get("atr14"))
-            return f"ATR(14) {a:.5g} = avg candle range → volatility scale."
+            ml = to_float(last.get("macd_line"))
+            sg = to_float(last.get("macd_signal"))
+            hs = to_float(last.get("macd_hist"))
+            if (ml is None) or (sg is None):
+                return "MACD — not available."
+            cross = "above" if ml > sg else "below"
+            bias  = "bullish" if ml > sg else "bearish"
+            hist  = "" if hs is None else f" (hist {hs:+.4f})"
+            return (f"MACD — line is {cross} signal → {bias} bias{hist}. "
+                    "Upward crosses often precede momentum builds; downward crosses hint at short‑term weakness.")
 
         if key == "ADX":
             a = to_float(last.get("adx14"))
-            if a is None: return "ADX unavailable."
-            if a>=40: return f"ADX {a:.1f}: strong trend likely to continue."
-            if a>=25: return f"ADX {a:.1f}: trend forming; confirm with volume."
-            return f"ADX {a:.1f}: weak trend, likely range-bound."
+            if a is None: return "ADX — not available."
+            if a >= 40: return f"ADX — {a:.1f}: strong trend in play; continuation moves often extend."
+            if a >= 25: return f"ADX — {a:.1f}: trend forming; confirm with volume and higher‑highs."
+            return f"ADX — {a:.1f}: weak trend; expect chop unless fresh volume arrives."
+
+        if key == "ATR":
+            a = to_float(last.get("atr14"))
+            if a is None: return "ATR — not available."
+            return f"ATR(14) — {a:.4g}: average candle range. Bigger ATR = faster tape; size positions accordingly."
 
         if key == "BANDS":
             w = to_float(last.get("bb_width"))
-            if w is None: return "Bollinger data unavailable."
-            if w>5: return f"Band width {w:.2f}% → volatile."
-            if w<1: return f"Band width {w:.2f}% → compression possible breakout."
-            return f"Band width {w:.2f}% → normal volatility."
+            if w is None: return "Bollinger Bands — unavailable."
+            if w <= 1:
+                return f"Bollinger width — {w:.2f}%: bands are tight (squeeze). Breakout risk rises if volume expands."
+            if w >= 5:
+                return f"Bollinger width — {w:.2f}%: bands are wide. Volatility is high; fades and whipsaws are common."
+            return f"Bollinger width — {w:.2f}%: normal volatility; look to momentum and volume for direction."
 
-        if key in ("VOL","LIQ"):
+        if key in ("VOL", "LIQ"):
             v = to_float(last.get("volume"))
-            return f"Volume {v:,.0f} → watch for spikes confirming price moves."
+            if v is None: return "Volume — not available."
+            return f"Volume — {v:,.0f}. Surges alongside breakouts validate moves; drying volume into highs can precede pullbacks."
 
         if key == "MCAP":
             mc = to_float(last.get("market_cap"))
-            return f"Market cap ≈ {money(mc)} → reflects valuation and participation."
+            return ("Market Cap — not available on this feed."
+                    if mc is None else f"Market Cap — ≈ {money(mc)}. Rising cap with rising volume suggests growing participation.")
+
+        if key == "OBV":
+            s = df["obv"].dropna()
+            if len(s) < 3: return "OBV — not enough points."
+            slope = float(s.iloc[-1] - s.iloc[-3])
+            dirn  = "accumulation" if slope > 0 else "distribution"
+            return f"OBV — recent slope points to {dirn}. Pair with price trend to judge confirmation vs divergence."
 
         if key == "ALT":
             a = to_float(last.get("alt_momentum"))
-            trend = "positive" if a>0 else "negative"
-            return f"ALT momentum {a:+.4f} → {trend} impulse; tracks EMA spread."
+            if a is None: return "ALT momentum — not available."
+            trend = "positive" if a > 0 else "negative"
+            return f"ALT momentum — {a:+.4f}: {trend} impulse; rising values reflect acceleration, falling values show fading push."
 
-        if key == "PRICE":
-            return "Price candles with bands and MACD overlay; use for context."
     except Exception as e:
-        LOG.warning("[Talk] %s", e)
-    return "Indicator data available; interpret with context."
+        LOG.warning("[Talk] error %s", e)
+
+    return "Data available; interpret with volume and context."
 
 @app.get("/api/refresh/<symbol>")
 def api_refresh(symbol: str):
