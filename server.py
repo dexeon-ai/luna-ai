@@ -1451,6 +1451,45 @@ def _recent_volume_spike(df: pd.DataFrame, lookback: int = 60, ema_span: int = 2
     except Exception:
         return None
 
+def extract_data_summary(df: pd.DataFrame, ch: dict) -> str:
+    """Compile a compact snapshot of technical metrics for Luna's context."""
+    if df.empty:
+        return "No chart data available."
+
+    latest = df.iloc[-1]
+    summary = {}
+
+    summary["last_price"] = to_float(latest.get("close"))
+    summary["volume"] = to_float(latest.get("volume"))
+    summary["rsi"] = to_float(latest.get("rsi"))
+    summary["adx"] = to_float(latest.get("adx14"))
+    summary["atr"] = to_float(latest.get("atr14"))
+    summary["macd_hist"] = to_float(latest.get("macd_hist"))
+    summary["bb_width"] = to_float(latest.get("bb_width"))
+    summary["market_cap"] = to_float(latest.get("market_cap"))
+
+    # 24h delta for price and volume
+    vol_24h = None
+    try:
+        tail = df.tail(96)
+        if len(tail) > 2:
+            vol_24h = float(tail["volume"].iloc[-1] - tail["volume"].iloc[0])
+    except Exception:
+        vol_24h = None
+
+    lines = [
+        f"Last price: {money_smart(summary['last_price']) if summary['last_price'] else 'n/a'}",
+        f"RSI: {summary['rsi']:.1f}" if summary["rsi"] else "RSI: n/a",
+        f"ADX: {summary['adx']:.1f}" if summary["adx"] else "ADX: n/a",
+        f"ATR: {summary['atr']:.4f}" if summary["atr"] else "ATR: n/a",
+        f"MACD hist: {summary['macd_hist']:+.4f}" if summary["macd_hist"] else "MACD hist: n/a",
+        f"Bollinger width: {summary['bb_width']:.2f}%" if summary["bb_width"] else "BB width: n/a",
+        f"Market cap: {money(summary['market_cap'])}" if summary["market_cap"] else "",
+        f"24h price change: {_fmt_pct(ch.get('24h'))}",
+        f"24h volume delta: {vol_24h:+,.0f}" if vol_24h else ""
+    ]
+    return "; ".join([x for x in lines if x])
+
 def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta: Optional[dict] = None) -> str:
     """
     Enhanced Luna response:
@@ -1555,7 +1594,9 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
         "Note—this is observation, not financial advice."
     )
 
-    return make_conversational(reply, symbol, question)
+    data_context = extract_data_summary(view, ch)
+    prompt_context = f"{reply}\n\nChart data summary:\n{data_context}"
+    return make_conversational(prompt_context, symbol, question)
 
 # ---------- safe tile placeholder ----------
 def safe_tile(html_block, label="No data for this timeframe."):
