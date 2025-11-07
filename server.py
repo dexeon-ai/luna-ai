@@ -1046,52 +1046,6 @@ def fmt_sig(x, default="0.00"):
     except Exception:
         return default
 
-@app.get("/expand_json")
-def expand_json():
-    try:
-        ip = request.headers.get("X-Forwarded-For", request.remote_addr or "na").split(",")[0].strip()
-        if not allow_rate(ip, "/expand_json", limit=12, window_sec=60):
-            tf  = (request.args.get("tf") or "12h")
-            key = (request.args.get("key") or "").upper()
-            empty = fig_line(pd.DataFrame(), "close", "No data", h=360)
-            return jsonify({"fig": empty.to_plotly_json(), "talk": "Rate limited. Try again in a moment.", "tf": tf, "key": key}), 429
-
-        symbol_raw = sanitize_query(request.args.get("symbol") or "ETH")
-        tf     = (request.args.get("tf") or "12h")
-        key    = (request.args.get("key") or "RSI").upper()
-
-        df = load_cached_frame(symbol_raw)
-        if df.empty:
-            df = hydrate_symbol(symbol_raw, force=False, tf_for_fetch=tf)
-
-        dfv = slice_df(df, tf)
-        dfv = resample_for_tf(dfv, tf)
-        dfv = compute_indicators(dfv)  # <- critical
-
-        # choose figure
-        if   key == "PRICE":  fig = fig_price(dfv if not dfv.empty else df, _disp_symbol(symbol_raw))
-        elif key == "RSI":    fig = fig_line(dfv, "rsi", "RSI", h=360)
-        elif key == "MACD":   fig = fig_line(dfv, "macd_line", "MACD", h=360)
-        elif key == "MCAP":   fig = fig_line(dfv if "market_cap" in dfv.columns else df, "market_cap", "Market Cap", h=360)
-        elif key == "BANDS":  fig = fig_line(dfv, "bb_width", "Bollinger Width", h=360)
-        elif key == "VOL":    fig = fig_line(dfv, "volume", "Volume Trend", h=360)
-        elif key == "LIQ":    fig = fig_line(dfv, "volume", "Liquidity", h=360)
-        elif key == "OBV":    fig = fig_line(dfv, "obv", "OBV", h=360)
-        elif key == "ADX":    fig = fig_line(dfv, "adx14", "ADX 14", h=360)
-        elif key == "ATR":    fig = fig_line(dfv, "atr14", "ATR 14", h=360)
-        elif key == "ALT":    fig = fig_line(dfv, "alt_momentum", "ALT momentum", h=360)
-        else:                 fig = fig_line(dfv, "close", key, h=360)
-
-        talk = talk_for_key(key, dfv if not dfv.empty else df)
-        return jsonify({"fig": fig.to_plotly_json(), "talk": talk, "tf": tf, "key": key})
-
-    except Exception as e:
-        LOG.exception("[expand_json] failed: %s", e)
-        tf  = (request.args.get("tf") or "12h")
-        key = (request.args.get("key") or "").upper()
-        empty = fig_line(pd.DataFrame(), "close", "No data", h=360)
-        return jsonify({"fig": empty.to_plotly_json(), "talk": "Error loading chart.", "tf": tf, "key": key}), 200
-
 def hydrate_symbol(query: str, force: bool=False, tf_for_fetch: str="12h") -> pd.DataFrame:
     raw_in = (query or "").strip()
     raw = canonicalize_query(raw_in)
