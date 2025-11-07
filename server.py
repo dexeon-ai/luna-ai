@@ -16,6 +16,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
 
+import pytz
+USER_TZ = pytz.timezone(os.getenv("LUNA_TZ", "America/Chicago"))
+
 # ---------- build tag ----------
 BUILD_TAG = "LUNA-PROD-DS_GT_BIRD-CAPMODE-2025-11-06-SAFE_TILE"
 
@@ -1195,53 +1198,97 @@ def _summarize_24h(view: pd.DataFrame, ch: dict) -> str:
     return " ".join(bits)
 
 # ---------- figures ----------
+import pytz
+# Default timezone — you can change this or make it dynamic later
+USER_TZ = pytz.timezone(os.getenv("LUNA_TZ", "America/Chicago"))
+
 def _apply_time_axis(fig: go.Figure) -> None:
+    """Applies clean time axis labels and consistent formatting."""
     fig.update_xaxes(
         tickformatstops=[
-            dict(dtickrange=[None, 1000*60*60*24], value="%H:%M"),
-            dict(dtickrange=[1000*60*60*24, None], value="%m-%d"),
-        ]
+            dict(dtickrange=[None, 1000 * 60 * 60 * 24], value="%H:%M"),   # hourly
+            dict(dtickrange=[1000 * 60 * 60 * 24, None], value="%m-%d"),   # daily
+        ],
+        showgrid=True,
+        gridcolor="#1a2b3e",
+        tickfont=dict(size=10, color="#9eb3c9"),
     )
 
 def fig_price(df: pd.DataFrame, symbol: str) -> go.Figure:
-    # a tad shorter, more bottom margin -> x ticks visible
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.78, 0.22], vertical_spacing=0.04)
+    """Builds the main candlestick + MACD chart and localizes timestamps."""
+    fig = make_subplots(
+        rows=2, cols=1, shared_xaxes=True,
+        row_heights=[0.78, 0.22], vertical_spacing=0.04
+    )
+
+    # --- timezone localization ---
     if not df.empty:
+        if "timestamp" in df.columns:
+            df = df.copy()
+            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce").dt.tz_convert(USER_TZ)
+
         fig.add_trace(go.Candlestick(
             x=df["timestamp"], open=df["open"], high=df["high"], low=df["low"], close=df["close"],
             name=f"{symbol} OHLC", increasing_line_color="#36d399", decreasing_line_color="#f87272", opacity=0.95
         ), row=1, col=1)
+
         if "bb_upper" in df.columns:
-            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["bb_upper"], name="BB upper", line=dict(width=1)), row=1, col=1)
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["bb_upper"],
+                                     name="BB upper", line=dict(width=1)), row=1, col=1)
         if "bb_mid" in df.columns:
-            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["bb_mid"],   name="BB mid",   line=dict(width=1, dash="dot")), row=1, col=1)
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["bb_mid"],
+                                     name="BB mid", line=dict(width=1, dash="dot")), row=1, col=1)
         if "bb_lower" in df.columns:
-            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["bb_lower"], name="BB lower", line=dict(width=1)), row=1, col=1)
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["bb_lower"],
+                                     name="BB lower", line=dict(width=1)), row=1, col=1)
         if "macd_line" in df.columns and "macd_signal" in df.columns:
-            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_line"],   name="MACD",  line=dict(width=1.1)), row=2, col=1)
-            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_signal"], name="Signal", line=dict(width=1, dash="dot")), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_line"],
+                                     name="MACD", line=dict(width=1.1)), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df["timestamp"], y=df["macd_signal"],
+                                     name="Signal", line=dict(width=1, dash="dot")), row=2, col=1)
         if "macd_hist" in df.columns:
             fig.add_trace(go.Bar(x=df["timestamp"], y=df["macd_hist"], name="MACD Hist"), row=2, col=1)
+
     fig.update_layout(
-        template="plotly_dark", height=400, margin=dict(l=12,r=12,t=24,b=36),
+        template="plotly_dark",
+        height=400,
+        margin=dict(l=12, r=12, t=24, b=36),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        xaxis_rangeslider_visible=False
+        xaxis_rangeslider_visible=False,
     )
     _apply_time_axis(fig)
     return fig
 
 def fig_line(df: pd.DataFrame, y: str, name: str, h: int = 155) -> go.Figure:
+    """Builds mini line charts for indicators with timezone conversion."""
     fig = go.Figure()
+
     if not df.empty and y in df.columns and not pd.isna(df[y]).all():
+        df = df.copy()
+        if "timestamp" in df.columns:
+            df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce").dt.tz_convert(USER_TZ)
+
         y_data = df[y].astype(float)
         fig.add_trace(go.Scatter(x=df["timestamp"], y=y_data, name=name, line=dict(width=1.6)))
         ymin, ymax = float(y_data.min()), float(y_data.max())
         if ymin == ymax:
-            ymin -= 0.5; ymax += 0.5
+            ymin -= 0.5
+            ymax += 0.5
         fig.update_yaxes(range=[ymin, ymax], fixedrange=False)
     else:
-        fig.add_annotation(text="No data for this timeframe.", showarrow=False, xref="paper", yref="paper", x=0.5, y=0.5)
-    fig.update_layout(template="plotly_dark", height=h, margin=dict(l=10,r=10,t=18,b=8), showlegend=False)
+        fig.add_annotation(
+            text="No data for this timeframe.",
+            showarrow=False,
+            xref="paper", yref="paper", x=0.5, y=0.5,
+            font=dict(color="#9eb3c9")
+        )
+
+    fig.update_layout(
+        template="plotly_dark",
+        height=h,
+        margin=dict(l=10, r=10, t=18, b=8),
+        showlegend=False
+    )
     _apply_time_axis(fig)
     return fig
 
@@ -1397,113 +1444,111 @@ def _recent_volume_spike(df: pd.DataFrame, lookback: int = 60, ema_span: int = 2
     except Exception:
         return None
 
-def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta: Optional[dict]=None) -> str:
-    # Prepare a clean view
+def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta: Optional[dict] = None) -> str:
+    """
+    Enhanced Luna response:
+    - Answers by question intent first
+    - Keeps one-line metric recap for context
+    - Reduces numeric overload, adds plain-English commentary
+    """
+
+    # --- Data prep
     view = slice_df(df, tf)
     if view.empty: view = df.tail(200)
     view = resample_for_tf(view, tf)
     view = compute_indicators(view)
-
-    intents = parse_intents(question)
-    q_type  = classify_question(question)
+    q_type = classify_question(question)
 
     bias, _ = classify_bias_metrics(view)
     ch, _   = compute_rollups(view)
+    price   = to_float(view["close"].iloc[-1]) if not view.empty else None
+    rsi     = to_float(view["rsi"].iloc[-1]) if "rsi" in view.columns else None
+    adx     = to_float(view["adx14"].iloc[-1]) if "adx14" in view.columns else None
+    tilt, conf = _directional_tilt(view)
 
-    price = to_float(view["close"].iloc[-1]) if not view.empty else None
-    rsi   = to_float(view["rsi"].iloc[-1])   if "rsi"   in view.columns else None
-    adx   = to_float(view["adx14"].iloc[-1]) if "adx14" in view.columns else None
+    def fmt_pct(v): 
+        return "n/a" if v is None else f"{v:+.2f}%"
 
-    # MACD slope note
-    hist = view["macd_hist"].dropna() if "macd_hist" in view.columns else pd.Series(dtype=float)
-    macd_note = ""
-    if len(hist) >= 3:
-        slope = hist.iloc[-1] - hist.iloc[-3]
-        if hist.iloc[-1] > 0 and slope > 0: macd_note = "MACD momentum rising"
-        elif hist.iloc[-1] < 0 and slope < 0: macd_note = "MACD momentum falling"
+    perf_str = f"1h {fmt_pct(ch.get('1h'))}, 12h {fmt_pct(ch.get('12h'))}, 24h {fmt_pct(ch.get('24h'))}"
 
-    perf = f"1h {_fmt_pct(ch.get('1h'))}, 4h {_fmt_pct(ch.get('4h'))}, 12h {_fmt_pct(ch.get('12h'))}, 24h {_fmt_pct(ch.get('24h'))}"
-    header = build_header_facts(meta or {})
-    where  = f"{symbol} around {money_smart(price)}" if price is not None else symbol
+    where = f"{symbol} is trading around {money_smart(price)}" if price else symbol
 
-    bias_text = {"bullish":"Bias: constructive up‑trend.",
-                 "bearish":"Bias: pressure lower.",
-                 "range":"Bias: range‑bound."}.get(bias,"Bias: range‑bound.")
+    # --- Interpret indicators in human style
+    rsi_text = (
+        "Momentum looks overheated — near-term pullback likely."
+        if rsi and rsi >= 70 else
+        "Momentum looks washed-out — possible bounce ahead."
+        if rsi and rsi <= 30 else
+        "Momentum is neutral and drifting sideways."
+    )
 
-    # Indicator reads
-    rsi_text = ""
-    if rsi is not None:
-        if rsi >= 70:   rsi_text = "RSI is hot—pullback risk increases near highs."
-        elif rsi <= 30: rsi_text = "RSI is washed‑out—mean‑reversion bounce is plausible."
-        else:           rsi_text = "RSI neutral—direction likely news/flow‑driven."
+    adx_text = (
+        "Trend strength is solid; strong moves may continue."
+        if adx and adx >= 40 else
+        "Trend is building but not yet decisive."
+        if adx and adx >= 25 else
+        "No strong directional trend right now."
+    )
 
-    adx_text = ""
-    if adx is not None:
-        if adx >= 40:   adx_text = "Trend strength high; moves often extend."
-        elif adx >= 25: adx_text = "Trend building; confirm with volume."
-        else:           adx_text = "Trend weak; expect chop."
+    # --- Core analysis text (by question)
+    answer = ""
 
-    # Quick levels
-    def near_levels():
-        try:
-            hi = float(view["high"].tail(60).max())
-            lo = float(view["low"].tail(60).min())
-            return f"Near‑term levels: ↑ {money_smart(hi)}, ↓ {money_smart(lo)}."
-        except Exception:
-            return ""
-    levels = near_levels()
+    if q_type in ("history24h", "trend"):
+        answer = _summarize_24h(view, ch) + " "
+        answer += f"Bias shows {bias}; the tape leans {tilt.replace('↑','up').replace('↓','down')} with about {conf}% confidence. "
+        answer += rsi_text + " " + adx_text
 
-    # Intent add‑ons
-    extras: List[str] = []
+    elif q_type in ("prediction",):
+        answer = (
+            f"In the next 24 hours, {symbol} may tilt {tilt.replace('↑','upward').replace('↓','downward')} "
+            f"(confidence ~{conf}%). {rsi_text} {adx_text}"
+        )
 
-    if q_type == "history24h":
-        extras.append(_summarize_24h(view, ch))
-
-    if q_type == "history1m":
-        d30 = ch.get("30d")
-        if d30 is not None:
-            direction = "higher" if d30 >= 0 else "lower"
-            extras.append(f"Past 30d: {d30:+.2f}% — you’d be {direction} from a month ago.")
-
-    if q_type == "support":
+    elif q_type in ("support",):
         kind, ts, val = _last_local_extrema(view.set_index("timestamp")["close"], window=60)
-        if kind in ("high","low") and ts and val is not None:
-            extras.append(f"Last local {kind}: {money_smart(val)} at {ts:%Y-%m-%d %H:%M UTC}.")
+        if val:
+            answer = (
+                f"The last local {kind} was near {money_smart(val)} on "
+                f"{ts:%b %d, %H:%M UTC}. {adx_text}"
+            )
+        else:
+            answer = "No clear local highs or lows detected on this timeframe."
 
-    if q_type == "volume":
+    elif q_type in ("volume",):
         vs = _recent_volume_spike(view, lookback=96, ema_span=20)
-        if vs: extras.append(vs)
+        answer = vs or "Volume activity appears typical—no unusual spikes recently."
 
-    if q_type in ("trend","prediction"):
-        tilt, conf = _directional_tilt(view)
-        extras.append(f"24h tilt: {tilt} (confidence ~{conf}%).")
+    elif q_type in ("volatility",):
+        atr = to_float(view.get("atr14", pd.Series(dtype=float)).iloc[-1])
+        if atr:
+            answer = (
+                f"Volatility is moderate. Average candle range (ATR14) is {atr:.4g}, "
+                "suggesting measured but not extreme price swings."
+            )
+        else:
+            answer = "No reliable ATR data for this symbol."
 
-    # Keyword-style intents
-    if "breakout" in intents:
-        extras.append("For breakouts: look for closes above recent swing highs on rising volume; failures at the band midline often fade.")
-    if "volatility" in intents:
-        a = to_float(view["atr14"].iloc[-1]) if "atr14" in view.columns else None
-        if a is not None: extras.append(f"Volatility (ATR14) {a:.4g}; size positions accordingly.")
-    if "support" in intents:
-        extras.append("Support/resistance: prior reaction zones are your best invalidation—below higher‑lows risks a trend flip.")
-    if "fib" in intents:
-        extras.append("Fibs: watch 0.618 pullbacks for continuation and 1.618 extensions for exhaustion; pair with volume/OBV.")
-    if "risk" in intents:
-        extras.append("Risk framing: define a stop just beyond the last failed level; avoid chasing thin liquidity spikes.")
+    elif q_type in ("history1m",):
+        d30 = ch.get("30d")
+        answer = (
+            f"Over the past month, {symbol} moved {fmt_pct(d30)}. "
+            + ("Momentum remains constructive." if (d30 or 0) > 0 else "Overall tone has softened.")
+        )
 
-    intro = random.choice(["Let’s keep it real:", "Quick take:", "Alright — chart check:", "Here’s the read:"])
-    parts: List[str] = []
-    if header: parts.append(header + ".")
-    parts += [perf + ".", bias_text]
-    if macd_note: parts.append(macd_note + ".")
-    if rsi_text:  parts.append(rsi_text)
-    if adx_text:  parts.append(adx_text)
-    if levels:    parts.append(levels)
-    if extras:    parts.append(" ".join(extras))
-    parts.append("Note—this is not financial advice, just how the tape reads right now.")
+    else:
+        answer = (
+            f"{symbol} is moving sideways with {bias} conditions. "
+            + rsi_text + " " + adx_text
+        )
 
-    final_text = f"{intro} {where}. " + " ".join(parts)
-    return make_conversational(final_text, symbol)
+    # --- Compose final readable output
+    reply = (
+        f"{where}. {answer.strip()} "
+        f"Performance snapshot: {perf_str}. "
+        "Note—this is observation, not financial advice."
+    )
+
+    return make_conversational(reply, symbol)
 
 # ---------- safe tile placeholder ----------
 def safe_tile(html_block, label="No data for this timeframe."):
