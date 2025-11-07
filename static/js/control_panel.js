@@ -1,95 +1,84 @@
-// control_panel.js — add-on behaviors without breaking the grid
+// Luna AI — control_panel.js (expand modal + Ask Luna)
 
-(function() {
-  // ---------- helpers ----------
-  function qs(sel, root) { return (root || document).querySelector(sel); }
-  function qsa(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
-  function getParam(name) {
-    const u = new URL(window.location.href);
-    return u.searchParams.get(name);
-  }
-  function setParam(name, val) {
-    const u = new URL(window.location.href);
-    if (val == null) u.searchParams.delete(name); else u.searchParams.set(name, val);
-    window.location.href = u.toString();
-  }
+(function () {
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-  // ---------- main tile toggles (Cap/Price + Lin/Log) ----------
-  function injectMainToggles() {
-    const tile = qs('#tile-PRICE') || qs('[data-key="PRICE"]') || qs('.tile-price') || qs('.tile[data-key="PRICE"]');
-    if (!tile) return;
-    const wrap = document.createElement('div');
-    wrap.style.position = 'absolute';
-    wrap.style.top = '6px';
-    wrap.style.right = '6px';
-    wrap.style.display = 'flex';
-    wrap.style.gap = '6px';
-    wrap.style.zIndex = 5;
+  // --- Expand modal ---
+  const modal = $("#modal");
+  const mClose = $("#m-close");
+  const mChart = $("#m-chart");
+  const mTalk  = $("#m-talk");
+  const mTf    = $("#m-tf");
+  let currentKey = null;
 
-    const viewPref = (localStorage.getItem('luna_view_pref') || '').toLowerCase(); // 'cap' or 'price'
-    const scalePref = (localStorage.getItem('luna_scale_pref') || '').toLowerCase(); // 'log' or 'lin'
-
-    const btnView = document.createElement('button');
-    btnView.textContent = viewPref === 'price' ? 'Price' : 'Cap';
-    btnView.title = 'Toggle Cap/Price';
-    btnView.className = 'luna-mini-btn';
-    btnView.onclick = function() {
-      const next = (btnView.textContent === 'Cap') ? 'price' : 'cap';
-      localStorage.setItem('luna_view_pref', next);
-      // round-trip via URL param ?view=
-      setParam('view', next);
-    };
-
-    const btnScale = document.createElement('button');
-    btnScale.textContent = scalePref === 'log' ? 'Log' : 'Lin';
-    btnScale.title = 'Toggle Linear/Log';
-    btnScale.className = 'luna-mini-btn';
-    btnScale.onclick = function() {
-      const next = (btnScale.textContent === 'Lin') ? 'log' : 'lin';
-      localStorage.setItem('luna_scale_pref', next);
-      setParam('scale', next);
-    };
-
-    wrap.appendChild(btnView);
-    wrap.appendChild(btnScale);
-    tile.style.position = tile.style.position || 'relative';
-    tile.appendChild(wrap);
-
-    // ensure URL params reflect prefs if user opens a fresh link
-    // only if no explicit URL param provided
-    const urlView = getParam('view');
-    if (!urlView && viewPref) setParam('view', viewPref);
-    const urlScale = getParam('scale');
-    if (!urlScale && scalePref) setParam('scale', scalePref);
+  function openModal(key) {
+    currentKey = key;
+    modal.classList.remove("hidden");
+    fetch(`/expand_json?symbol=${encodeURIComponent(window.__SYMBOL__)}&key=${encodeURIComponent(key)}&tf=${encodeURIComponent(mTf.value)}`)
+      .then(r => r.json())
+      .then(j => {
+        mChart.innerHTML = "";
+        Plotly.newPlot(mChart, j.fig.data, j.fig.layout || {}, {responsive: true});
+        mTalk.textContent = j.talk || "";
+      })
+      .catch(err => { mTalk.textContent = "Error loading chart."; console.error(err); });
   }
 
-  // ---------- Ask-Luna speak (Web Speech API; safe no-op if unsupported) ----------
-  function wireAskLunaSpeech() {
-    // expect an element that receives the answer text
-    // we try a few likely IDs; non-destructive
-    const answerBox = qs('#luna-answer') || qs('#answer') || qs('#answers') || qs('.luna-answer');
-    if (!answerBox) return;
+  function closeModal() { modal.classList.add("hidden"); }
 
-    // simple observer: when textContent changes, speak it
-    if (!('SpeechSynthesisUtterance' in window)) return;
-    let lastSpoken = '';
-    const obs = new MutationObserver(() => {
-      const txt = (answerBox.textContent || '').trim();
-      if (!txt || txt === lastSpoken) return;
-      lastSpoken = txt;
-      try {
-        const u = new SpeechSynthesisUtterance(txt);
-        u.rate = 1.05; u.pitch = 1.10;
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(u);
-      } catch(e) {}
+  mClose.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+  mTf.addEventListener("change", () => { if (currentKey) openModal(currentKey); });
+
+  $$(".expand").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.key || btn.closest(".tile")?.dataset?.key;
+      if (key) openModal(key);
     });
-    obs.observe(answerBox, { childList: true, subtree: true, characterData: true });
+  });
+
+  // --- Ask Luna ---
+  const askBox  = $("#askBox");
+  const askSend = $("#askSend");
+  const qaQ = $("#qaQ"), qaA = $("#qaA");
+
+  function pushQA(q, a) {
+    if (q) {
+      const li = document.createElement("div");
+      li.className = "bubble q";
+      li.textContent = "• " + q;
+      qaQ.appendChild(li);
+      qaQ.scrollTop = qaQ.scrollHeight;
+    }
+    if (a) {
+      const li = document.createElement("div");
+      li.className = "bubble a";
+      li.textContent = a;
+      qaA.appendChild(li);
+      qaA.scrollTop = qaA.scrollHeight;
+    }
   }
 
-  // ---------- init ----------
-  document.addEventListener('DOMContentLoaded', function() {
-    try { injectMainToggles(); } catch(e) { console.warn(e); }
-    try { wireAskLunaSpeech(); } catch(e) { console.warn(e); }
+  askSend?.addEventListener("click", () => {
+    const q = (askBox.value || "").trim();
+    if (!q) return;
+    pushQA(q, null);
+    askBox.value = "";
+    fetch("/api/luna", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({symbol: window.__SYMBOL__, tf: $("#tf")?.value || window.__TF__, text: q})
+    })
+    .then(r => r.json())
+    .then(j => pushQA(null, j.reply))
+    .catch(err => pushQA(null, "Error: " + String(err)));
   });
+
+  // --- Refresh button ---
+  $("#refreshBtn")?.addEventListener("click", () => {
+    fetch(`/api/refresh/${encodeURIComponent(window.__SYMBOL__)}`)
+      .then(() => window.location.reload());
+  });
+
 })();
