@@ -165,3 +165,5 @@ body{
    If you decide TL;DR is redundant, you can hide it by adding class "tldr" to its panel in HTML
    and uncommenting the rule below. */
 /* .panel.tldr{ display:none; } */
+
+.panel.tldr{ display:none !important; }

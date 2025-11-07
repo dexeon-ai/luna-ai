@@ -1256,20 +1256,62 @@ def make_conversational(text: str, symbol: str) -> str:
 
 # ---- Question classifier (maps user phrasing to a topic bucket)
 QUESTION_TYPES = {
-    "trend":       ["trend","direction","bias","bullish","bearish","up","down"],
-    "support":     ["support","resistance","levels","floor","ceiling","s/r"],
-    "volume":      ["volume","liquidity","hype","interest","vol"],
-    "volatility":  ["atr","volatility","wild","calm","range","choppy"],
+    "trend":       ["trend","direction","bias","bullish","bearish","up","down","next 24h","24 hours"],
+    "support":     ["support","resistance","levels","floor","ceiling","s/r","local high","local low","last high","last low","swing"],
+    "volume":      ["volume","liquidity","hype","interest","vol","spike","jump","surge","00:00"],
+    "volatility":  ["atr","volatility","wild","calm","range","choppy","band"],
     "fundamental": ["market cap","mcap","fdv","supply","tokenomics","holders"],
-    "prediction":  ["future","next","soon","where","price","move","forecast"]
+    "prediction":  ["future","next","soon","where","price","move","forecast","breakout","break out","rip","pump","explode"]
 }
-
 def classify_question(q: str) -> str:
     ql = (q or "").lower()
     for k, words in QUESTION_TYPES.items():
         if any(w in ql for w in words):
             return k
     return "general"
+
+def _last_local_extrema(series: pd.Series, window: int = 20) -> tuple[str, Optional[pd.Timestamp], Optional[float]]:
+    """Find last local high/low in a simple way: lookback N bars and report max/min + time."""
+    try:
+        s = series.dropna()
+        if s.empty: return ("none", None, None)
+        tail = s.tail(window)
+        if tail.empty: return ("none", None, None)
+        hi_val = float(tail.max()); hi_ts = tail.idxmax()
+        lo_val = float(tail.min()); lo_ts = tail.idxmin()
+        # Decide which is more "recent"
+        if hi_ts > lo_ts: return ("high", hi_ts, hi_val)
+        else:             return ("low",  lo_ts, lo_val)
+    except Exception:
+        return ("none", None, None)
+
+def _recent_volume_spike(df: pd.DataFrame, lookback: int = 60, ema_span: int = 20) -> Optional[str]:
+    try:
+        if "volume" not in df.columns or df.empty: return None
+        vol = df["volume"].dropna()
+        if len(vol) < max(lookback, ema_span): return None
+        tail = vol.tail(lookback)
+        ema = tail.ewm(span=ema_span).mean()
+        last = float(tail.iloc[-1]); ema_last = float(ema.iloc[-1])
+        if ema_last <= 0: return None
+        ratio = last / ema_last
+        ts = df["timestamp"].iloc[-1]
+        # If the last bar is an outlier, report it; otherwise report max in window
+        if ratio >= 1.5:
+            when = ts.to_pydatetime()
+            return f"Recent volume spike ~{ratio:.2f}× typical; last bar {when:%Y-%m-%d %H:%M UTC}."
+        # else find the biggest spike
+        abs_ratio = (tail / ema).fillna(0.0)
+        imax = int(abs_ratio.idxmax())
+        # idxmax returns absolute index; we need timestamp at that position
+        peak_idx = abs_ratio.values.argmax()
+        peak_ts  = df["timestamp"].tail(lookback).iloc[peak_idx].to_pydatetime()
+        peak_mul = float(abs_ratio.max())
+        if peak_mul >= 1.5:
+            return f"Largest recent spike ~{peak_mul:.2f}× typical at {peak_ts:%Y-%m-%d %H:%M UTC}."
+        return None
+    except Exception:
+        return None
 
 def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta: Optional[dict]=None) -> str:
     # view to talk about
@@ -1280,8 +1322,8 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
     view = compute_indicators(view)
 
     # states
-    intents = parse_intents(question)              # from earlier helper you already have
-    q_type  = classify_question(question)          # <-- NEW: question bucket
+    intents = parse_intents(question)           # you already had this
+    q_type  = classify_question(question)       # <-- NEW
     bias, _ = classify_bias_metrics(view)
     ch, _   = compute_rollups(view)
 
@@ -1335,7 +1377,7 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
             return ""
     levels = near_levels()
 
-    # intent-aware add-ons (from parse_intents)
+    # intent-aware add-ons (generic)
     extras = []
     if "breakout" in intents:
         extras.append("For breakouts: look for a close above recent swing highs on rising volume; failed pushes at the band midline often fade.")
@@ -1349,22 +1391,29 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
     if "risk" in intents:
         extras.append("Risk: set stops just beyond the last failed level; avoid chasing thin liquidity spikes.")
 
-    # ---- supplement based on detected question type (NEW)
-    extra = ""
-    if   q_type == "trend":
-        extra = "Trendwise, the bias shows where pressure sits; rising ADX confirms follow-through."
-    elif q_type == "support":
-        extra = "For levels, mark the last high/low cluster; if price respects it, the zone is valid."
-    elif q_type == "volume":
-        extra = "Volume surges validate moves—low-volume rallies often fade."
-    elif q_type == "volatility":
-        extra = "ATR + Bollinger width tell you the tape’s speed; wide bands = whipsaw risk."
-    elif q_type == "fundamental":
-        extra = "Market cap vs liquidity helps sanity-check valuation against peers on the same chain."
-    elif q_type == "prediction":
-        extra = "Momentum hints direction, never certainty—breakouts need closes above resistance and sustained volume."
-    if extra:
-        extras.append(extra)
+    # ---- question-specific answers (THIS is what changes reply content)
+    # local high/low
+    if q_type == "support":
+        kind, ts, val = _last_local_extrema(view.set_index("timestamp")["close"], window=60)
+        if kind in ("high","low") and ts and val is not None:
+            extras.append(f"Last local {kind}: {money_smart(val)} at {ts:%Y-%m-%d %H:%M UTC}.")
+
+    # volume/liquidity spike
+    if q_type == "volume":
+        vs = _recent_volume_spike(view, lookback=96, ema_span=20)
+        if vs: extras.append(vs)
+
+    # next 24h “direction” framing (NOT prediction; just tilt)
+    if q_type in ("trend","prediction"):
+        tilt = []
+        if macd_note: tilt.append(macd_note)
+        if rsi is not None:
+            if rsi >= 70: tilt.append("RSI hot → pullback risk elevated")
+            elif rsi <= 30: tilt.append("RSI washed-out → bounce plausible")
+        if adx is not None:
+            if adx >= 25: tilt.append("trend strength present")
+            else: tilt.append("weak trend → chop likely")
+        if tilt: extras.append("24h tilt: " + "; ".join(tilt) + ".")
 
     # build the paragraph
     intro = random.choice(["Let’s keep it real:", "Quick take:", "Alright — chart check:", "Here’s the read:"])
@@ -1378,9 +1427,9 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
     if extras:    parts.append(" ".join(extras))
     parts.append("Not advice—just how the tape reads right now.")
 
-    # final text (optionally pass through your conversationalizer)
     final_text = f"{intro} {where}. " + " ".join(parts)
-    return make_conversational(final_text, symbol)   # if you don’t want rewriting, return final_text instead
+    # If you don’t want the LLM rewrite, return final_text instead of make_conversational(...)
+    return make_conversational(final_text, symbol)
 
 # ---------- safe tile placeholder ----------
 def safe_tile(html_block, label="No data for this timeframe."):
@@ -1423,7 +1472,7 @@ def analyze():
 
     df_view = slice_df(df_full, tf)
     df_view = resample_for_tf(df_view, tf)
-    df_view = compute_indicators(df_view)  # <-- recompute on the resampled view
+    df_view = compute_indicators(df_view)  # CRITICAL: indicators after resample so small tiles aren’t empty/same
 
     meta = META_CACHE.get(_norm_for_cache(canonicalize_query(symbol_raw))) or {}
     name_sym = meta.get("label")
@@ -1496,7 +1545,7 @@ def expand_json():
         elif key == "ALT":    fig = fig_line(dfv, "alt_momentum", "ALT momentum", h=360)
         else:                 fig = fig_line(dfv, "close", key, h=360)
 
-        talk = f"{key} — {talk_for_key(key, dfv if not dfv.empty else df)}"
+        talk = f"{key} — " + talk_for_key(key, dfv if not dfv.empty else df)
         return jsonify({"fig": fig.to_plotly_json(), "talk": talk, "tf": tf, "key": key})
 
     except Exception as e:
