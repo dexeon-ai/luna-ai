@@ -1341,46 +1341,47 @@ def build_header_facts(meta: dict) -> str:
         parts.append(f"Pair: https://dexscreener.com/{meta['chain']}/{meta['pairAddress']}")
     return " | ".join(parts)
 
+from openai import OpenAI
+
 def make_conversational(text: str, symbol: str) -> str:
     """
-    Best-effort “humanizing” pass.
-    - If the 'openai' package and OPENAI_API_KEY are present, call the model.
-    - Otherwise, return a lightly polished version of `text` (never crash).
+    Uses the modern OpenAI v1+/v2+ client to rewrite Luna's technical summary
+    into a conversational, human-readable answer.
+    Gracefully skips if the API key is missing or fails.
     """
-    # --- Try OpenAI if available
-    try:
-        import importlib
-        if importlib.util.find_spec("openai") is not None and os.getenv("OPENAI_API_KEY"):
-            import openai
-            openai.api_key = os.getenv("OPENAI_API_KEY")
-            prompt = (
-                "You are Luna, a friendly crypto analyst. "
-                f"Rewrite the following technical summary about {symbol} into a short, conversational answer. "
-                "Keep it accurate; 3–6 sentences; avoid repeating the same numbers twice; end with one practical takeaway.\n\n"
-                f"{text}"
-            )
-            resp = openai.ChatCompletion.create(
-                model="gpt-4o-mini",
-                messages=[{"role":"user","content":prompt}],
-                temperature=0.7,
-            )
-            out = (resp.choices[0].message.content or "").strip()
-            if out:
-                return out
-    except Exception as e:
-        LOG.warning("[Luna conversational rewrite skipped] %s", e)
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        LOG.warning("[Luna conversational rewrite skipped] No OPENAI_API_KEY set")
+        return text
 
-    # --- Local fallback: tiny cleanups so the text reads less robotic
     try:
-        msg = text
-        # Collapse multiple spaces, ensure single trailing period
-        msg = re.sub(r"\s+", " ", msg).strip()
-        if not msg.endswith("."): msg += "."
-        # Soften some phrases
-        msg = msg.replace("Not advice—", "Note—")
-        msg = msg.replace("Bias:", "Bias →")
-        return msg
-    except Exception:
+        # Create a new client instance
+        client = OpenAI(api_key=api_key)
+
+        prompt = (
+            f"You are Luna, a friendly crypto analyst. Rewrite the following "
+            f"technical summary about {symbol} into a short conversational answer (3–5 sentences). "
+            "Avoid repeating the same data points or listing too many numbers. "
+            "Explain what the movement means and finish with one practical insight.\n\n"
+            f"Technical summary:\n{text}"
+        )
+
+        # New-style API call
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are Luna, an engaging crypto analyst."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.8,
+            max_tokens=220,
+        )
+
+        rewritten = response.choices[0].message.content.strip()
+        return rewritten if rewritten else text
+
+    except Exception as e:
+        LOG.warning("[Luna conversational rewrite failed] %s", e)
         return text
 
 # ---- Question classifier (maps user phrasing to a topic bucket)
