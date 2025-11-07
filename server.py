@@ -1300,27 +1300,51 @@ def make_conversational(text: str, symbol: str) -> str:
         LOG.warning("[Luna conversational rewrite failed] %s", e)
         return text
 
+# ---- Question classifier (maps user phrasing to a topic bucket)
+QUESTION_TYPES = {
+    "trend":       ["trend","direction","bias","bullish","bearish","up","down"],
+    "support":     ["support","resistance","levels","floor","ceiling","s/r"],
+    "volume":      ["volume","liquidity","hype","interest","vol"],
+    "volatility":  ["atr","volatility","wild","calm","range","choppy"],
+    "fundamental": ["market cap","mcap","fdv","supply","tokenomics","holders"],
+    "prediction":  ["future","next","soon","where","price","move","forecast"]
+}
+
+def classify_question(q: str) -> str:
+    ql = (q or "").lower()
+    for k, words in QUESTION_TYPES.items():
+        if any(w in ql for w in words):
+            return k
+    return "general"
+
 def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta: Optional[dict]=None) -> str:
     # view to talk about
     view = slice_df(df, tf)
-    if view.empty: view = df.tail(200)
+    if view.empty:
+        view = df.tail(200)
     view = resample_for_tf(view, tf)
     view = compute_indicators(view)
 
     # states
-    intents = parse_intents(question)
+    intents = parse_intents(question)              # from earlier helper you already have
+    q_type  = classify_question(question)          # <-- NEW: question bucket
     bias, _ = classify_bias_metrics(view)
     ch, _   = compute_rollups(view)
-    price   = to_float(view["close"].iloc[-1]) if not view.empty else None
-    rsi     = to_float(view["rsi"].iloc[-1]) if "rsi" in view.columns else None
-    adx     = to_float(view["adx14"].iloc[-1]) if "adx14" in view.columns else None
-    hist    = view["macd_hist"].dropna() if "macd_hist" in view.columns else pd.Series(dtype=float)
+
+    price = to_float(view["close"].iloc[-1]) if not view.empty else None
+    rsi   = to_float(view["rsi"].iloc[-1])   if "rsi"   in view.columns else None
+    adx   = to_float(view["adx14"].iloc[-1]) if "adx14" in view.columns else None
+
+    hist = view["macd_hist"].dropna() if "macd_hist" in view.columns else pd.Series(dtype=float)
     macd_note = ""
     if len(hist) >= 3:
         slope = hist.iloc[-1] - hist.iloc[-3]
-        if hist.iloc[-1] > 0 and slope > 0: macd_note = "MACD momentum rising"
-        elif hist.iloc[-1] < 0 and slope < 0: macd_note = "MACD momentum falling"
-    return make_conversational(f"{intro} {where}. " + " ".join(parts), symbol)
+        if hist.iloc[-1] > 0 and slope > 0:
+            macd_note = "MACD momentum rising"
+        elif hist.iloc[-1] < 0 and slope < 0:
+            macd_note = "MACD momentum falling"
+
+    # compact performance line
     perf = f"1h {_fmt_pct(ch.get('1h'))}, 4h {_fmt_pct(ch.get('4h'))}, 12h {_fmt_pct(ch.get('12h'))}, 24h {_fmt_pct(ch.get('24h'))}"
 
     # headline facts
@@ -1328,22 +1352,24 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
     where  = f"{symbol} around {money_smart(price)}" if price is not None else symbol
 
     # bias text
-    bias_text = {"bullish":"Bias: constructive up-trend.",
-                 "bearish":"Bias: pressure lower.",
-                 "range":"Bias: range-bound."}.get(bias,"Bias: range-bound.")
+    bias_text = {
+        "bullish": "Bias: constructive up-trend.",
+        "bearish": "Bias: pressure lower.",
+        "range":   "Bias: range-bound."
+    }.get(bias, "Bias: range-bound.")
 
     # indicator reads
     rsi_text = ""
     if rsi is not None:
-        if rsi >= 70: rsi_text = "RSI is hot—pullback risk increases near highs."
-        elif rsi <= 30: rsi_text = "RSI is washed-out—mean-reversion bounce is plausible."
-        else: rsi_text = "RSI neutral—direction likely news/flow-driven."
+        if rsi >= 70:     rsi_text = "RSI is hot—pullback risk increases near highs."
+        elif rsi <= 30:   rsi_text = "RSI is washed-out—mean-reversion bounce is plausible."
+        else:             rsi_text = "RSI neutral—direction likely news/flow-driven."
 
     adx_text = ""
     if adx is not None:
-        if adx >= 40: adx_text = "Trend strength high; moves often extend."
-        elif adx >= 25: adx_text = "Trend building; confirm with volume."
-        else: adx_text = "Trend weak; expect chop."
+        if adx >= 40:     adx_text = "Trend strength high; moves often extend."
+        elif adx >= 25:   adx_text = "Trend building; confirm with volume."
+        else:             adx_text = "Trend weak; expect chop."
 
     # quick levels for anchoring
     def near_levels():
@@ -1351,31 +1377,44 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
             hi = float(view["high"].tail(60).max())
             lo = float(view["low"].tail(60).min())
             return f"Near-term levels: ↑ {money_smart(hi)}, ↓ {money_smart(lo)}."
-        except Exception: return ""
+        except Exception:
+            return ""
     levels = near_levels()
 
-    # intent-aware add-ons
+    # intent-aware add-ons (from parse_intents)
     extras = []
     if "breakout" in intents:
-        extras.append("For breakouts: look for a close above recent swing highs on rising volume; failed pushes that stall at the band midline often fade.")
+        extras.append("For breakouts: look for a close above recent swing highs on rising volume; failed pushes at the band midline often fade.")
     if "volatility" in intents:
         a = to_float(view["atr14"].iloc[-1]) if "atr14" in view.columns else None
         if a is not None: extras.append(f"Volatility (ATR14) {a:.4g}; size entries accordingly.")
     if "support" in intents:
-        extras.append("Support/resistance: prior reaction zones remain the best invalidation—below recent higher-lows risks trend flips.")
+        extras.append("Support/resistance: prior reaction zones are your best invalidation—below higher-lows risks a trend flip.")
     if "fib" in intents:
-        extras.append("Fibs: watch 0.618 pullbacks for trend continuation and 1.618 extensions for exhaustion areas; always pair with volume/OBV.")
+        extras.append("Fibs: watch 0.618 pullbacks for continuation and 1.618 extensions for exhaustion; pair with volume/OBV.")
     if "risk" in intents:
-        extras.append("Risk framing: define a stop just beyond the last failed level; avoid chasing thin liquidity spikes.")
+        extras.append("Risk: set stops just beyond the last failed level; avoid chasing thin liquidity spikes.")
 
-    # build
-    intro = random.choice([
-        "Let’s keep it real:",
-        "Quick take:",
-        "Alright — chart check:",
-        "Here’s the read:"
-    ])
-    parts = []
+    # ---- supplement based on detected question type (NEW)
+    extra = ""
+    if   q_type == "trend":
+        extra = "Trendwise, the bias shows where pressure sits; rising ADX confirms follow-through."
+    elif q_type == "support":
+        extra = "For levels, mark the last high/low cluster; if price respects it, the zone is valid."
+    elif q_type == "volume":
+        extra = "Volume surges validate moves—low-volume rallies often fade."
+    elif q_type == "volatility":
+        extra = "ATR + Bollinger width tell you the tape’s speed; wide bands = whipsaw risk."
+    elif q_type == "fundamental":
+        extra = "Market cap vs liquidity helps sanity-check valuation against peers on the same chain."
+    elif q_type == "prediction":
+        extra = "Momentum hints direction, never certainty—breakouts need closes above resistance and sustained volume."
+    if extra:
+        extras.append(extra)
+
+    # build the paragraph
+    intro = random.choice(["Let’s keep it real:", "Quick take:", "Alright — chart check:", "Here’s the read:"])
+    parts: List[str] = []
     if header: parts.append(header + ".")
     parts += [perf + ".", bias_text]
     if macd_note: parts.append(macd_note + ".")
@@ -1385,7 +1424,9 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
     if extras:    parts.append(" ".join(extras))
     parts.append("Not advice—just how the tape reads right now.")
 
-    return f"{intro} {where}. " + " ".join(parts)
+    # final text (optionally pass through your conversationalizer)
+    final_text = f"{intro} {where}. " + " ".join(parts)
+    return make_conversational(final_text, symbol)   # if you don’t want rewriting, return final_text instead
 
 # ---------- safe tile placeholder ----------
 def safe_tile(html_block, label="No data for this timeframe."):
