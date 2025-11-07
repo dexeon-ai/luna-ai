@@ -1343,11 +1343,11 @@ def build_header_facts(meta: dict) -> str:
 
 from openai import OpenAI
 
-def make_conversational(text: str, symbol: str) -> str:
+def make_conversational(text: str, symbol: str, question: str = "") -> str:
     """
-    Uses the modern OpenAI v1+/v2+ client to rewrite Luna's technical summary
-    into a conversational, human-readable answer.
-    Gracefully skips if the API key is missing or fails.
+    Context-aware rewrite using the new OpenAI API.
+    The LLM sees both the question and the data summary,
+    so responses are more targeted and relevant.
     """
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
@@ -1355,30 +1355,36 @@ def make_conversational(text: str, symbol: str) -> str:
         return text
 
     try:
-        # Create a new client instance
         client = OpenAI(api_key=api_key)
 
-        prompt = (
-            f"You are Luna, a friendly crypto analyst. Rewrite the following "
-            f"technical summary about {symbol} into a short conversational answer (3–5 sentences). "
-            "Avoid repeating the same data points or listing too many numbers. "
-            "Explain what the movement means and finish with one practical insight.\n\n"
-            f"Technical summary:\n{text}"
+        system_prompt = (
+            "You are Luna, a friendly crypto analyst who explains charts "
+            "and market behavior clearly to retail traders. "
+            "Your job is to answer the user's question using the provided data summary. "
+            "Be confident but not absolute—describe what the data *suggests*, not certainties. "
+            "Be concise (3–6 sentences). Avoid repeating identical numeric stats each time."
         )
 
-        # New-style API call
+        user_prompt = (
+            f"User question: {question}\n\n"
+            f"Technical summary data for {symbol}:\n{text}\n\n"
+            "Please answer the question directly, interpreting the data in plain English. "
+            "If the question asks about a cause, speculate responsibly based on volume, volatility, or momentum shifts. "
+            "If it asks for a prediction, frame it as probability or potential scenarios, not financial advice."
+        )
+
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are Luna, an engaging crypto analyst."},
-                {"role": "user", "content": prompt},
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
             ],
             temperature=0.8,
-            max_tokens=220,
+            max_tokens=260,
         )
 
-        rewritten = response.choices[0].message.content.strip()
-        return rewritten if rewritten else text
+        reply = response.choices[0].message.content.strip()
+        return reply if reply else text
 
     except Exception as e:
         LOG.warning("[Luna conversational rewrite failed] %s", e)
@@ -1549,7 +1555,7 @@ def luna_answer(symbol: str, df: pd.DataFrame, tf: str, question: str = "", meta
         "Note—this is observation, not financial advice."
     )
 
-    return make_conversational(reply, symbol)
+    return make_conversational(reply, symbol, question)
 
 # ---------- safe tile placeholder ----------
 def safe_tile(html_block, label="No data for this timeframe."):
