@@ -1884,54 +1884,44 @@ def api_luna():
     if not allow_rate(ip, "/api_luna", limit=5, window_sec=60):
         return jsonify({"symbol":"", "reply":"Hold up—too many requests; try again in a minute."}), 429
 
-    # --- input parsing ---
+    # --- parse input ---
     data    = request.get_json(silent=True) or {}
     symbol  = sanitize_query((data.get("symbol") or "ETH").strip())
     tf      = (data.get("tf") or "12h")
     text    = (data.get("text") or data.get("question") or "").strip()
 
-    # --- load or hydrate dataframe ---
+    # --- load cached OR hydrate ---
     df = load_cached_frame(symbol)
     if df.empty:
         df = hydrate_symbol(symbol, force=False, tf_for_fetch=tf)
 
-    # --- metadata / display symbol ---
     meta = META_CACHE.get(_norm_for_cache(canonicalize_query(symbol))) or {}
     disp = meta.get("label") if (meta.get("label") and is_address(symbol)) else _disp_symbol(symbol)
 
-    # ==========================================================================
-    #                     ATH CALCULATION (COMPLETE & CORRECT)
-    # ==========================================================================
-    # Uses full dataset (df) to determine:
-    #  - All-time-high price
-    #  - Timestamp of ATH
-    #  - Percent from ATH
-    # ==========================================================================
-
+    # --- ATH calc ---
     ath_price, ath_date = calculate_all_time_high(df)
-
-    # Safeguard in case the frame is too small or malformed
     try:
-        last = df.iloc[-1]
-        current_price = float(last.get("close"))
+        last_close = float(df.iloc[-1]["close"])
     except Exception:
-        current_price = None
+        last_close = None
+    pct_from_ath = percent_from_ath(last_close, ath_price)
 
-    pct_from_ath = percent_from_ath(current_price, ath_price)
-
-    # Attach for downstream use inside luna_answer()
+    # Attach for downstream logic
     df._ath_price = ath_price
     df._ath_date  = ath_date
     df._pct_from_ath = pct_from_ath
-    # ==========================================================================
 
-    # --- generate Luna's text answer ---
-    reply = luna_answer(disp, df, tf, text, meta) if not df.empty else f"{disp}: I don’t have enough fresh data yet."
+    # --- FIXED LINE: call the CORRECT function ---
+    from luna_agent import answer_question
+    reply = answer_question(disp, df, tf, text) if not df.empty else f"{disp}: I don’t have enough fresh data yet."
 
     # --- optional voice synthesis ---
     voice = None
     if os.getenv("LUNA_VOICE_BACKEND", "none") != "none":
-        voice = synth_to_wav_base64(reply)
+        try:
+            voice = synth_to_wav_base64(reply)
+        except Exception:
+            pass
 
     return jsonify({"ok": True, "symbol": disp, "reply": reply, "audio": voice})
 
