@@ -1913,7 +1913,14 @@ def api_luna():
 
     # --- FIXED LINE: call the CORRECT function ---
     from luna_agent import answer_question
-    reply = answer_question(disp, df, tf, text) if not df.empty else f"{disp}: I don’t have enough fresh data yet."
+    from luna_agent import answer_question
+    try:
+        reply = answer_question(disp, df, tf, text)
+        if not reply or not isinstance(reply, str):
+            reply = f"{disp}: I couldn't form an answer from the data."
+    except Exception as e:
+        print("[Luna QA ERROR]", e)
+        reply = f"{disp}: Something went wrong analyzing the data."
 
     # --- optional voice synthesis ---
     voice = None
