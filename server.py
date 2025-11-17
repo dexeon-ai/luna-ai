@@ -16,6 +16,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
 
+from luna_voice_engine import synth_to_wav_base64
+
 import pytz
 USER_TZ = pytz.timezone(os.getenv("LUNA_TZ", "America/Chicago"))
 
@@ -1036,6 +1038,31 @@ def token_meta_for(q: str) -> dict:
         LOG.warning("[Meta] DS failed: %s", e)
     return meta
 
+# ---------- ATH calculations ----------
+def calculate_all_time_high(df: pd.DataFrame):
+    """
+    Returns:
+        ath_price (float)
+        ath_timestamp (ISO str)
+    """
+    if df is None or df.empty: 
+        return None, None
+    if "high" not in df.columns:
+        return None, None
+
+    row = df.loc[df["high"].idxmax()]
+    ath_price = float(row["high"])
+    ath_ts = row["timestamp"]
+    if isinstance(ath_ts, pd.Timestamp):
+        ath_ts = ath_ts.isoformat()
+    return ath_price, ath_ts
+
+
+def percent_from_ath(current_price, ath_price):
+    if not current_price or not ath_price:
+        return None
+    return ((current_price - ath_price) / ath_price) * 100
+
 # --- tiny format helpers for small indicator numbers
 def fmt_sig(x, default="0.00"):
     try:
@@ -1627,9 +1654,9 @@ def analyze():
     symbol_raw = sanitize_query(symbol_raw)
     tf = (request.args.get("tf") or "12h")
 
+    # --- hydrate main dataframe ---
     df_full = hydrate_symbol(symbol_raw, force=False, tf_for_fetch=tf)
     if df_full.empty:
-        # return a non-crashing placeholder without breaking layout
         LOG.warning("[Analyze] %s returned empty frame — rendering placeholder.", symbol_raw)
         now = utcnow()
         df_full = pd.DataFrame({
@@ -1637,21 +1664,28 @@ def analyze():
             "open":[0,0],"high":[0,0],"low":[0,0],"close":[0,0],"volume":[0,0]
         })
 
+    # --- slice & resample for the visible charts ---
     df_view = slice_df(df_full, tf)
     df_view = resample_for_tf(df_view, tf)
-    df_view = compute_indicators(df_view)  # CRITICAL: indicators after resample so small tiles aren’t empty/same
+    df_view = compute_indicators(df_view)
 
+    # --- symbol display label ---
     meta = META_CACHE.get(_norm_for_cache(canonicalize_query(symbol_raw))) or {}
     name_sym = meta.get("label")
     symbol_disp = name_sym if (name_sym and is_address(symbol_raw)) else _disp_symbol(symbol_raw)
 
+    # --- performance/investment rollups ---
     perf, invest = compute_rollups(df_full)
 
+    # --- build tiles for grid ---
     tiles: Dict[str, str] = {
-        "PRICE": safe_tile(pio.to_html(fig_price(df_view if not df_view.empty else df_full, symbol_disp), include_plotlyjs=False, full_html=False)),
+        "PRICE": safe_tile(pio.to_html(
+            fig_price(df_view if not df_view.empty else df_full, symbol_disp),
+            include_plotlyjs=False, full_html=False)),
         "RSI":   safe_tile(pio.to_html(fig_line(df_view, "rsi", "RSI"), include_plotlyjs=False, full_html=False)),
         "MCAP":  safe_tile(pio.to_html(
-                    fig_line(df_view if "market_cap" in df_view.columns else df_full, "market_cap", "Market Cap"),
+                    fig_line(df_view if "market_cap" in df_view.columns else df_full,
+                             "market_cap", "Market Cap"),
                     include_plotlyjs=False, full_html=False)),
         "MACD":  safe_tile(pio.to_html(fig_line(df_view, "macd_line", "MACD"), include_plotlyjs=False, full_html=False)),
         "OBV":   safe_tile(pio.to_html(fig_line(df_view, "obv", "OBV"), include_plotlyjs=False, full_html=False)),
@@ -1663,17 +1697,52 @@ def analyze():
         "ALT":   safe_tile(pio.to_html(fig_line(df_view, "alt_momentum", "ALT (Momentum)"), include_plotlyjs=False, full_html=False)),
     }
 
+    # --- TL;DR block ---
     def pct(v): return ("n/a" if v is None else f"{v:+.2f}%")
     tldr_line = f"{symbol_disp}: 1h {pct(perf.get('1h'))}, 4h {pct(perf.get('4h'))}, 12h {pct(perf.get('12h'))}, 24h {pct(perf.get('24h'))}."
     facts = build_header_facts(meta)
-    if facts: tldr_line = f"{facts} — " + tldr_line
+    if facts:
+        tldr_line = f"{facts} — " + tldr_line
 
-    updated = (pd.to_datetime(df_full["timestamp"]).max().strftime("UTC %Y-%m-%d %H:%M") if not df_full.empty else _to_iso(utcnow()))
+    # --- last updated timestamp ---
+    updated = (
+        pd.to_datetime(df_full["timestamp"]).max().strftime("UTC %Y-%m-%d %H:%M")
+        if not df_full.empty else _to_iso(utcnow())
+    )
 
+    # ==========================================================================
+    #                         ATH CALCULATIONS (NEW)
+    # ==========================================================================
+    ath_price, ath_date = calculate_all_time_high(df_full)
+    pct_from_ath = None
+    try:
+        if ath_price:
+            last_close = float(df_full.iloc[-1]["close"])
+            pct_from_ath = percent_from_ath(last_close, ath_price)
+    except Exception:
+        pct_from_ath = None
+    # ==========================================================================
+
+    # --- render page (ATH now included in template context) ---
     return render_template(
         "control_panel.html",
-        symbol=symbol_disp, symbol_raw=symbol_raw, tf=tf, updated=updated,
-        tiles=tiles, performance=perf, investment=invest, tldr_line=tldr_line, build=BUILD_TAG
+        symbol=symbol_disp,
+        symbol_raw=symbol_raw,
+        tf=tf,
+        updated=updated,
+
+        tiles=tiles,
+        performance=perf,
+        investment=invest,
+        tldr_line=tldr_line,
+        build=BUILD_TAG,
+
+        # ---------------------------
+        # NEW ATH CONTEXT VARIABLES
+        # ---------------------------
+        ath_price=ath_price,
+        ath_date=ath_date,
+        pct_from_ath=pct_from_ath
     )
 
 @app.get("/expand_json")
@@ -1810,23 +1879,61 @@ def api_refresh(symbol: str):
 
 @app.post("/api/luna")
 def api_luna():
+    # --- rate limit ---
     ip = request.headers.get("X-Forwarded-For", request.remote_addr or "na").split(",")[0].strip()
     if not allow_rate(ip, "/api_luna", limit=5, window_sec=60):
         return jsonify({"symbol":"", "reply":"Hold up—too many requests; try again in a minute."}), 429
 
+    # --- input parsing ---
     data    = request.get_json(silent=True) or {}
     symbol  = sanitize_query((data.get("symbol") or "ETH").strip())
     tf      = (data.get("tf") or "12h")
     text    = (data.get("text") or data.get("question") or "").strip()
 
+    # --- load or hydrate dataframe ---
     df = load_cached_frame(symbol)
     if df.empty:
         df = hydrate_symbol(symbol, force=False, tf_for_fetch=tf)
 
+    # --- metadata / display symbol ---
     meta = META_CACHE.get(_norm_for_cache(canonicalize_query(symbol))) or {}
     disp = meta.get("label") if (meta.get("label") and is_address(symbol)) else _disp_symbol(symbol)
+
+    # ==========================================================================
+    #                     ATH CALCULATION (COMPLETE & CORRECT)
+    # ==========================================================================
+    # Uses full dataset (df) to determine:
+    #  - All-time-high price
+    #  - Timestamp of ATH
+    #  - Percent from ATH
+    # ==========================================================================
+
+    ath_price, ath_date = calculate_all_time_high(df)
+
+    # Safeguard in case the frame is too small or malformed
+    try:
+        last = df.iloc[-1]
+        current_price = float(last.get("close"))
+    except Exception:
+        current_price = None
+
+    pct_from_ath = percent_from_ath(current_price, ath_price)
+
+    # Attach for downstream use inside luna_answer()
+    df._ath_price = ath_price
+    df._ath_date  = ath_date
+    df._pct_from_ath = pct_from_ath
+    # ==========================================================================
+
+    # --- generate Luna's text answer ---
     reply = luna_answer(disp, df, tf, text, meta) if not df.empty else f"{disp}: I don’t have enough fresh data yet."
-    return jsonify({"symbol": disp, "reply": reply})
+
+    # --- optional voice synthesis ---
+    voice = None
+    if os.getenv("LUNA_VOICE_BACKEND", "none") != "none":
+        voice = synth_to_wav_base64(reply)
+
+    return jsonify({"ok": True, "symbol": disp, "reply": reply, "audio": voice})
 
 # --- healthz -----------------------------------------------------------------
 @app.get("/healthz")
