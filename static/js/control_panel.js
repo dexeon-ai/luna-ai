@@ -1,126 +1,154 @@
-/* Luna control_panel.js — robust wiring for Search, Expand and Ask */
+/* Luna control_panel.js — FULL CLEAN WORKING VERSION */
 
 (function () {
-  const $ = (sel, root=document) => root.querySelector(sel);
+  const $  = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-  const symbolSel = $('#symbol');       // dropdown
-  const tfSel     = $('#tf');           // dropdown
-  const searchBox = $('#searchBox');    // free text
+  // Grab DOM elements
+  const askBox  = $('#askBox');
+  const askSend = $('#askSend');
+  const qaQ     = $('#qaQ');
+  const qaA     = $('#qaA');
+
+  const symbolSel = $('#symbol');
+  const tfSel     = $('#tf');
+  const searchBox = $('#searchBox');
   const refresh   = $('#refreshBtn');
-  const askBox    = $('#askBox');
-  const askSend   = $('#askSend');
 
-  const modal     = $('#modal');
-  const mTitle    = $('#m-title');
-  const mTF       = $('#m-tf');
-  const mClose    = $('#m-close');
-  const mChart    = $('#m-chart');
-  const mTalk     = $('#m-talk');
+  const modal  = $('#modal');
+  const mTitle = $('#m-title');
+  const mTF    = $('#m-tf');
+  const mClose = $('#m-close');
+  const mChart = $('#m-chart');
+  const mTalk  = $('#m-talk');
 
+  /* Utility: Get symbol & timeframe from page */
   function currentSymbol() {
-    // prefer dropdown; if user typed something new, use that when they hit Go
-    return (symbolSel && symbolSel.value) ? symbolSel.value.trim() : (window.__SYMBOL__ || 'BTC');
+    return document.body.getAttribute("data-symbol") || symbolSel?.value || "BTC";
   }
+
   function currentTF() {
-    return (tfSel && tfSel.value) ? tfSel.value.trim() : (window.__TF__ || '12h');
+    return document.body.getAttribute("data-tf-default") || tfSel?.value || "12h";
   }
 
-  // Top-bar form submission (Apply)
-  const goLine = $('.go-line');
-  if (goLine) {
-    goLine.addEventListener('submit', (e) => {
-      // Respect the dropdown choices; searchBox is for "Go" only
-      // Native form submit ok
-    });
+  /* Utility: Add Q & A bubbles */
+  function pushQA(q, a) {
+    if (q) {
+      const el = document.createElement("div");
+      el.className = "bubble q";
+      el.textContent = "• " + q;
+      qaQ.appendChild(el);
+      qaQ.scrollTop = qaQ.scrollHeight;
+    }
+    if (a) {
+      const el = document.createElement("div");
+      el.className = "bubble a";
+      el.textContent = a;
+      qaA.appendChild(el);
+      qaA.scrollTop = qaA.scrollHeight;
+    }
   }
 
-  // "Go" from search box → navigate with ?symbol=<entered>&tf=<tf>
+  /* Search box “Go” button */
   const goBtn = $('#goBtn');
   if (goBtn && searchBox) {
-    goBtn.addEventListener('click', (e) => {
+    goBtn.addEventListener("click", (e) => {
       e.preventDefault();
       const q = searchBox.value.trim();
       if (!q) return;
-      const tf = currentTF();
-      window.location.href = `/analyze?symbol=${encodeURIComponent(q)}&tf=${encodeURIComponent(tf)}`;
+      window.location.href =
+        `/analyze?symbol=${encodeURIComponent(q)}&tf=${encodeURIComponent(currentTF())}`;
     });
-    searchBox.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        goBtn.click();
-      }
+
+    searchBox.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") goBtn.click();
     });
   }
 
-  // Refresh
+  /* Refresh Button */
   if (refresh) {
-    refresh.addEventListener('click', () => {
-      window.location.href = `/analyze?symbol=${encodeURIComponent(currentSymbol())}&tf=${encodeURIComponent(currentTF())}`;
+    refresh.addEventListener("click", () => {
+      window.location.href =
+        `/analyze?symbol=${encodeURIComponent(currentSymbol())}&tf=${encodeURIComponent(currentTF())}`;
     });
   }
 
-  // Expand tile → open modal and fetch fresh data
+  /* Expand tile modal */
   function openModalFor(key) {
     if (!key) return;
-    modal.classList.remove('hidden');
-    mTalk.textContent = 'Loading…';
-    mChart.innerHTML = '';
+
+    modal.classList.remove("hidden");
+    mTalk.textContent = "Loading…";
+    mChart.innerHTML = "";
+
     fetch(`/expand_json?symbol=${encodeURIComponent(currentSymbol())}&key=${encodeURIComponent(key)}&tf=${encodeURIComponent(currentTF())}`)
       .then(r => r.json())
       .then(data => {
-        mTitle.textContent = data.title || (`${key} — ${currentSymbol()} (${currentTF()})`);
-        mTalk.textContent = data.explain || '';
-        if (data.html) {
-          mChart.innerHTML = data.html;
-        } else if (data.figure) {
-          Plotly.newPlot(mChart, data.figure.data, data.figure.layout || {}, {responsive:true});
+        mTitle.textContent = `${key} — ${currentSymbol()} (${currentTF()})`;
+
+        mTalk.textContent = data.talk || "No commentary.";
+        if (data.fig) {
+          Plotly.newPlot(mChart, data.fig.data, data.fig.layout || {}, {responsive:true});
         } else {
-          mChart.innerHTML = '<div class="chart-missing">No chart data.</div>';
+          mChart.innerHTML = "<div class='chart-missing'>No chart available.</div>";
         }
       })
-      .catch(() => {
-        mTalk.textContent = 'Error loading chart.';
-        mChart.innerHTML = '<div class="chart-missing">Error.</div>';
+      .catch(err => {
+        mTalk.textContent = "Error loading chart.";
+        mChart.innerHTML = "<div class='chart-missing'>Error loading.</div>";
       });
   }
 
-  $$('.expand').forEach(btn => {
-    btn.addEventListener('click', () => openModalFor(btn.dataset.key || btn.getAttribute('data-key')));
+  $$(".expand").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.key || btn.getAttribute("data-key");
+      openModalFor(key);
+    });
   });
 
-  if (mClose) mClose.addEventListener('click', () => modal.classList.add('hidden'));
+  if (mClose) {
+    mClose.addEventListener("click", () => modal.classList.add("hidden"));
+  }
+
   if (mTF) {
-    mTF.addEventListener('change', () => {
-      const key = (mTitle.textContent || '').split('—')[0].trim();
+    mTF.addEventListener("change", () => {
+      const key = (mTitle.textContent || "").split("—")[0].trim();
       openModalFor(key);
     });
   }
 
-  // Ask Luna
-  function appendQA(q, a) {
-    const qWrap = $('#qaQ'), aWrap = $('#qaA');
-    if (qWrap) qWrap.insertAdjacentHTML('beforeend', `<div class="bubble q">• ${q}</div>`);
-    if (aWrap) aWrap.insertAdjacentHTML('beforeend', `<div class="bubble a">${a}</div>`);
-    if (aWrap) aWrap.scrollTop = aWrap.scrollHeight;
-  }
+  /* ASK LUNA — FULL FIXED VERSION */
+  if (askSend && askBox) {
+    askSend.addEventListener("click", () => {
+      const q = (askBox.value || "").trim();
+      if (!q) return;
 
-  function ask() {
-    const q = (askBox && askBox.value || '').trim();
-    if (!q) return;
-    const payload = { symbol: currentSymbol(), tf: currentTF(), q };
-    appendQA(q, '…');
-    askBox.value = '';
-    fetch('/api/luna', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
-      .then(r => r.json()).then(data => {
-        const last = $('#qaA .bubble.a:last-child');
-        if (last) last.textContent = data.answer || '(no answer)';
+      pushQA(q, null);
+
+      const payload = {
+        symbol: currentSymbol(),
+        tf: currentTF(),
+        text: q
+      };
+
+      fetch("/api/luna", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
       })
-      .catch(() => {
-        const last = $('#qaA .bubble.a:last-child');
-        if (last) last.textContent = 'Error.';
+      .then(r => r.json())
+      .then(j => {
+        pushQA(null, j.reply || "(no response)");
+      })
+      .catch(err => {
+        pushQA(null, "Error: " + String(err));
       });
-  }
 
-  if (askSend) askSend.addEventListener('click', ask);
-  if (askBox) askBox.addEventListener('keydown', (e) => { if (e.key === 'Enter') ask(); });
+      askBox.value = "";
+    });
+
+    askBox.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") askSend.click();
+    });
+  }
 })();
